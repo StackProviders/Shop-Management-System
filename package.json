@@ -1,6 +1,6 @@
 {
   "name": "tauri-react-app",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "",
   "type": "module",
   "scripts": {
@@ -10,7 +10,8 @@
     "tauri": "tauri",
     "prepare": "husky",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "release": "git tag v%npm_package_version% && git push origin v%npm_package_version%"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"
