@@ -66,39 +66,38 @@ jobs:
                 APP_NAME="${{ steps.app-name.outputs.name }}"
                 REPO="${{ github.repository }}"
                 DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-                cat > latest.json << EOF
-                {
-                  "version": "${VERSION}",
+                echo '{
+                  "version": "'${VERSION}'",
                   "notes": "See the assets to download this version and install.",
-                  "pub_date": "${DATE}",
+                  "pub_date": "'${DATE}'",
                   "platforms": {
                     "windows-x86_64": {
                       "signature": "",
-                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_x64_en-US.msi"
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x64_en-US.msi"
                     },
                     "windows-i686": {
                       "signature": "",
-                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_x86_en-US.msi"
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x86_en-US.msi"
                     },
                     "darwin-x86_64": {
                       "signature": "",
-                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_x64.app.tar.gz"
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x64.app.tar.gz"
                     },
                     "darwin-aarch64": {
                       "signature": "",
-                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_aarch64.app.tar.gz"
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_aarch64.app.tar.gz"
                     },
                     "linux-x86_64": {
                       "signature": "",
-                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_amd64.AppImage"
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_amd64.AppImage"
                     },
                     "linux-i686": {
                       "signature": "",
-                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_i386.AppImage"
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_i386.AppImage"
                     }
                   }
-                }
-                EOF
+                }' > latest.json
+              shell: bash
 
             - uses: tauri-apps/tauri-action@v0
               env:
@@ -144,39 +143,38 @@ jobs:
                 APP_NAME="${{ steps.app-name.outputs.name }}"
                 REPO="${{ github.repository }}"
                 DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-                cat > latest.json << EOF
-                {
-                  "version": "${VERSION}",
+                echo '{
+                  "version": "'${VERSION}'",
                   "notes": "See the assets to download this version and install.",
-                  "pub_date": "${DATE}",
+                  "pub_date": "'${DATE}'",
                   "platforms": {
                     "windows-x86_64": {
                       "signature": "",
-                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_x64_en-US.msi"
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x64_en-US.msi"
                     },
                     "windows-i686": {
                       "signature": "",
-                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_x86_en-US.msi"
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x86_en-US.msi"
                     },
                     "darwin-x86_64": {
                       "signature": "",
-                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_x64.app.tar.gz"
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x64.app.tar.gz"
                     },
                     "darwin-aarch64": {
                       "signature": "",
-                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_aarch64.app.tar.gz"
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_aarch64.app.tar.gz"
                     },
                     "linux-x86_64": {
                       "signature": "",
-                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_amd64.AppImage"
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_amd64.AppImage"
                     },
                     "linux-i686": {
                       "signature": "",
-                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_i386.AppImage"
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_i386.AppImage"
                     }
                   }
-                }
-                EOF
+                }' > latest.json
+              shell: bash
 
             - name: Upload latest.json to existing release
               uses: softprops/action-gh-release@v1
