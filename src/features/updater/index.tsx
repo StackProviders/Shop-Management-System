@@ -2,24 +2,31 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, RefreshCw, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useUpdater } from './hooks/use-updater';
+import { autoUpdater } from './services/auto-updater';
+import { APP_VERSION } from '@/lib/config';
 
 export function Updater() {
-  const { 
-    state, 
-    checkForUpdates, 
-    downloadAndInstall, 
-    isChecking, 
-    isDownloading, 
-    isInstalling, 
-    hasUpdate, 
+  const {
+    state,
+    checkForUpdates,
+    downloadAndInstall,
+    isChecking,
+    isDownloading,
+    isInstalling,
+    hasUpdate,
     isDownloaded,
-    hasError 
+    hasError
   } = useUpdater();
-  
-  const [isAutoCheckEnabled, setIsAutoCheckEnabled] = useState(true);
+
+  const [isAutoCheckEnabled, setIsAutoCheckEnabled] = useState(() => {
+    const saved = localStorage.getItem('autoUpdateEnabled');
+    return saved !== null ? saved === 'true' : false;
+  });
 
   useEffect(() => {
-    // Auto-check for updates on component mount
+    localStorage.setItem('autoUpdateEnabled', String(isAutoCheckEnabled));
+    autoUpdater.setEnabled(isAutoCheckEnabled);
+
     if (isAutoCheckEnabled) {
       checkForUpdates();
     }
@@ -79,7 +86,7 @@ export function Updater() {
           )}
           {state.update.body && (
             <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
-              <p className="font-medium">What's new:</p>
+              <p className="font-medium">What&apos;s new:</p>
               <p className="whitespace-pre-wrap">{state.update.body}</p>
             </div>
           )}
@@ -88,7 +95,7 @@ export function Updater() {
 
       {isDownloading && state.progress !== undefined && (
         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-          <div 
+          <div
             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
             style={{ width: `${state.progress}%` }}
           />
@@ -140,8 +147,13 @@ export function Updater() {
       </div>
 
       <div className="text-xs text-gray-500 dark:text-gray-400">
-        <p>Current version: {import.meta.env.VITE_APP_VERSION || '1.0.0'}</p>
-        <p>Updates are checked automatically when the app starts.</p>
+        <p>Current version: {APP_VERSION}</p>
+        {isAutoCheckEnabled && (
+          <p>Updates are checked automatically every 24 hours.</p>
+        )}
+        <p className="mt-2 text-yellow-600 dark:text-yellow-400">
+          Note: To enable updates, configure your GitHub repository in tauri.conf.json
+        </p>
       </div>
     </div>
   );

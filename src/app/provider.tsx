@@ -6,10 +6,13 @@ import { autoUpdater } from '@/features/updater/services/auto-updater'
 
 export default function AppProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
-        // Initialize auto-updater when the app starts
-        autoUpdater.initialize();
+        const saved = localStorage.getItem('autoUpdateEnabled');
+        const isEnabled = saved === 'true';
+        
+        if (isEnabled) {
+            autoUpdater.setEnabled(true);
+        }
 
-        // Cleanup on unmount
         return () => {
             autoUpdater.destroy();
         };

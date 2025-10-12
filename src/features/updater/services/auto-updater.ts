@@ -1,9 +1,13 @@
 import { check } from '@tauri-apps/plugin-updater';
 
+type UpdateListener = (available: boolean, version?: string) => void;
+
 export class AutoUpdaterService {
   private static instance: AutoUpdaterService;
   private isInitialized = false;
   private checkInterval: number | null = null;
+  private listeners: UpdateListener[] = [];
+  private isEnabled = false;
 
   private constructor() {}
 
@@ -14,18 +18,34 @@ export class AutoUpdaterService {
     return AutoUpdaterService.instance;
   }
 
+  public setEnabled(enabled: boolean): void {
+    this.isEnabled = enabled;
+    if (enabled && !this.isInitialized) {
+      this.initialize();
+    } else if (!enabled) {
+      this.stopPeriodicChecks();
+    }
+  }
+
+  public subscribe(listener: UpdateListener): () => void {
+    this.listeners.push(listener);
+    return () => {
+      this.listeners = this.listeners.filter(l => l !== listener);
+    };
+  }
+
+  private notifyListeners(available: boolean, version?: string): void {
+    this.listeners.forEach(listener => listener(available, version));
+  }
+
   public async initialize(): Promise<void> {
-    if (this.isInitialized) {
+    if (this.isInitialized || !this.isEnabled) {
       return;
     }
 
     try {
-      // Check for updates on startup
       await this.checkForUpdates();
-      
-      // Set up periodic checks (every 24 hours)
       this.startPeriodicChecks();
-      
       this.isInitialized = true;
       console.log('Auto-updater initialized');
     } catch (error) {
@@ -33,15 +53,18 @@ export class AutoUpdaterService {
     }
   }
 
-  private async checkForUpdates(): Promise<void> {
+  public async checkForUpdates(): Promise<void> {
+    if (!this.isEnabled) return;
+    
     try {
       const update = await check();
       
-      if (update?.available) {
+      if (update) {
         console.log(`Update available: v${update.version}`);
-        // The UpdateNotification component will handle showing the update to the user
+        this.notifyListeners(true, update.version);
       } else {
         console.log('No updates available');
+        this.notifyListeners(false);
       }
     } catch (error) {
       console.error('Error checking for updates:', error);
@@ -49,7 +72,6 @@ export class AutoUpdaterService {
   }
 
   private startPeriodicChecks(): void {
-    // Check for updates every 24 hours (in milliseconds)
     const CHECK_INTERVAL = 24 * 60 * 60 * 1000;
     
     this.checkInterval = window.setInterval(() => {
@@ -67,8 +89,8 @@ export class AutoUpdaterService {
   public destroy(): void {
     this.stopPeriodicChecks();
     this.isInitialized = false;
+    this.listeners = [];
   }
 }
 
-// Export singleton instance
 export const autoUpdater = AutoUpdaterService.getInstance();

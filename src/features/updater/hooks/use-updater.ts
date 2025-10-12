@@ -21,13 +21,15 @@ export function useUpdater() {
   const checkForUpdates = useCallback(async () => {
     try {
       setState(prev => ({ ...prev, status: 'checking', error: undefined }));
-      
+
       const update = await check();
-      
+
+      console.log({ update });
+
       if (update) {
         setCurrentUpdate(update);
-        setState(prev => ({ 
-          ...prev, 
+        setState(prev => ({
+          ...prev,
           status: 'available',
           update: {
             version: update.version,
@@ -42,8 +44,8 @@ export function useUpdater() {
         return null;
       }
     } catch (error) {
-      setState(prev => ({ 
-        ...prev, 
+      setState(prev => ({
+        ...prev,
         status: 'error',
         error: error instanceof Error ? error.message : 'Unknown error occurred'
       }));
@@ -55,10 +57,10 @@ export function useUpdater() {
     if (!currentUpdate) {
       throw new Error('No update available to install');
     }
-    
+
     try {
       setState(prev => ({ ...prev, status: 'downloading' }));
-      
+
       await currentUpdate.downloadAndInstall((event: DownloadEvent) => {
         switch (event.event) {
           case 'Started':
@@ -66,8 +68,8 @@ export function useUpdater() {
             break;
           case 'Progress':
             // Calculate progress percentage if we have content length
-            setState(prev => ({ 
-              ...prev, 
+            setState(prev => ({
+              ...prev,
               status: 'downloading',
               progress: event.data.chunkLength // This is just chunk length, not percentage
             }));
@@ -77,11 +79,11 @@ export function useUpdater() {
             break;
         }
       });
-      
+
       setState(prev => ({ ...prev, status: 'installing' }));
     } catch (error) {
-      setState(prev => ({ 
-        ...prev, 
+      setState(prev => ({
+        ...prev,
         status: 'error',
         error: error instanceof Error ? error.message : 'Failed to install update'
       }));

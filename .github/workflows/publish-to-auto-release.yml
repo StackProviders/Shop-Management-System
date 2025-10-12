@@ -5,9 +5,6 @@ on:
         tags:
             - 'v*'
 
-# Triggers on git tags starting with 'v' (e.g., v1.0.0)
-# Creates a GitHub release, builds your app, and uploads the artifacts to the release.
-
 jobs:
     publish-tauri:
         permissions:
@@ -16,15 +13,14 @@ jobs:
             fail-fast: false
             matrix:
                 include:
-                    - platform: 'macos-latest' # for Arm based macs (M1 and above).
+                    - platform: 'macos-latest'
                       args: '--target aarch64-apple-darwin'
-                    - platform: 'macos-latest' # for Intel based macs.
+                    - platform: 'macos-latest'
                       args: '--target x86_64-apple-darwin'
-                    - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
+                    - platform: 'ubuntu-22.04'
                       args: ''
                     - platform: 'windows-latest'
                       args: ''
-
 
         runs-on: ${{ matrix.platform }}
         steps:
@@ -46,12 +42,10 @@ jobs:
                   targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
             - name: install dependencies (ubuntu only)
-              if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
+              if: matrix.platform == 'ubuntu-22.04'
               run: |
                   sudo apt-get update
                   sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-              # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
-              # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
 
             - name: install frontend dependencies
               run: pnpm install
@@ -73,12 +67,75 @@ jobs:
                   VITE_GITHUB_TOKEN: ${{ secrets.VITE_GITHUB_TOKEN }}
                   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
                   TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-                  NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
               with:
                   tagName: v${{ steps.package-version.outputs.version }}
                   releaseName: 'App v${{ steps.package-version.outputs.version }}'
                   releaseBody: 'See the assets to download this version and install.'
-                  releaseDraft: false
+                  releaseDraft: true
                   prerelease: false
                   args: ${{ matrix.args }}
-                  includeUpdaterJson: true
+
+    update-release:
+        needs: publish-tauri
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Get package version
+              id: package-version
+              run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+            - name: Get app name
+              id: app-name
+              run: echo "name=$(node -p "require('./src-tauri/tauri.conf.json').productName")" >> $GITHUB_OUTPUT
+
+            - name: Generate latest.json
+              run: |
+                VERSION="${{ steps.package-version.outputs.version }}"
+                APP_NAME="${{ steps.app-name.outputs.name }}"
+                REPO="${{ github.repository }}"
+                DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+                cat > latest.json << EOF
+                {
+                  "version": "${VERSION}",
+                  "notes": "See the assets to download this version and install.",
+                  "pub_date": "${DATE}",
+                  "platforms": {
+                    "windows-x86_64": {
+                      "signature": "",
+                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_x64_en-US.msi"
+                    },
+                    "windows-i686": {
+                      "signature": "",
+                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_x86_en-US.msi"
+                    },
+                    "darwin-x86_64": {
+                      "signature": "",
+                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_x64.app.tar.gz"
+                    },
+                    "darwin-aarch64": {
+                      "signature": "",
+                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_aarch64.app.tar.gz"
+                    },
+                    "linux-x86_64": {
+                      "signature": "",
+                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_amd64.AppImage"
+                    },
+                    "linux-i686": {
+                      "signature": "",
+                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_i386.AppImage"
+                    }
+                  }
+                }
+                EOF
+
+            - name: Upload latest.json to release
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: v${{ steps.package-version.outputs.version }}
+                  files: latest.json
+                  draft: false
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
