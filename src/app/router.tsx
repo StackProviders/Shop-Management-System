@@ -11,6 +11,10 @@ const createAppRouter = () =>
             lazy: () => import('@/app/routes/todos')
         },
         {
+            path: '/settings',
+            lazy: () => import('@/app/routes/settings')
+        },
+        {
             path: '*',
             lazy: () => import('@/app/routes/not-found')
         }

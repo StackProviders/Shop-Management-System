@@ -8,6 +8,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -22,6 +23,14 @@
   "plugins": {
     "process": {
       "active": true
+    },
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/{{owner}}/{{repo}}/releases/latest/download/latest.json"
+      ],
+      "dialog": false,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc0OUEwODMxN0I4QURCRUYKUldUdjI0cDdNUWlhZEZjQUR6dVhSOXdUMjU0QzlrWXFHb2poQVhOaUc2cUEzbUYzNTBBdkVzajgK"
     }
   },
   "app": {
