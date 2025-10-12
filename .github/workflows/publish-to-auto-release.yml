@@ -55,41 +55,10 @@ jobs:
               run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
               shell: bash
 
-            - uses: tauri-apps/tauri-action@v0
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-                  VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
-                  VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
-                  VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
-                  VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
-                  VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
-                  VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
-                  VITE_GITHUB_TOKEN: ${{ secrets.VITE_GITHUB_TOKEN }}
-                  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-                  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-              with:
-                  tagName: v${{ steps.package-version.outputs.version }}
-                  releaseName: 'App v${{ steps.package-version.outputs.version }}'
-                  releaseBody: 'See the assets to download this version and install.'
-                  releaseDraft: true
-                  prerelease: false
-                  args: ${{ matrix.args }}
-
-    update-release:
-        needs: publish-tauri
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-        steps:
-            - uses: actions/checkout@v4
-
-            - name: Get package version
-              id: package-version
-              run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-
             - name: Get app name
               id: app-name
               run: echo "name=$(node -p "require('./src-tauri/tauri.conf.json').productName")" >> $GITHUB_OUTPUT
+              shell: bash
 
             - name: Generate latest.json
               run: |
@@ -131,7 +100,85 @@ jobs:
                 }
                 EOF
 
-            - name: Upload latest.json to release
+            - uses: tauri-apps/tauri-action@v0
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+                  VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+                  VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+                  VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+                  VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+                  VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+                  VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+                  VITE_GITHUB_TOKEN: ${{ secrets.VITE_GITHUB_TOKEN }}
+                  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+                  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+              with:
+                  tagName: v${{ steps.package-version.outputs.version }}
+                  releaseName: 'App v${{ steps.package-version.outputs.version }}'
+                  releaseBody: 'See the assets to download this version and install.'
+                  releaseDraft: true
+                  prerelease: false
+                  args: ${{ matrix.args }}
+
+    finalize-release:
+        needs: publish-tauri
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Get package version
+              id: package-version
+              run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+              shell: bash
+
+            - name: Get app name
+              id: app-name
+              run: echo "name=$(node -p "require('./src-tauri/tauri.conf.json').productName")" >> $GITHUB_OUTPUT
+              shell: bash
+
+            - name: Generate latest.json
+              run: |
+                VERSION="${{ steps.package-version.outputs.version }}"
+                APP_NAME="${{ steps.app-name.outputs.name }}"
+                REPO="${{ github.repository }}"
+                DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+                cat > latest.json << EOF
+                {
+                  "version": "${VERSION}",
+                  "notes": "See the assets to download this version and install.",
+                  "pub_date": "${DATE}",
+                  "platforms": {
+                    "windows-x86_64": {
+                      "signature": "",
+                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_x64_en-US.msi"
+                    },
+                    "windows-i686": {
+                      "signature": "",
+                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_x86_en-US.msi"
+                    },
+                    "darwin-x86_64": {
+                      "signature": "",
+                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_x64.app.tar.gz"
+                    },
+                    "darwin-aarch64": {
+                      "signature": "",
+                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_aarch64.app.tar.gz"
+                    },
+                    "linux-x86_64": {
+                      "signature": "",
+                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_amd64.AppImage"
+                    },
+                    "linux-i686": {
+                      "signature": "",
+                      "url": "https://github.com/${REPO}/releases/download/v${VERSION}/${APP_NAME}_${VERSION}_i386.AppImage"
+                    }
+                  }
+                }
+                EOF
+
+            - name: Upload latest.json to existing release
               uses: softprops/action-gh-release@v1
               with:
                   tag_name: v${{ steps.package-version.outputs.version }}

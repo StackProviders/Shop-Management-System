@@ -15,7 +15,8 @@ export function Updater() {
     isInstalling,
     hasUpdate,
     isDownloaded,
-    hasError
+    hasError,
+    isUpToDate
   } = useUpdater();
 
   const [isAutoCheckEnabled, setIsAutoCheckEnabled] = useState(() => {
@@ -39,16 +40,18 @@ export function Updater() {
     if (isDownloaded) return <CheckCircle className="h-4 w-4 text-green-500" />;
     if (isInstalling) return <Loader2 className="h-4 w-4 animate-spin" />;
     if (hasError) return <AlertCircle className="h-4 w-4 text-red-500" />;
+    if (isUpToDate) return <CheckCircle className="h-4 w-4 text-green-500" />;
     return <RefreshCw className="h-4 w-4" />;
   };
 
   const getStatusText = () => {
     if (isChecking) return 'Checking for updates...';
     if (hasUpdate) return `Update available: v${state.update?.version}`;
-    if (isDownloading) return `Downloading update... ${state.progress ? Math.round(state.progress) : 0}%`;
+    if (isDownloading) return `Downloading update... ${state.progress || 0}%`;
     if (isDownloaded) return 'Update downloaded. Ready to install.';
     if (isInstalling) return 'Installing update...';
     if (hasError) return `Error: ${state.error}`;
+    if (isUpToDate) return `You're up to date! Latest version: v${state.update?.version}`;
     return 'Check for updates';
   };
 
@@ -89,6 +92,22 @@ export function Updater() {
               <p className="font-medium">What&apos;s new:</p>
               <p className="whitespace-pre-wrap">{state.update.body}</p>
             </div>
+          )}
+        </div>
+      )}
+
+      {isUpToDate && state.update && (
+        <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+          <h4 className="font-medium text-green-900 dark:text-green-100">
+            ✓ You&#39;re up to date!
+          </h4>
+          <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+            Current version: v{APP_VERSION} | Latest version: v{state.update.version}
+          </p>
+          {state.update.date && (
+            <p className="text-sm text-green-700 dark:text-green-300">
+              Latest release: {new Date(state.update.date).toLocaleDateString()}
+            </p>
           )}
         </div>
       )}

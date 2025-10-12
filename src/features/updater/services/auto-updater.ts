@@ -1,6 +1,23 @@
 import { check } from '@tauri-apps/plugin-updater';
+import { APP_VERSION } from '@/lib/config';
 
 type UpdateListener = (available: boolean, version?: string) => void;
+
+// Helper function to compare semantic versions
+function compareVersions(version1: string, version2: string): number {
+  const v1parts = version1.split('.').map(Number);
+  const v2parts = version2.split('.').map(Number);
+  
+  for (let i = 0; i < Math.max(v1parts.length, v2parts.length); i++) {
+    const v1part = v1parts[i] || 0;
+    const v2part = v2parts[i] || 0;
+    
+    if (v1part > v2part) return 1;
+    if (v1part < v2part) return -1;
+  }
+  
+  return 0;
+}
 
 export class AutoUpdaterService {
   private static instance: AutoUpdaterService;
@@ -60,8 +77,16 @@ export class AutoUpdaterService {
       const update = await check();
       
       if (update) {
-        console.log(`Update available: v${update.version}`);
-        this.notifyListeners(true, update.version);
+        // Compare versions to determine if update is actually newer
+        const versionComparison = compareVersions(update.version, APP_VERSION);
+        
+        if (versionComparison > 0) {
+          console.log(`Update available: v${update.version} (current: v${APP_VERSION})`);
+          this.notifyListeners(true, update.version);
+        } else {
+          console.log(`No updates available. Current version (v${APP_VERSION}) is up to date or newer than available version (v${update.version})`);
+          this.notifyListeners(false);
+        }
       } else {
         console.log('No updates available');
         this.notifyListeners(false);
