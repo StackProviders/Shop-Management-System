@@ -1,12 +1,14 @@
 # GitHub Secrets Setup for Tauri Updater
 
-## Step 1: Generate Signing Keys Locally
+## Step 1: Generate Signing Keys Locally (WITHOUT PASSWORD)
 
-Run this command in your project root:
+**IMPORTANT**: Generate keys WITHOUT a password for GitHub Actions:
 
 ```bash
-pnpm tauri signer generate -w .tauri-key
+pnpm tauri signer generate -w .tauri-key --force
 ```
+
+When prompted for password, just press ENTER (leave it empty).
 
 This creates two files:
 - `.tauri-key` - Private key (DO NOT COMMIT)
@@ -44,7 +46,19 @@ untrusted comment: minisign secret key
 RWRTY5x9Q7gSOPb+...your key content here...
 ```
 
-## Step 4: Add GitHub Token (if using GH_TOKEN)
+## Step 4: Add Password to GitHub Secrets (If Key Has Password)
+
+If you generated your key WITH a password:
+
+1. Go to **Settings** → **Secrets and variables** → **Actions**
+2. Click **New repository secret**
+3. Add:
+   - **Name**: `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
+   - **Value**: Your key password
+
+**OR** regenerate the key without password (see Step 1).
+
+## Step 5: Add GitHub Token (if using GH_TOKEN)
 
 If you're using `GH_TOKEN` instead of the default `GITHUB_TOKEN`:
 
@@ -61,7 +75,7 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-## Step 5: Verify .gitignore
+## Step 6: Verify .gitignore
 
 Ensure `.tauri-key` is in `.gitignore`:
 
@@ -71,7 +85,7 @@ Ensure `.tauri-key` is in `.gitignore`:
 .tauri-key.pub
 ```
 
-## Step 6: Test the Build
+## Step 7: Test the Build
 
 1. Commit and push your changes
 2. Create a tag: `git tag v1.0.0 && git push origin v1.0.0`
