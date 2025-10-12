@@ -24,6 +24,18 @@ jobs:
                       args: ''
                     - platform: 'windows-latest'
                       args: ''
+                    - platform: 'ubuntu-22.04' # Android build
+                      args: '--target aarch64-linux-android'
+                      mobile: true
+                    - platform: 'ubuntu-22.04' # Android build
+                      args: '--target armv7-linux-androideabi'
+                      mobile: true
+                    - platform: 'macos-latest' # iOS build
+                      args: '--target aarch64-apple-ios'
+                      mobile: true
+                    - platform: 'macos-latest' # iOS simulator
+                      args: '--target aarch64-apple-ios-sim'
+                      mobile: true
 
         runs-on: ${{ matrix.platform }}
         steps:
@@ -42,8 +54,24 @@ jobs:
             - name: install Rust stable
               uses: dtolnay/rust-toolchain@stable
               with:
-                  # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
-                  targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+                  targets: ${{ matrix.mobile && (contains(matrix.args, 'android') && 'aarch64-linux-android,armv7-linux-androideabi' || contains(matrix.args, 'ios') && 'aarch64-apple-ios,aarch64-apple-ios-sim' || '') || matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+            - name: Setup Java (Android only)
+              if: matrix.mobile && contains(matrix.args, 'android')
+              uses: actions/setup-java@v4
+              with:
+                  distribution: 'temurin'
+                  java-version: '17'
+
+            - name: Setup Android SDK (Android only)
+              if: matrix.mobile && contains(matrix.args, 'android')
+              uses: android-actions/setup-android@v3
+
+            - name: Install Android NDK (Android only)
+              if: matrix.mobile && contains(matrix.args, 'android')
+              run: |
+                  sdkmanager "ndk;25.2.9519653"
+                  echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/25.2.9519653" >> $GITHUB_ENV
 
             - name: install dependencies (ubuntu only)
               if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
@@ -73,6 +101,7 @@ jobs:
                   VITE_GITHUB_TOKEN: ${{ secrets.VITE_GITHUB_TOKEN }}
                   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
                   TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+                  NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
               with:
                   tagName: v${{ steps.package-version.outputs.version }}
                   releaseName: 'App v${{ steps.package-version.outputs.version }}'
