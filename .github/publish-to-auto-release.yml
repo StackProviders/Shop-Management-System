@@ -2,8 +2,7 @@ name: 'publish'
 
 on:
     push:
-        tags:
-            - 'v*'
+        tags: ['*']
 
 # Triggers on git tags starting with 'v' (e.g., v1.0.0)
 # Creates a GitHub release, builds your app, and uploads the artifacts to the release.
