@@ -188,6 +188,44 @@ jobs:
                   prerelease: false
                   args: ${{ matrix.args }}
 
+            - name: Upload artifacts to release
+              if: matrix.platform == 'ubuntu-22.04'
+              env:
+                  GITHUB_TOKEN: ${{ secrets.PUBLISHER_REPO_TOKEN }}
+                  GITHUB_REPOSITORY: ${{ secrets.PUBLISH_REPO }}
+              run: |
+                  echo "Uploading artifacts to release..."
+                  VERSION="${{ steps.package-version.outputs.version }}"
+                  
+                  # List all artifacts that should be uploaded
+                  echo "Looking for artifacts in src-tauri/target..."
+                  find src-tauri/target -type f \( -name "*.msi" -o -name "*.dmg" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" -o -name "*.tar.gz" -o -name "*.app" \) | while read artifact; do
+                      echo "Found artifact: $artifact"
+                      if [ -f "$artifact" ]; then
+                          echo "Uploading: $artifact"
+                          curl -X POST \
+                            -H "Authorization: token $GITHUB_TOKEN" \
+                            -H "Accept: application/vnd.github.v3+json" \
+                            -H "Content-Type: application/octet-stream" \
+                            --data-binary @"$artifact" \
+                            "https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/v$VERSION/assets?name=$(basename "$artifact")"
+                      else
+                          echo "Artifact not found: $artifact"
+                      fi
+                  done
+                  
+                  # Also upload latest.json if it exists
+                  if [ -f "latest.json" ]; then
+                      echo "Uploading latest.json..."
+                      curl -X POST \
+                        -H "Authorization: token $GITHUB_TOKEN" \
+                        -H "Accept: application/vnd.github.v3+json" \
+                        -H "Content-Type: application/json" \
+                        --data-binary @latest.json \
+                        "https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/v$VERSION/assets?name=latest.json"
+                  fi
+              shell: bash
+
     finalize-release:
         needs: publish-tauri
         runs-on: ubuntu-latest
@@ -257,3 +295,30 @@ jobs:
                   repository: ${{ secrets.PUBLISH_REPO }}
               env:
                   GITHUB_TOKEN: ${{ secrets.PUBLISHER_REPO_TOKEN }}
+
+            - name: Verify release assets
+              env:
+                  GITHUB_TOKEN: ${{ secrets.PUBLISHER_REPO_TOKEN }}
+                  GITHUB_REPOSITORY: ${{ secrets.PUBLISH_REPO }}
+              run: |
+                  echo "Verifying release assets..."
+                  VERSION="${{ steps.package-version.outputs.version }}"
+                  
+                  # Get release assets
+                  ASSETS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                       -H "Accept: application/vnd.github.v3+json" \
+                       "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/v$VERSION")
+                  
+                  echo "Release assets: $ASSETS"
+                  
+                  # Check if latest.json exists
+                  if echo "$ASSETS" | grep -q "latest.json"; then
+                      echo "✅ latest.json found in release"
+                  else
+                      echo "❌ latest.json NOT found in release"
+                  fi
+                  
+                  # Count total assets
+                  ASSET_COUNT=$(echo "$ASSETS" | jq '.assets | length')
+                  echo "Total assets in release: $ASSET_COUNT"
+              shell: bash
