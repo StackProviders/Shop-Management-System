@@ -101,9 +101,16 @@ jobs:
                 }' > latest.json
               shell: bash
 
+            - name: Set repository context
+              run: |
+                  echo "REPO_OWNER=$(echo '${{ secrets.PUBLISH_REPO }}' | cut -d'/' -f1)" >> $GITHUB_ENV
+                  echo "REPO_NAME=$(echo '${{ secrets.PUBLISH_REPO }}' | cut -d'/' -f2)" >> $GITHUB_ENV
+              shell: bash
+
             - uses: tauri-apps/tauri-action@v0
               env:
                   GITHUB_TOKEN: ${{ secrets.PUBLISHER_REPO_TOKEN }}
+                  GITHUB_REPOSITORY: ${{ secrets.PUBLISH_REPO }}
                   VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
                   VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
                   VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
@@ -186,5 +193,6 @@ jobs:
                   tag_name: v${{ steps.package-version.outputs.version }}
                   files: latest.json
                   draft: false
+                  repository: ${{ secrets.PUBLISH_REPO }}
               env:
                   GITHUB_TOKEN: ${{ secrets.PUBLISHER_REPO_TOKEN }}
