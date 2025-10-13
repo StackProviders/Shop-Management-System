@@ -69,6 +69,9 @@ jobs:
                 APP_NAME="${{ steps.app-name.outputs.name }}"
                 REPO="$PUBLISH_REPO"
                 DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+                echo "Generating latest.json for repository: $REPO"
+                echo "App name: $APP_NAME"
+                echo "Version: $VERSION"
                 echo '{
                   "version": "'${VERSION}'",
                   "notes": "See the assets to download this version and install.",
@@ -100,6 +103,8 @@ jobs:
                     }
                   }
                 }' > latest.json
+                echo "Generated latest.json content:"
+                cat latest.json
               shell: bash
 
             - name: Set repository context
@@ -256,6 +261,9 @@ jobs:
                 APP_NAME="${{ steps.app-name.outputs.name }}"
                 REPO="$PUBLISH_REPO"
                 DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+                echo "Generating latest.json for repository: $REPO"
+                echo "App name: $APP_NAME"
+                echo "Version: $VERSION"
                 echo '{
                   "version": "'${VERSION}'",
                   "notes": "See the assets to download this version and install.",
@@ -287,6 +295,8 @@ jobs:
                     }
                   }
                 }' > latest.json
+                echo "Generated latest.json content:"
+                cat latest.json
               shell: bash
 
             - name: Upload latest.json to existing release
@@ -307,21 +317,35 @@ jobs:
                   echo "Verifying release assets..."
                   VERSION="${{ steps.package-version.outputs.version }}"
                   
-                  # Get release assets
+                  echo "Checking assets in publisher repository: $GITHUB_REPOSITORY"
+                  
+                  # Get release assets from the publisher repository
                   ASSETS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
                        -H "Accept: application/vnd.github.v3+json" \
                        "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/v$VERSION")
                   
-                  echo "Release assets: $ASSETS"
+                  echo "Release assets response: $ASSETS"
                   
-                  # Check if latest.json exists
-                  if echo "$ASSETS" | grep -q "latest.json"; then
-                      echo "✅ latest.json found in release"
+                  # Check if the release exists
+                  if echo "$ASSETS" | grep -q '"message": "Not Found"'; then
+                      echo "❌ Release v$VERSION not found in publisher repository $GITHUB_REPOSITORY"
+                      echo "This is expected if the release hasn't been created yet or assets haven't been uploaded"
                   else
-                      echo "❌ latest.json NOT found in release"
+                      # Check if latest.json exists
+                      if echo "$ASSETS" | grep -q "latest.json"; then
+                          echo "✅ latest.json found in release"
+                      else
+                          echo "❌ latest.json NOT found in release"
+                      fi
+                      
+                      # Count total assets
+                      ASSET_COUNT=$(echo "$ASSETS" | jq '.assets | length')
+                      echo "Total assets in release: $ASSET_COUNT"
+                      
+                      # List all asset names
+                      echo "Asset names:"
+                      echo "$ASSETS" | jq -r '.assets[].name' | while read asset_name; do
+                          echo "  - $asset_name"
+                      done
                   fi
-                  
-                  # Count total assets
-                  ASSET_COUNT=$(echo "$ASSETS" | jq '.assets | length')
-                  echo "Total assets in release: $ASSET_COUNT"
               shell: bash
