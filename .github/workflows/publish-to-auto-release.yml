@@ -9,6 +9,7 @@ jobs:
     publish-tauri:
         permissions:
             contents: write
+            id-token: write
         strategy:
             fail-fast: false
             matrix:
@@ -107,6 +108,17 @@ jobs:
                   echo "REPO_NAME=$(echo '${{ secrets.PUBLISH_REPO }}' | cut -d'/' -f2)" >> $GITHUB_ENV
               shell: bash
 
+            - name: Verify repository access
+              env:
+                  GITHUB_TOKEN: ${{ secrets.PUBLISHER_REPO_TOKEN }}
+                  GITHUB_REPOSITORY: ${{ secrets.PUBLISH_REPO }}
+              run: |
+                  echo "Verifying access to repository: $GITHUB_REPOSITORY"
+                  curl -H "Authorization: token $GITHUB_TOKEN" \
+                       -H "Accept: application/vnd.github.v3+json" \
+                       https://api.github.com/repos/$GITHUB_REPOSITORY
+              shell: bash
+
             - uses: tauri-apps/tauri-action@v0
               env:
                   GITHUB_TOKEN: ${{ secrets.PUBLISHER_REPO_TOKEN }}
@@ -124,7 +136,7 @@ jobs:
                   tagName: v${{ steps.package-version.outputs.version }}
                   releaseName: 'App v${{ steps.package-version.outputs.version }}'
                   releaseBody: 'See the assets to download this version and install.'
-                  releaseDraft: true
+                  releaseDraft: false
                   prerelease: false
                   args: ${{ matrix.args }}
 
@@ -133,6 +145,7 @@ jobs:
         runs-on: ubuntu-latest
         permissions:
             contents: write
+            id-token: write
         steps:
             - uses: actions/checkout@v4
 
