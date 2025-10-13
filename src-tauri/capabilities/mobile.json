@@ -8,8 +8,8 @@
     "main"
   ],
  "permissions": [
-  "barcode-scanner:allow-scan", 
-  "barcode-scanner:allow-cancel",
+    "barcode-scanner:allow-scan", 
+    "barcode-scanner:allow-cancel",
     "barcode-scanner:allow-vibrate",
     "barcode-scanner:allow-check-permissions",
     "barcode-scanner:allow-request-permissions"

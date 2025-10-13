@@ -46,8 +46,6 @@ export function BarcodeScanner() {
                 formats: [Format.QRCode, Format.EAN13, Format.EAN8, Format.Code128, Format.Code39]
             });
 
-            console.log(result);
-
             const newResult: ScanResult = {
                 data: result.content,
                 format: result.format,
