@@ -59,8 +59,10 @@ jobs:
 
             - name: Get package version
               id: package-version
-              run: node -e "const out=process.argv[2]; const v=require('./package.json').version; require('fs').appendFileSync(out, `version=${v}\n`)" "$GITHUB_OUTPUT"
               shell: bash
+              run: |
+                  VERSION=$(node -p "require('./package.json').version")
+                  echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
             - name: Build Tauri app
               env:
@@ -113,8 +115,10 @@ jobs:
 
             - name: Get package version
               id: package-version
-              run: node -e "const out=process.argv[2]; const v=require('./package.json').version; require('fs').appendFileSync(out, `version=${v}\n`)" "$GITHUB_OUTPUT"
               shell: bash
+              run: |
+                  VERSION=$(node -p "require('./package.json').version")
+                  echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
             - name: List downloaded artifacts
               run: |
