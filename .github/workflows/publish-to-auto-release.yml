@@ -138,6 +138,6 @@ jobs:
                   TAG=v${{ steps.package-version.outputs.version }}
                   TITLE="App v${{ steps.package-version.outputs.version }}"
                   NOTES="See attached assets to download this version."
-                  gh release create "$TAG" --repo "$PUBLISH_REPO" --title "$TITLE" --notes "$NOTES" || echo "Release may already exist; continuing to upload assets."
-                  find ./dist -type f \( -name "*.dmg" -o -name "*.app.tar.gz" -o -name "*.msi" -o -name "*.exe" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" -o -name "*.zip" -o -name "*.7z" \) -print0 | xargs -0 -I {} gh release upload "$TAG" "{}" --repo "$PUBLISH_REPO" --clobber
+                  gh release create "$TAG" --repo "$PUBLISH_REPO" --title "$TITLE" --notes "$NOTES" --draft || echo "Release may already exist; continuing to upload assets."
+                  find ./dist -type f \( -name "*.dmg" -o -name "*.app.tar.gz" -o -name "*.msi" -o -name "*.exe" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" -o -name "*.zip" -o -name "*.7z" -o -name "latest.json" \) -print0 | xargs -0 -I {} gh release upload "$TAG" "{}" --repo "$PUBLISH_REPO" --clobber
               shell: bash
