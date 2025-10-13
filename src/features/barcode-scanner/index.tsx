@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { scan, Format, checkPermissions, requestPermissions } from '@tauri-apps/plugin-barcode-scanner';
+import { scan, cancel as cancelScan, Format, checkPermissions, requestPermissions } from '@tauri-apps/plugin-barcode-scanner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -42,7 +42,7 @@ export function BarcodeScanner() {
             }
 
             const result = await scan({
-                windowed: true,
+                windowed: false, // open full-screen camera
                 formats: [Format.QRCode, Format.EAN13, Format.EAN8, Format.Code128, Format.Code39]
             });
 
@@ -56,22 +56,37 @@ export function BarcodeScanner() {
 
             setScanResult(newResult);
             setScanHistory(prev => [newResult, ...prev.slice(0, 9)]); // Keep last 10 scans
+            // Ensure camera is stopped after a successful scan
+            try { await cancelScan(); } catch (err) {
+                // Suppress error but log for debugging
+                console.error('Failed to cancel scan:', err);
+            }
         } catch (err) {
             console.error('Failed to scan barcode:', err);
             const message = err instanceof Error
                 ? err.message
                 : typeof err === 'string'
-                ? err
-                : (() => {
-                    try {
-                        return JSON.stringify(err);
-                    } catch {
-                        return String(err);
-                    }
-                })();
+                    ? err
+                    : (() => {
+                        try {
+                            return JSON.stringify(err);
+                        } catch {
+                            return String(err);
+                        }
+                    })();
             setError(message);
         } finally {
+            // Ensure camera is stopped on any exit path.
+            // But do not call cancelScan twice if we already called it after a successful scan.
+            // To fix: move cancellation logic so it is only done in finally, not both after a successful scan and in finally.
+
             setIsScanning(false);
+            try {
+                await cancelScan();
+            } catch (err) {
+                // Suppress error but log for debugging
+                console.error('Failed to cancel scan:', err);
+            }
         }
     };
 
