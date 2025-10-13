@@ -83,19 +83,25 @@ jobs:
                   fi
               shell: bash
 
-            - name: Archive bundles
-              id: archive
-              run: |
-                  echo "version=${{ steps.package-version.outputs.version }}" >> $GITHUB_OUTPUT
-                  echo "bundle_dir=src-tauri/target/release/bundle" >> $GITHUB_OUTPUT
+            - name: Collect artifacts
               shell: bash
+              run: |
+                  set -e
+                  mkdir -p artifacts
+                  echo "Scanning for installer files under src-tauri/target ..."
+                  find src-tauri/target -type f \
+                    \( -name "*.dmg" -o -name "*.app.tar.gz" -o -name "*.pkg" \
+                       -name "*.msi" -o -name "*.exe" -o -name "*.nsis.*" \
+                       -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" \
+                       -name "*.zip" -o -name "*.7z" \) \
+                    -print -exec cp {} artifacts/ \;
+                  echo "Collected files:" && ls -la artifacts || true
 
             - name: Upload artifacts
               uses: actions/upload-artifact@v4
               with:
                   name: tauri-bundles-${{ matrix.artifact_suffix }}-v${{ steps.package-version.outputs.version }}
-                  path: |
-                      ${{ steps.archive.outputs.bundle_dir }}/**/*
+                  path: artifacts/*
                   if-no-files-found: error
 
     publish-external:
