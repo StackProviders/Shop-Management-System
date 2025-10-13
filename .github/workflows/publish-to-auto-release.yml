@@ -110,8 +110,6 @@ jobs:
         runs-on: ubuntu-22.04
         permissions:
             contents: read
-        env:
-            PUBLISH_REPO: StackProviders/Shop-Management-App-Publisher
         steps:
             - uses: actions/checkout@v4
 
@@ -134,6 +132,7 @@ jobs:
             - name: Create release in external repo and upload assets
               env:
                   GH_TOKEN: ${{ secrets.PUBLISHER_REPO_TOKEN }}
+                  PUBLISH_REPO: ${{ secrets.PUBLISH_REPO }}
               run: |
                   TAG=v${{ steps.package-version.outputs.version }}
                   TITLE="App v${{ steps.package-version.outputs.version }}"
