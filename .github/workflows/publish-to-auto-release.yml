@@ -94,7 +94,7 @@ jobs:
                     \( -name "*.dmg" -o -name "*.app.tar.gz" -o -name "*.pkg" \
                        -o -name "*.msi" -o -name "*setup*.exe" -o -name "*.nsis.exe" \
                        -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" \
-                       -o -name "*.zip" -o -name "*.7z" \) \
+                       -o -name "*.zip" -o -name "*.7z" -o -name "latest.json" \) \
                     -print -exec cp {} artifacts/ \;
                   echo "Collected files:" && ls -la artifacts || true
 
