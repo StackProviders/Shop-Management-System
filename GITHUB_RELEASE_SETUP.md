@@ -9,17 +9,25 @@ This guide explains how to fix the "Not Found" error when creating releases in y
 3. **Added repository access verification** - Helps debug permission issues
 4. **Improved error handling** - Better visibility into what's failing
 
+## Cross-Repository Setup for GitHub Organizations
+
+This workflow builds in `StackProviders/Shop-Management-System` and publishes releases to `StackProviders/Shop-Management-App-Publisher`. Since both repositories are in a GitHub Organization, this requires special token permissions and organization-level access.
+
 ## Required GitHub Secrets
 
-You need to configure these secrets in your **publisher repository** (`StackProviders/Shop-Management-App-Publisher`):
+You need to configure these secrets in your **source repository** (`StackProviders/Shop-Management-System`):
 
 ### 1. Repository Access Token
 - **Secret Name**: `PUBLISHER_REPO_TOKEN`
-- **Description**: Personal Access Token with full repository access
+- **Description**: Personal Access Token with cross-repository access
 - **Required Scopes**:
   - `repo` (Full control of private repositories)
   - `write:packages` (Upload packages to GitHub Package Registry)
   - `delete:packages` (Delete packages from GitHub Package Registry)
+  - `admin:org` (Organization access - required for cross-repo releases)
+- **Critical**: This token must have access to BOTH repositories:
+  - Source: `StackProviders/Shop-Management-System`
+  - Publisher: `StackProviders/Shop-Management-App-Publisher`
 
 ### 2. Repository Configuration
 - **Secret Name**: `PUBLISH_REPO`
@@ -53,28 +61,33 @@ If your repository is in a GitHub organization, you have two options:
 #### Option 1: Personal Access Token (Recommended)
 1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
 2. Click "Generate new token (classic)"
-3. Give it a descriptive name like "Shop Management System Publisher"
+3. Give it a descriptive name like "Cross-Repo Shop Management System Publisher"
 4. Select these scopes:
    - ✅ `repo` (Full control of private repositories)
    - ✅ `write:packages`
    - ✅ `delete:packages`
-   - ✅ `admin:org` (if you need organization access)
-5. **Important**: If your organization requires SSO, click "Enable SSO" next to your organization
-6. Click "Generate token"
-7. Copy the token and add it as `PUBLISHER_REPO_TOKEN` secret
+   - ✅ `admin:org` (REQUIRED for cross-repository access)
+5. **Critical**: If your organization requires SSO, click "Enable SSO" next to your organization
+6. **Important**: After creating the token, you MUST authorize it for both repositories:
+   - `StackProviders/Shop-Management-System` (source)
+   - `StackProviders/Shop-Management-App-Publisher` (publisher)
+7. Click "Generate token"
+8. Copy the token and add it as `PUBLISHER_REPO_TOKEN` secret in the SOURCE repository
 
 #### Option 2: Fine-Grained Personal Access Token (Newer)
 1. Go to GitHub Settings → Developer settings → Personal access tokens → Fine-grained tokens
 2. Click "Generate new token"
 3. Set expiration and resource owner (your organization)
-4. Select the specific repository: `StackProviders/Shop-Management-App-Publisher`
-5. Grant these permissions:
+4. **Select BOTH repositories**:
+   - `StackProviders/Shop-Management-System` (source)
+   - `StackProviders/Shop-Management-App-Publisher` (publisher)
+5. Grant these permissions for BOTH repositories:
    - Contents: Read and write
    - Metadata: Read
    - Pull requests: Write (if needed)
    - Issues: Write (if needed)
 6. Click "Generate token"
-7. Copy the token and add it as `PUBLISHER_REPO_TOKEN` secret
+7. Copy the token and add it as `PUBLISHER_REPO_TOKEN` secret in the SOURCE repository
 
 ## Repository Setup
 
@@ -96,6 +109,24 @@ Your source repository should:
 - **Repository Access**: Verify the token has access to both source and publisher repositories
 - **Organization Permissions**: The token owner must have appropriate permissions in the organization
 - **Branch Protection**: Ensure the workflow can push to the required branches
+- **Organization Settings**: Check organization settings for any restrictions on cross-repository access
+- **Token Authorization**: After creating the token, you may need to authorize it for the organization
+
+### Organization Repository Setup Steps
+
+1. **Check Organization Settings**:
+   - Go to your organization settings
+   - Check "Third-party application access policy"
+   - Ensure personal access tokens are allowed
+
+2. **Verify Repository Permissions**:
+   - Source repo: `StackProviders/Shop-Management-System`
+   - Publisher repo: `StackProviders/Shop-Management-App-Publisher`
+   - Both should be accessible by your token
+
+3. **Organization Token Authorization**:
+   - After creating the token, you may see a banner asking to authorize it for the organization
+   - Click "Authorize" to grant organization access
 
 ## Testing the Setup
 
@@ -115,6 +146,15 @@ Your source repository should:
 - Ensure the publisher repository exists and is accessible
 - **For Organizations**: Verify SSO is enabled for the token if required
 - Check that the token has access to the organization's repositories
+
+### "Resource not accessible by personal access token" Error
+- **Most Common Cause**: Token doesn't have access to the publisher repository
+- Verify the token has `admin:org` scope for cross-repository access
+- Check that the token is authorized for BOTH repositories:
+  - Source: `StackProviders/Shop-Management-System`
+  - Publisher: `StackProviders/Shop-Management-App-Publisher`
+- Ensure the token has `repo` scope with full repository access
+- **For Organizations**: Verify SSO is enabled for the organization
 
 ### Permission Denied
 - Verify the token has `repo` scope
