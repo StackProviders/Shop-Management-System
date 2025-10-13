@@ -33,7 +33,8 @@
         "installMode": "passive"
       },
       "dialog": false,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc0OUEwODMxN0I4QURCRUYKUldUdjI0cDdNUWlhZEZjQUR6dVhSOXdUMjU0QzlrWXFHb2poQVhOaUc2cUEzbUYzNTBBdkVzajgK"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc0OUEwODMxN0I4QURCRUYKUldUdjI0cDdNUWlhZEZjQUR6dVhSOXdUMjU0QzlrWXFHb2poQVhOaUc2cUEzbUYzNTBBdkVzajgK",
+      "includeUpdaterJson": true
     }
   },
   "app": {

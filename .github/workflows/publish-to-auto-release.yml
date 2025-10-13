@@ -77,9 +77,9 @@ jobs:
               run: |
                   pnpm build
                   if [ -n "${{ matrix.target }}" ]; then
-                    pnpm tauri build --target ${{ matrix.target }}
+                    pnpm tauri build --target ${{ matrix.target }} -- --config '{"bundle":{"createUpdaterArtifacts":true},"plugins":{"updater":{"includeUpdaterJson":true}}}'
                   else
-                    pnpm tauri build
+                    pnpm tauri build -- --config '{"bundle":{"createUpdaterArtifacts":true},"plugins":{"updater":{"includeUpdaterJson":true}}}'
                   fi
               shell: bash
 
