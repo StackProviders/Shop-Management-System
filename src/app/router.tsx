@@ -15,6 +15,10 @@ const createAppRouter = () =>
             lazy: () => import('@/app/routes/settings')
         },
         {
+            path: '/scanner',
+            lazy: () => import('@/app/routes/scanner')
+        },
+        {
             path: '*',
             lazy: () => import('@/app/routes/not-found')
         }

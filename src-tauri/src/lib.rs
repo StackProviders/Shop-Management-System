@@ -5,12 +5,22 @@ fn greet(name: &str) -> String {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    let builder = builder.plugin(tauri_plugin_barcode_scanner::init());
+
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    let builder = builder;
+
+    builder
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_process::init())
         .setup(|app| {
             #[cfg(desktop)]
-            let _ = app.handle().plugin(tauri_plugin_updater::Builder::new().build());
+            let _ = app
+                .handle()
+                .plugin(tauri_plugin_updater::Builder::new().build());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![greet])

@@ -24,6 +24,9 @@ export function HomePage() {
                         <Link to="/todos">Go to Todos</Link>
                     </Button>
                     <Button asChild variant="outline">
+                        <Link to="/scanner">Barcode Scanner</Link>
+                    </Button>
+                    <Button asChild variant="outline">
                         <Link to="/settings">Settings</Link>
                     </Button>
                     <GithubStarButton />
