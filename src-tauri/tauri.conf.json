@@ -27,7 +27,7 @@
     "updater": {
       "active": true,
       "endpoints": [
-        "https://github.com/StackProviders/Shop-Management-System/releases/latest/download/latest.json"
+        "https://github.com/StackProviders/Shop-Management-App-Publisher/releases/latest/download/latest.json"
       ],
       "windows": {
         "installMode": "passive"

@@ -5,29 +5,22 @@ on:
         tags:
             - 'v*'
 
-# Builds app artifacts per platform, uploads them as artifacts (no local release),
-# then creates a release in an external repository and uploads the artifacts there.
-
 jobs:
-    build:
+    publish-tauri:
         permissions:
-            contents: read
+            contents: write
         strategy:
             fail-fast: false
             matrix:
                 include:
                     - platform: 'macos-latest'
-                      target: 'aarch64-apple-darwin'
-                      artifact_suffix: 'macos-arm64'
+                      args: '--target aarch64-apple-darwin'
                     - platform: 'macos-latest'
-                      target: 'x86_64-apple-darwin'
-                      artifact_suffix: 'macos-x64'
+                      args: '--target x86_64-apple-darwin'
                     - platform: 'ubuntu-22.04'
-                      target: ''
-                      artifact_suffix: 'linux-x64'
+                      args: ''
                     - platform: 'windows-latest'
-                      target: ''
-                      artifact_suffix: 'windows-x64'
+                      args: ''
 
         runs-on: ${{ matrix.platform }}
         steps:
@@ -52,110 +45,146 @@ jobs:
               if: matrix.platform == 'ubuntu-22.04'
               run: |
                   sudo apt-get update
-                  sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+                  sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
             - name: install frontend dependencies
               run: pnpm install
 
             - name: Get package version
               id: package-version
+              run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
               shell: bash
-              run: |
-                  VERSION=$(node -p "require('./package.json').version")
-                  echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-            - name: Build Tauri app
+            - name: Get app name
+              id: app-name
+              run: echo "name=$(node -p "require('./src-tauri/tauri.conf.json').productName")" >> $GITHUB_OUTPUT
+              shell: bash
+
+            - name: Generate latest.json
               env:
+                  PUBLISH_REPO: ${{ secrets.PUBLISH_REPO }}
+              run: |
+                VERSION="${{ steps.package-version.outputs.version }}"
+                APP_NAME="${{ steps.app-name.outputs.name }}"
+                REPO="$PUBLISH_REPO"
+                DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+                echo '{
+                  "version": "'${VERSION}'",
+                  "notes": "See the assets to download this version and install.",
+                  "pub_date": "'${DATE}'",
+                  "platforms": {
+                    "windows-x86_64": {
+                      "signature": "",
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x64_en-US.msi"
+                    },
+                    "windows-i686": {
+                      "signature": "",
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x86_en-US.msi"
+                    },
+                    "darwin-x86_64": {
+                      "signature": "",
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x64.app.tar.gz"
+                    },
+                    "darwin-aarch64": {
+                      "signature": "",
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_aarch64.app.tar.gz"
+                    },
+                    "linux-x86_64": {
+                      "signature": "",
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_amd64.AppImage"
+                    },
+                    "linux-i686": {
+                      "signature": "",
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_i386.AppImage"
+                    }
+                  }
+                }' > latest.json
+              shell: bash
+
+            - uses: tauri-apps/tauri-action@v0
+              env:
+                  GITHUB_TOKEN: ${{ secrets.PUBLISHER_REPO_TOKEN }}
                   VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
                   VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
                   VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
                   VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
                   VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
                   VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+                  VITE_GITHUB_TOKEN: ${{ secrets.VITE_GITHUB_TOKEN }}
                   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
                   TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-              run: |
-                  pnpm build
-                  if [ -n "${{ matrix.target }}" ]; then
-                    pnpm tauri build --target ${{ matrix.target }}
-                  else
-                    pnpm tauri build
-                  fi
-              shell: bash
-
-            - name: Collect artifacts
-              shell: bash
-              run: |
-                  set -e
-                  mkdir -p artifacts
-                  echo "Scanning for installer files and updater artifacts..."
-                  
-                  # Collect installer files from bundle directories
-                  find src-tauri/target -path "*/*/bundle/*" -type f \
-                    \( -name "*.dmg" -o -name "*.app.tar.gz" -o -name "*.pkg" \
-                       -o -name "*.msi" -o -name "*setup*.exe" -o -name "*.nsis.exe" \
-                       -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" \
-                       -o -name "*.zip" -o -name "*.7z" \) \
-                    -print -exec cp {} artifacts/ \;
-                  
-                  # Collect updater artifacts including latest.json
-                  find src-tauri/target -path "*/*/bundle/updater/*" -type f \
-                    \( -name "*.json" -o -name "*.sig" \) \
-                    -print -exec cp {} artifacts/ \;
-                  
-                  # Also look for latest.json in the root bundle directory (fallback)
-                  find src-tauri/target -path "*/*/bundle/latest.json" -type f \
-                    -print -exec cp {} artifacts/ \;
-                  
-                  echo "Collected files:" && ls -la artifacts || true
-
-            - name: Upload artifacts
-              uses: actions/upload-artifact@v4
               with:
-                  name: tauri-bundles-${{ matrix.artifact_suffix }}-v${{ steps.package-version.outputs.version }}
-                  path: artifacts/*
-                  if-no-files-found: error
+                  tagName: v${{ steps.package-version.outputs.version }}
+                  releaseName: 'App v${{ steps.package-version.outputs.version }}'
+                  releaseBody: 'See the assets to download this version and install.'
+                  releaseDraft: true
+                  prerelease: false
+                  args: ${{ matrix.args }}
 
-    publish-external:
-        needs: build
-        runs-on: ubuntu-22.04
+    finalize-release:
+        needs: publish-tauri
+        runs-on: ubuntu-latest
         permissions:
-            contents: read
+            contents: write
         steps:
             - uses: actions/checkout@v4
 
-            - name: Download all artifacts
-              uses: actions/download-artifact@v4
-              with:
-                  path: ./dist
-
             - name: Get package version
               id: package-version
+              run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
               shell: bash
-              run: |
-                  VERSION=$(node -p "require('./package.json').version")
-                  echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-            - name: List downloaded artifacts
-              run: |
-                  ls -R
+            - name: Get app name
+              id: app-name
+              run: echo "name=$(node -p "require('./src-tauri/tauri.conf.json').productName")" >> $GITHUB_OUTPUT
+              shell: bash
 
-            - name: Create release in external repo and upload assets
+            - name: Generate latest.json
               env:
-                  GH_TOKEN: ${{ secrets.PUBLISHER_REPO_TOKEN }}
                   PUBLISH_REPO: ${{ secrets.PUBLISH_REPO }}
               run: |
-                  TAG=v${{ steps.package-version.outputs.version }}
-                  TITLE="App v${{ steps.package-version.outputs.version }}"
-                  NOTES="See attached assets to download this version."
-                  gh release create "$TAG" --repo "$PUBLISH_REPO" --title "$TITLE" --notes "$NOTES" --draft || echo "Release may already exist; continuing to upload assets."
-                  
-                  # Upload all installer files
-                  find ./dist -type f \( -name "*.dmg" -o -name "*.app.tar.gz" -o -name "*.msi" -o -name "*.exe" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" -o -name "*.zip" -o -name "*.7z" \) -print0 | xargs -0 -I {} gh release upload "$TAG" "{}" --repo "$PUBLISH_REPO" --clobber
-                  
-                  # Upload updater artifacts (latest.json and signature files)
-                  find ./dist -type f \( -name "*.json" -o -name "*.sig" \) -print0 | xargs -0 -I {} gh release upload "$TAG" "{}" --repo "$PUBLISH_REPO" --clobber
-                  
-                  echo "Uploaded files:"
-                  find ./dist -type f \( -name "*.dmg" -o -name "*.app.tar.gz" -o -name "*.msi" -o -name "*.exe" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" -o -name "*.zip" -o -name "*.7z" -o -name "*.json" -o -name "*.sig" \) -exec echo "  {}" \;
+                VERSION="${{ steps.package-version.outputs.version }}"
+                APP_NAME="${{ steps.app-name.outputs.name }}"
+                REPO="$PUBLISH_REPO"
+                DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+                echo '{
+                  "version": "'${VERSION}'",
+                  "notes": "See the assets to download this version and install.",
+                  "pub_date": "'${DATE}'",
+                  "platforms": {
+                    "windows-x86_64": {
+                      "signature": "",
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x64_en-US.msi"
+                    },
+                    "windows-i686": {
+                      "signature": "",
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x86_en-US.msi"
+                    },
+                    "darwin-x86_64": {
+                      "signature": "",
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x64.app.tar.gz"
+                    },
+                    "darwin-aarch64": {
+                      "signature": "",
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_aarch64.app.tar.gz"
+                    },
+                    "linux-x86_64": {
+                      "signature": "",
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_amd64.AppImage"
+                    },
+                    "linux-i686": {
+                      "signature": "",
+                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_i386.AppImage"
+                    }
+                  }
+                }' > latest.json
               shell: bash
+
+            - name: Upload latest.json to existing release
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: v${{ steps.package-version.outputs.version }}
+                  files: latest.json
+                  draft: false
+              env:
+                  GITHUB_TOKEN: ${{ secrets.PUBLISHER_REPO_TOKEN }}
