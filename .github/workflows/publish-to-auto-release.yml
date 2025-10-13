@@ -88,12 +88,13 @@ jobs:
               run: |
                   set -e
                   mkdir -p artifacts
-                  echo "Scanning for installer files under src-tauri/target ..."
-                  find src-tauri/target -type f \
+                  echo "Scanning for installer files only inside */bundle/* directories ..."
+                  # Restrict to Tauri bundle folders to avoid copying Rust build helper executables
+                  find src-tauri/target -path "*/*/bundle/*" -type f \
                     \( -name "*.dmg" -o -name "*.app.tar.gz" -o -name "*.pkg" \
-                       -name "*.msi" -o -name "*.exe" -o -name "*.nsis.*" \
-                       -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" \
-                       -name "*.zip" -o -name "*.7z" \) \
+                       -o -name "*.msi" -o -name "*setup*.exe" -o -name "*.nsis.exe" \
+                       -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" \
+                       -o -name "*.zip" -o -name "*.7z" \) \
                     -print -exec cp {} artifacts/ \;
                   echo "Collected files:" && ls -la artifacts || true
 
