@@ -120,6 +120,7 @@ jobs:
                     'build-tools;34.0.0' \
                     'ndk;26.1.10909125' \
                     'cmake;3.22.1'
+                  yes | sdkmanager --licenses
 
             - name: Export Android env
               run: |
@@ -128,6 +129,13 @@ jobs:
 
             - name: Install frontend dependencies
               run: pnpm install
+
+            - name: Initialize Tauri Android project (if missing)
+              shell: bash
+              run: |
+                  if [ ! -d "src-tauri/gen/android" ]; then
+                      pnpm tauri android init
+                  fi
 
             - name: Get package version
               id: package-version
