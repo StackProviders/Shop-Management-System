@@ -61,121 +61,52 @@ jobs:
               run: echo "name=$(node -p "require('./src-tauri/tauri.conf.json').productName")" >> $GITHUB_OUTPUT
               shell: bash
 
-            - name: Generate latest.json
-              env:
-                  PUBLISH_REPO: ${{ secrets.PUBLISH_REPO }}
-              run: |
-                VERSION="${{ steps.package-version.outputs.version }}"
-                APP_NAME="${{ steps.app-name.outputs.name }}"
-                REPO="$PUBLISH_REPO"
-                DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-                echo "Generating latest.json for repository: $REPO"
-                echo "App name: $APP_NAME"
-                echo "Version: $VERSION"
-                echo '{
-                  "version": "'${VERSION}'",
-                  "notes": "See the assets to download this version and install.",
-                  "pub_date": "'${DATE}'",
-                  "platforms": {
-                    "windows-x86_64": {
-                      "signature": "",
-                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x64_en-US.msi"
-                    },
-                    "windows-i686": {
-                      "signature": "",
-                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x86_en-US.msi"
-                    },
-                    "darwin-x86_64": {
-                      "signature": "",
-                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x64.app.tar.gz"
-                    },
-                    "darwin-aarch64": {
-                      "signature": "",
-                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_aarch64.app.tar.gz"
-                    },
-                    "linux-x86_64": {
-                      "signature": "",
-                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_amd64.AppImage"
-                    },
-                    "linux-i686": {
-                      "signature": "",
-                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_i386.AppImage"
-                    }
-                  }
-                }' > latest.json
-                echo "Generated latest.json content:"
-                cat latest.json
-              shell: bash
-
-            - name: Set repository context
-              run: |
-                  echo "REPO_OWNER=$(echo '${{ secrets.PUBLISH_REPO }}' | cut -d'/' -f1)" >> $GITHUB_ENV
-                  echo "REPO_NAME=$(echo '${{ secrets.PUBLISH_REPO }}' | cut -d'/' -f2)" >> $GITHUB_ENV
-              shell: bash
-
-            - name: Verify repository access
-              env:
-                  GITHUB_TOKEN: ${{ secrets.PUBLISHER_REPO_TOKEN }}
-                  GITHUB_REPOSITORY: ${{ secrets.PUBLISH_REPO }}
-              run: |
-                  echo "Verifying access to repository: $GITHUB_REPOSITORY"
-                  echo "Current repository: ${{ github.repository }}"
-                  echo "Target repository: $GITHUB_REPOSITORY"
-                  
-                  # Test repository access
-                  echo "Testing repository access..."
-                  RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" -H "Authorization: token $GITHUB_TOKEN" \
-                       -H "Accept: application/vnd.github.v3+json" \
-                       https://api.github.com/repos/$GITHUB_REPOSITORY)
-                  
-                  echo "Repository access response: $RESPONSE"
-                  
-                  # Test release creation permissions
-                  echo "Testing release access..."
-                  RELEASE_TEST=$(curl -s -w "\nHTTP_CODE:%{http_code}" -H "Authorization: token $GITHUB_TOKEN" \
-                       -H "Accept: application/vnd.github.v3+json" \
-                       https://api.github.com/repos/$GITHUB_REPOSITORY/releases)
-                  
-                  echo "Release access response: $RELEASE_TEST"
-                  
-                  # Test token permissions
-                  echo "Testing token permissions..."
-                  TOKEN_INFO=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                       -H "Accept: application/vnd.github.v3+json" \
-                       https://api.github.com/user)
-                  
-                  echo "Token info: $TOKEN_INFO"
-              shell: bash
-
-            - name: Create release manually (fallback)
-              if: matrix.platform == 'ubuntu-22.04'
-              env:
-                  GITHUB_TOKEN: ${{ secrets.PUBLISHER_REPO_TOKEN }}
-                  GITHUB_REPOSITORY: ${{ secrets.PUBLISH_REPO }}
-              run: |
-                  echo "Creating release manually for cross-repository setup"
-                  VERSION="${{ steps.package-version.outputs.version }}"
-                  
-                  # Create release using GitHub API
-                  curl -X POST \
-                    -H "Authorization: token $GITHUB_TOKEN" \
-                    -H "Accept: application/vnd.github.v3+json" \
-                    -H "Content-Type: application/json" \
-                    https://api.github.com/repos/$GITHUB_REPOSITORY/releases \
-                    -d '{
-                      "tag_name": "v'$VERSION'",
-                      "target_commitish": "main",
-                      "name": "App v'$VERSION'",
-                      "body": "See the assets to download this version and install.",
-                      "draft": false,
-                      "prerelease": false
-                    }'
-              shell: bash
+            # - name: Generate latest.json
+            #   run: |
+            #       VERSION="${{ steps.package-version.outputs.version }}"
+            #       APP_NAME="${{ steps.app-name.outputs.name }}"
+            #       REPO="${{ github.repository }}"
+            #       DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+            #       echo "Generating latest.json for repository: $REPO"
+            #       echo "App name: $APP_NAME"
+            #       echo "Version: $VERSION"
+            #       echo '{
+            #         "version": "'${VERSION}'",
+            #         "notes": "See the assets to download this version and install.",
+            #         "pub_date": "'${DATE}'",
+            #         "platforms": {
+            #           "windows-x86_64": {
+            #             "signature": "",
+            #             "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x64_en-US.msi"
+            #           },
+            #           "windows-i686": {
+            #             "signature": "",
+            #             "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x86_en-US.msi"
+            #           },
+            #           "darwin-x86_64": {
+            #             "signature": "",
+            #             "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x64.app.tar.gz"
+            #           },
+            #           "darwin-aarch64": {
+            #             "signature": "",
+            #             "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_aarch64.app.tar.gz"
+            #           },
+            #           "linux-x86_64": {
+            #             "signature": "",
+            #             "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_amd64.AppImage"
+            #           },
+            #           "linux-i686": {
+            #             "signature": "",
+            #             "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_i386.AppImage"
+            #           }
+            #         }
+            #       }' > latest.json
+            #       echo "Generated latest.json content:"
+            #       cat latest.json
+            #   shell: bash
 
             - uses: tauri-apps/tauri-action@v0
               env:
-                  GITHUB_TOKEN: ${{ secrets.PUBLISHER_REPO_TOKEN }}
-                  GITHUB_REPOSITORY: ${{ secrets.PUBLISH_REPO }}
                   VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
                   VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
                   VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
@@ -189,163 +120,7 @@ jobs:
                   tagName: v${{ steps.package-version.outputs.version }}
                   releaseName: 'App v${{ steps.package-version.outputs.version }}'
                   releaseBody: 'See the assets to download this version and install.'
-                  releaseDraft: false
-                  prerelease: false
                   args: ${{ matrix.args }}
-
-            - name: Upload artifacts to release
-              if: matrix.platform == 'ubuntu-22.04'
-              env:
-                  GITHUB_TOKEN: ${{ secrets.PUBLISHER_REPO_TOKEN }}
-                  GITHUB_REPOSITORY: ${{ secrets.PUBLISH_REPO }}
-              run: |
-                  echo "Uploading artifacts to release..."
-                  VERSION="${{ steps.package-version.outputs.version }}"
-                  
-                  # List all artifacts that should be uploaded
-                  echo "Looking for artifacts in src-tauri/target..."
-                  find src-tauri/target -type f \( -name "*.msi" -o -name "*.dmg" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" -o -name "*.tar.gz" -o -name "*.app" \) | while read artifact; do
-                      echo "Found artifact: $artifact"
-                      if [ -f "$artifact" ]; then
-                          echo "Uploading: $artifact"
-                          # URL encode the filename to handle spaces and special characters
-                          FILENAME=$(basename "$artifact")
-                          ENCODED_FILENAME=$(printf '%s\n' "$FILENAME" | sed 's/ /%20/g; s/\[/%5B/g; s/\]/%5D/g; s/{/%7B/g; s/}/%7D/g; s/(/%28/g; s/)/%29/g; s/+/%2B/g; s/=/%3D/g; s/&/%26/g; s/#/%23/g; s/?/%3F/g; s/;/%3B/g; s/:/%3A/g; s/@/%40/g; s/!/%21/g; s/\$/%24/g; s/,/%2C/g; s/|/%7C/g; s/\\/%5C/g; s/"/%22/g; s/'"'"'/%27/g; s/</%3C/g; s/>/%3E/g; s/`/%60/g; s/^/%5E/g; s/~/%7E/g; s/%/%25/g')
-                          curl -X POST \
-                            -H "Authorization: token $GITHUB_TOKEN" \
-                            -H "Accept: application/vnd.github.v3+json" \
-                            -H "Content-Type: application/octet-stream" \
-                            --data-binary @"$artifact" \
-                            "https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/v$VERSION/assets?name=$ENCODED_FILENAME"
-                      else
-                          echo "Artifact not found: $artifact"
-                      fi
-                  done
-                  
-                  # Also upload latest.json if it exists
-                  if [ -f "latest.json" ]; then
-                      echo "Uploading latest.json..."
-                      curl -X POST \
-                        -H "Authorization: token $GITHUB_TOKEN" \
-                        -H "Accept: application/vnd.github.v3+json" \
-                        -H "Content-Type: application/json" \
-                        --data-binary @latest.json \
-                        "https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/v$VERSION/assets?name=latest.json"
-                  fi
-              shell: bash
-
-    finalize-release:
-        needs: publish-tauri
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-            id-token: write
-        steps:
-            - uses: actions/checkout@v4
-
-            - name: Get package version
-              id: package-version
-              run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-              shell: bash
-
-            - name: Get app name
-              id: app-name
-              run: echo "name=$(node -p "require('./src-tauri/tauri.conf.json').productName")" >> $GITHUB_OUTPUT
-              shell: bash
-
-            - name: Generate latest.json
-              env:
-                  PUBLISH_REPO: ${{ secrets.PUBLISH_REPO }}
-              run: |
-                VERSION="${{ steps.package-version.outputs.version }}"
-                APP_NAME="${{ steps.app-name.outputs.name }}"
-                REPO="$PUBLISH_REPO"
-                DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-                echo "Generating latest.json for repository: $REPO"
-                echo "App name: $APP_NAME"
-                echo "Version: $VERSION"
-                echo '{
-                  "version": "'${VERSION}'",
-                  "notes": "See the assets to download this version and install.",
-                  "pub_date": "'${DATE}'",
-                  "platforms": {
-                    "windows-x86_64": {
-                      "signature": "",
-                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x64_en-US.msi"
-                    },
-                    "windows-i686": {
-                      "signature": "",
-                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x86_en-US.msi"
-                    },
-                    "darwin-x86_64": {
-                      "signature": "",
-                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_x64.app.tar.gz"
-                    },
-                    "darwin-aarch64": {
-                      "signature": "",
-                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_aarch64.app.tar.gz"
-                    },
-                    "linux-x86_64": {
-                      "signature": "",
-                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_amd64.AppImage"
-                    },
-                    "linux-i686": {
-                      "signature": "",
-                      "url": "https://github.com/'${REPO}'/releases/download/v'${VERSION}'/'${APP_NAME}'_'${VERSION}'_i386.AppImage"
-                    }
-                  }
-                }' > latest.json
-                echo "Generated latest.json content:"
-                cat latest.json
-              shell: bash
-
-            - name: Upload latest.json to existing release
-              uses: softprops/action-gh-release@v1
-              with:
-                  tag_name: v${{ steps.package-version.outputs.version }}
-                  files: latest.json
-                  draft: false
-                  repository: ${{ secrets.PUBLISH_REPO }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.PUBLISHER_REPO_TOKEN }}
-
-            - name: Verify release assets
-              env:
-                  GITHUB_TOKEN: ${{ secrets.PUBLISHER_REPO_TOKEN }}
-                  GITHUB_REPOSITORY: ${{ secrets.PUBLISH_REPO }}
-              run: |
-                  echo "Verifying release assets..."
-                  VERSION="${{ steps.package-version.outputs.version }}"
-                  
-                  echo "Checking assets in publisher repository: $GITHUB_REPOSITORY"
-                  
-                  # Get release assets from the publisher repository
-                  ASSETS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                       -H "Accept: application/vnd.github.v3+json" \
-                       "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/v$VERSION")
-                  
-                  echo "Release assets response: $ASSETS"
-                  
-                  # Check if the release exists
-                  if echo "$ASSETS" | grep -q '"message": "Not Found"'; then
-                      echo "❌ Release v$VERSION not found in publisher repository $GITHUB_REPOSITORY"
-                      echo "This is expected if the release hasn't been created yet or assets haven't been uploaded"
-                  else
-                      # Check if latest.json exists
-                      if echo "$ASSETS" | grep -q "latest.json"; then
-                          echo "✅ latest.json found in release"
-                      else
-                          echo "❌ latest.json NOT found in release"
-                      fi
-                      
-                      # Count total assets
-                      ASSET_COUNT=$(echo "$ASSETS" | jq '.assets | length')
-                      echo "Total assets in release: $ASSET_COUNT"
-                      
-                      # List all asset names
-                      echo "Asset names:"
-                      echo "$ASSETS" | jq -r '.assets[].name' | while read asset_name; do
-                          echo "  - $asset_name"
-                      done
-                  fi
-              shell: bash
+                  includeUpdaterJson: true
+                  releaseDraft: true
+                  prerelease: false
