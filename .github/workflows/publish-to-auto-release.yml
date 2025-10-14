@@ -74,7 +74,7 @@ jobs:
                   TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
                   NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
               with:
-                  tagName: v${{ steps.package-version.outputs.version }}
+                  tagName: 'v${{ steps.package-version.outputs.version }}'
                   releaseName: 'App v${{ steps.package-version.outputs.version }}'
                   releaseBody: 'See the assets to download this version and install.'
                   releaseDraft: false
@@ -141,7 +141,7 @@ jobs:
                       pnpm tauri android init
                   fi
 
-            - name: Configure Android signing (use secrets or generate debug keystore)
+            - name: Configure Android signing
               shell: bash
               run: |
                   APP_DIR="src-tauri/gen/android/app"
@@ -157,6 +157,7 @@ jobs:
                       echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}"
                       echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}"
                     } > "$PROPS_FILE"
+                    echo "Android signing configured with production keystore"
                   else
                     echo "No signing secrets provided. Generating a temporary debug keystore..."
                     keytool -genkeypair -v -keystore "$APP_DIR/debug.keystore" -storepass android -keypass android -alias upload -dname "CN=CI, OU=CI, O=CI, L=CI, S=CI, C=US" -keyalg RSA -keysize 2048 -validity 10000
@@ -166,7 +167,12 @@ jobs:
                       echo "keyAlias=upload"
                       echo "keyPassword=android"
                     } > "$PROPS_FILE"
+                    echo "Android signing configured with debug keystore"
                   fi
+                  
+                  # Verify the signing configuration
+                  echo "Signing configuration:"
+                  cat "$PROPS_FILE"
 
             - name: Get package version
               id: package-version
@@ -177,12 +183,67 @@ jobs:
             - name: Build Android APK (Tauri)
               run: pnpm tauri android build
 
+            - name: Verify APK signing
+              shell: bash
+              run: |
+                  echo "Checking APK files:"
+                  find src-tauri/gen/android/app/build/outputs -name "*.apk" -type f
+                  
+                  # Check if APK is signed
+                  APK_FILE=$(find src-tauri/gen/android/app/build/outputs -name "*.apk" -type f | head -1)
+                  if [ -n "$APK_FILE" ]; then
+                    echo "Found APK: $APK_FILE"
+                    # Check if APK is signed (not unsigned)
+                    if [[ "$APK_FILE" == *"unsigned"* ]]; then
+                      echo "WARNING: APK is unsigned!"
+                      exit 1
+                    else
+                      echo "APK appears to be signed successfully"
+                      # Verify signature
+                      jarsigner -verify -verbose -certs "$APK_FILE" || echo "Signature verification failed"
+                    fi
+                  else
+                    echo "No APK file found!"
+                    exit 1
+                  fi
+
+            - name: Rename APK files for release
+              shell: bash
+              run: |
+                  OUTPUT_DIR="src-tauri/gen/android/app/build/outputs"
+                  VERSION="${{ steps.package-version.outputs.version }}"
+                  
+                  # Find and rename APK files
+                  find "$OUTPUT_DIR" -name "*.apk" -type f | while read apk_file; do
+                    dir=$(dirname "$apk_file")
+                    filename=$(basename "$apk_file")
+                    
+                    # Extract architecture from filename or directory
+                    if [[ "$filename" == *"arm64"* ]] || [[ "$dir" == *"arm64"* ]]; then
+                      new_name="Shop.Management.System_${VERSION}_arm64-v8a.apk"
+                    elif [[ "$filename" == *"x86_64"* ]] || [[ "$dir" == *"x86_64"* ]]; then
+                      new_name="Shop.Management.System_${VERSION}_x86_64.apk"
+                    elif [[ "$filename" == *"universal"* ]]; then
+                      new_name="Shop.Management.System_${VERSION}_universal.apk"
+                    else
+                      new_name="Shop.Management.System_${VERSION}.apk"
+                    fi
+                    
+                    # Copy to a clean directory with proper naming
+                    mkdir -p "dist-apk"
+                    cp "$apk_file" "dist-apk/$new_name"
+                    echo "Renamed: $filename -> $new_name"
+                  done
+                  
+                  # List final APK files
+                  echo "Final APK files:"
+                  ls -la dist-apk/
+
             - name: Upload APK as artifact
               uses: actions/upload-artifact@v4
               with:
                   name: android-apk
-                  path: |
-                      src-tauri/gen/android/app/build/outputs/**/*.apk
+                  path: dist-apk/*.apk
 
             # Release upload handled in a separate job to avoid race with desktop release creation
 
@@ -208,11 +269,80 @@ jobs:
                   name: android-apk
                   path: dist-apk
 
+            - name: Generate/merge latest.json with Android APK URLs
+              shell: bash
+              env:
+                  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+              run: |
+                  set -euo pipefail
+                  VERSION="${{ steps.package-version.outputs.version }}"
+                  REPO="$GITHUB_REPOSITORY"
+                  BASE_URL="https://github.com/$REPO/releases/download/v$VERSION"
+
+                  mkdir -p out
+                  cd out
+
+                  echo "Attempting to download existing latest.json from release v$VERSION"
+                  if gh release view "v$VERSION" --repo "$REPO" --json assets | jq -e '.assets[] | select(.name == "latest.json")' >/dev/null 2>&1; then
+                    gh release download "v$VERSION" --repo "$REPO" --pattern latest.json --output latest.json
+                    echo "Downloaded existing latest.json"
+                  else
+                    echo "No existing latest.json found. Creating a new one."
+                    NOW_ISO=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+                    jq -n --arg v "$VERSION" \
+                          --arg notes "See the assets to download this version and install." \
+                          --arg pub "$NOW_ISO" \
+                          '{version:$v, notes:$notes, pub_date:$pub, platforms:{}}' > latest.json
+                  fi
+
+                  echo "Collecting Android APKs from ../dist-apk"
+                  ls -la ../dist-apk || true
+
+                  # Prepare jq args for android entries
+                  JQ_FILTER='.'
+
+                  add_android_platform() {
+                    local key="$1"; shift
+                    local file="$1"; shift
+                    local url="$BASE_URL/$file"
+                    # We only set url. Signature for Android is not required by desktop updaters.
+                    JQ_FILTER="\n$JQ_FILTER | .platforms[\"$key\"] = ({ url: \"$url\" })"
+                  }
+
+                  # Map APK filenames to platform keys
+                  for apk in ../dist-apk/*.apk; do
+                    [ -e "$apk" ] || continue
+                    fname=$(basename "$apk")
+                    case "$fname" in
+                      *arm64*|*aarch64*) add_android_platform "android-aarch64" "$fname" ;;
+                      *x86_64*)          add_android_platform "android-x86_64" "$fname" ;;
+                      *universal*)       add_android_platform "android-universal" "$fname" ;;
+                      *)                  add_android_platform "android" "$fname" ;;
+                    esac
+                  done
+
+                  # Apply merge with jq
+                  jq "$JQ_FILTER" latest.json > latest.merged.json
+                  mv latest.merged.json latest.json
+                  echo "Resulting latest.json:"
+                  cat latest.json
+
+                  cd -
+
+            - name: Upload latest.json to GitHub Release (overwrite)
+              uses: svenstaro/upload-release-action@v2
+              with:
+                  repo_token: ${{ secrets.GH_TOKEN }}
+                  file: out/latest.json
+                  asset_name: latest.json
+                  tag: 'v${{ steps.package-version.outputs.version }}'
+                  overwrite: true
+
             - name: Upload APK to GitHub Release
               uses: softprops/action-gh-release@v2
               with:
-                  tag_name: v${{ steps.package-version.outputs.version }}
+                  tag_name: 'v${{ steps.package-version.outputs.version }}'
                   files: |
-                      dist-apk/**/*.apk
+                      dist-apk/*.apk
               env:
                   GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
