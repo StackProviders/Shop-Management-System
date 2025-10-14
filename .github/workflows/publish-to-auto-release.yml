@@ -141,6 +141,33 @@ jobs:
                       pnpm tauri android init
                   fi
 
+            - name: Configure Android signing (use secrets or generate debug keystore)
+              shell: bash
+              run: |
+                  APP_DIR="src-tauri/gen/android/app"
+                  mkdir -p "$APP_DIR"
+                  PROPS_FILE="$APP_DIR/tauri.properties"
+
+                  if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ] && [ -n "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" ] && [ -n "${{ secrets.ANDROID_KEY_ALIAS }}" ] && [ -n "${{ secrets.ANDROID_KEY_PASSWORD }}" ]; then
+                    echo "Using provided Android signing secrets"
+                    echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$APP_DIR/upload.keystore"
+                    {
+                      echo "storeFile=$APP_DIR/upload.keystore"
+                      echo "storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}"
+                      echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}"
+                      echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}"
+                    } > "$PROPS_FILE"
+                  else
+                    echo "No signing secrets provided. Generating a temporary debug keystore..."
+                    keytool -genkeypair -v -keystore "$APP_DIR/debug.keystore" -storepass android -keypass android -alias upload -dname "CN=CI, OU=CI, O=CI, L=CI, S=CI, C=US" -keyalg RSA -keysize 2048 -validity 10000
+                    {
+                      echo "storeFile=$APP_DIR/debug.keystore"
+                      echo "storePassword=android"
+                      echo "keyAlias=upload"
+                      echo "keyPassword=android"
+                    } > "$PROPS_FILE"
+                  fi
+
             - name: Get package version
               id: package-version
               shell: bash
@@ -154,7 +181,8 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: android-apk
-                  path: src-tauri/gen/android/app/build/outputs/apk/release/app-release.apk
+                  path: |
+                      src-tauri/gen/android/app/build/outputs/**/*.apk
 
             # Release upload handled in a separate job to avoid race with desktop release creation
 
@@ -185,6 +213,6 @@ jobs:
               with:
                   tag_name: v${{ steps.package-version.outputs.version }}
                   files: |
-                      dist-apk/app-release.apk
+                      dist-apk/**/*.apk
               env:
                   GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
