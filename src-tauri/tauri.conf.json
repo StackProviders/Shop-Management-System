@@ -43,7 +43,8 @@
         "title": "Shop Management System",
         "width": 1000,
         "height": 600,
-        "dragDropEnabled": false
+        "dragDropEnabled": false,
+        "maximized": true
       }
     ],
     "withGlobalTauri": true

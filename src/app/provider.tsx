@@ -1,27 +1,19 @@
-import { ReactNode, Suspense, useEffect } from 'react'
+import { ReactNode, Suspense } from 'react'
 import AppErrorPage from '@/features/errors/app-error'
 import { ErrorBoundary } from 'react-error-boundary'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { autoUpdater } from '@/features/updater/services/auto-updater'
+import { AuthProvider } from '@/hooks/use-auth'
+import { ShopProvider } from '@/hooks/use-shop'
 
 export default function AppProvider({ children }: { children: ReactNode }) {
-    useEffect(() => {
-        const saved = localStorage.getItem('autoUpdateEnabled');
-        const isEnabled = saved === 'true';
-        
-        if (isEnabled) {
-            autoUpdater.setEnabled(true);
-        }
-
-        return () => {
-            autoUpdater.destroy();
-        };
-    }, []);
-
     return (
         <Suspense fallback={<>Loading...</>}>
             <ErrorBoundary FallbackComponent={AppErrorPage}>
-                <TooltipProvider>{children}</TooltipProvider>
+                <TooltipProvider>
+                    <AuthProvider>
+                        <ShopProvider>{children}</ShopProvider>
+                    </AuthProvider>
+                </TooltipProvider>
             </ErrorBoundary>
         </Suspense>
     )

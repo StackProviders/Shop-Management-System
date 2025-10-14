@@ -1,36 +1,26 @@
-import { Link } from 'react-router'
-import BuiltWith from '@/features/built-with'
-import GithubStarButton from '@/features/github-star-button'
-import { Button } from '@/components/ui/button'
-import { UpdateNotification } from '@/features/updater/components/update-notification'
+import { useEffect } from 'react'
+import { useIsAuthenticated } from '@/hooks/use-user'
 
 export function HomePage() {
+    const isAuthenticated = useIsAuthenticated()
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            // Redirect authenticated users to shops
+            window.location.href = '/shops'
+        } else {
+            // Redirect unauthenticated users to auth
+            window.location.href = '/auth'
+        }
+    }, [isAuthenticated])
+
     return (
-        <div className="flex h-screen">
-            <div className="m-auto text-center space-y-3 w-full max-w-2xl px-4">
-                <UpdateNotification className="mb-4" />
-                <div className="space-y-3">
-                    <BuiltWith />
-                    <h1 className="text-3xl items-center">
-                        Welcome to Tauri Core template!
-                    </h1>
-                    <p>
-                        This template is a starting point for building Tauri
-                        apps with Vite, React, and Tailwind CSS.
-                    </p>
-                </div>
-                <div className="flex gap-3 justify-center">
-                    <Button asChild>
-                        <Link to="/todos">Go to Todos</Link>
-                    </Button>
-                    <Button asChild variant="outline">
-                        <Link to="/scanner">Barcode Scanner</Link>
-                    </Button>
-                    <Button asChild variant="outline">
-                        <Link to="/settings">Settings</Link>
-                    </Button>
-                    <GithubStarButton />
-                </div>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+            <div className="text-center">
+                <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                    Shop Management System
+                </h1>
+                <p className="text-xl text-gray-600 mb-8">Redirecting...</p>
             </div>
         </div>
     )
