@@ -28,6 +28,7 @@ yarn-error.log*
 # Android signing
 src-tauri/keystore/*.keystore
 src-tauri/keystore.properties
+upload.keystore.base64
 
 # Tauri updater signing keys
 .tauri
