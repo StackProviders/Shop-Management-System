@@ -127,6 +127,10 @@ jobs:
                   echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/26.1.10909125" >> $GITHUB_ENV
                   echo "NDK_HOME=$ANDROID_SDK_ROOT/ndk/26.1.10909125" >> $GITHUB_ENV
 
+            - name: Install Rust Android targets
+              run: |
+                  rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+
             - name: Install frontend dependencies
               run: pnpm install
 
@@ -144,7 +148,7 @@ jobs:
                   echo "version=$(jq -r .version package.json)" >> "$GITHUB_OUTPUT"
 
             - name: Build Android APK (Tauri)
-              run: pnpm tauri android build -- --apk
+              run: pnpm tauri android build
 
             - name: Upload APK as artifact
               uses: actions/upload-artifact@v4
