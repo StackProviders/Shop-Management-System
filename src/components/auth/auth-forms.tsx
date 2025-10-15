@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Field, FieldGroup, FieldLabel, FieldSet } from '@/components/ui/field'
 import {
     Card,
     CardContent,
@@ -9,123 +10,121 @@ import {
     CardHeader,
     CardTitle
 } from '@/components/ui/card'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Loader2, ArrowLeft, Chrome, ShieldCheck } from 'lucide-react'
-import {
-    InputOTP,
-    InputOTPGroup,
-    InputOTPSlot
-} from '@/components/ui/input-otp'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Loader2, Mail, Phone } from 'lucide-react'
 
 interface AuthFormProps {
     onSuccess?: () => void
 }
 
+type LoginType = 'email' | 'phone'
+type Step = 'input' | 'verify'
+
 export function LoginForm({ onSuccess }: AuthFormProps) {
-    const [email, setEmail] = useState('')
+    const [loginType, setLoginType] = useState<LoginType>('email')
+    const [step, setStep] = useState<Step>('input')
+    const [identifier, setIdentifier] = useState('')
     const [otp, setOtp] = useState('')
-    const [showOTP, setShowOTP] = useState(false)
-    const { sendOTP, verifyOTP, loginWithGoogle, authState } = useAuth()
+    const [trustDevice, setTrustDevice] = useState(false)
+    const [success, setSuccess] = useState('')
+    const [loading, setLoading] = useState(false)
+    const { sendOTP, verifyOTP, authState } = useAuth()
 
     const handleSendOTP = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!email) return
-
+        setLoading(true)
         try {
-            await sendOTP(email)
-            setShowOTP(true)
+            await sendOTP(identifier, loginType)
+            setSuccess('OTP sent successfully!')
+            setStep('verify')
         } catch (error) {
             console.error('Failed to send OTP:', error)
+        } finally {
+            setLoading(false)
         }
     }
 
     const handleVerifyOTP = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (otp.length !== 6) return
-
+        setLoading(true)
         try {
-            await verifyOTP(email, otp)
+            await verifyOTP(identifier, otp, trustDevice)
             onSuccess?.()
         } catch (error) {
-            console.error('Failed to verify OTP:', error)
+            console.error('OTP verification failed:', error)
+        } finally {
+            setLoading(false)
         }
     }
 
-    const handleGoogleLogin = async () => {
-        try {
-            await loginWithGoogle()
-            onSuccess?.()
-        } catch (error) {
-            console.error('Google login failed:', error)
-        }
-    }
-
-    const handleBackToEmail = () => {
-        setShowOTP(false)
-        setOtp('')
-    }
-
-    if (showOTP) {
+    if (step === 'verify') {
         return (
             <Card className="w-full max-w-md mx-auto">
                 <CardHeader className="text-center">
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                        <ShieldCheck className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <CardTitle>Enter OTP</CardTitle>
+                    <CardTitle>Verify OTP</CardTitle>
                     <CardDescription>
-                        We&apos;ve sent a 6-digit code to{' '}
-                        <strong>{email}</strong>
+                        Enter the 6-digit code sent to {identifier}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form onSubmit={handleVerifyOTP} className="space-y-4">
-                        <div className="flex justify-center">
-                            <InputOTP
-                                maxLength={6}
-                                value={otp}
-                                onChange={setOtp}
+                    <form onSubmit={handleVerifyOTP}>
+                        <FieldSet>
+                            <FieldGroup>
+                                <Field>
+                                    <FieldLabel htmlFor="otp">
+                                        OTP Code
+                                    </FieldLabel>
+                                    <Input
+                                        id="otp"
+                                        type="text"
+                                        maxLength={6}
+                                        value={otp}
+                                        onChange={(e) => setOtp(e.target.value)}
+                                        required
+                                    />
+                                </Field>
+                            </FieldGroup>
+                        </FieldSet>
+                        <div className="flex items-center space-x-2 mt-4">
+                            <Checkbox
+                                id="trust"
+                                checked={trustDevice}
+                                onCheckedChange={(checked) =>
+                                    setTrustDevice(checked as boolean)
+                                }
+                            />
+                            <label
+                                htmlFor="trust"
+                                className="text-sm cursor-pointer"
                             >
-                                <InputOTPGroup>
-                                    <InputOTPSlot index={0} />
-                                    <InputOTPSlot index={1} />
-                                    <InputOTPSlot index={2} />
-                                    <InputOTPSlot index={3} />
-                                    <InputOTPSlot index={4} />
-                                    <InputOTPSlot index={5} />
-                                </InputOTPGroup>
-                            </InputOTP>
+                                Trust this device for 30 days
+                            </label>
                         </div>
-
                         {authState.error && (
-                            <Alert variant="destructive">
-                                <AlertTitle>Error</AlertTitle>
+                            <Alert variant="destructive" className="mt-4">
                                 <AlertDescription>
                                     {authState.error}
                                 </AlertDescription>
                             </Alert>
                         )}
-
                         <Button
                             type="submit"
-                            className="w-full"
-                            disabled={authState.loading || otp.length !== 6}
+                            className="w-full mt-4"
+                            disabled={loading}
                         >
-                            {authState.loading && (
+                            {loading && (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
-                            Verify OTP
+                            Verify & Login
                         </Button>
-
                         <Button
                             type="button"
                             variant="ghost"
-                            className="w-full"
-                            onClick={handleBackToEmail}
-                            disabled={authState.loading}
+                            className="w-full mt-2"
+                            onClick={() => setStep('input')}
                         >
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Back to email
+                            Back
                         </Button>
                     </form>
                 </CardContent>
@@ -136,75 +135,168 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
     return (
         <Card className="w-full max-w-md mx-auto">
             <CardHeader className="text-center">
-                <CardTitle>Welcome back</CardTitle>
+                <CardTitle>Welcome</CardTitle>
                 <CardDescription>
-                    Sign in to your account using email or Google
+                    Login with{' '}
+                    {loginType === 'email' ? 'Email' : 'Phone Number'}
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="space-y-4">
-                    {/* Google Login Button */}
+                <form onSubmit={handleSendOTP}>
+                    <FieldSet>
+                        <FieldGroup>
+                            <Field>
+                                <FieldLabel htmlFor="identifier">
+                                    {loginType === 'email'
+                                        ? 'Email'
+                                        : 'Phone Number'}
+                                </FieldLabel>
+                                <Input
+                                    id="identifier"
+                                    type={
+                                        loginType === 'email' ? 'email' : 'tel'
+                                    }
+                                    placeholder={
+                                        loginType === 'email'
+                                            ? 'your@email.com'
+                                            : '+1234567890'
+                                    }
+                                    value={identifier}
+                                    onChange={(e) =>
+                                        setIdentifier(e.target.value)
+                                    }
+                                    required
+                                />
+                            </Field>
+                        </FieldGroup>
+                    </FieldSet>
+                    {success && (
+                        <Alert className="mt-4">
+                            <AlertDescription>{success}</AlertDescription>
+                        </Alert>
+                    )}
+                    {authState.error && (
+                        <Alert variant="destructive" className="mt-4">
+                            <AlertDescription>
+                                {authState.error}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    <Button
+                        type="submit"
+                        className="w-full mt-4"
+                        disabled={loading}
+                    >
+                        {loading && (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        )}
+                        {loginType === 'email' ? (
+                            <Mail className="mr-2 h-4 w-4" />
+                        ) : (
+                            <Phone className="mr-2 h-4 w-4" />
+                        )}
+                        Login
+                    </Button>
                     <Button
                         type="button"
-                        variant="outline"
-                        className="w-full"
-                        onClick={handleGoogleLogin}
-                        disabled={authState.loading}
+                        variant="link"
+                        className="w-full mt-2"
+                        onClick={() =>
+                            setLoginType(
+                                loginType === 'email' ? 'phone' : 'email'
+                            )
+                        }
                     >
-                        {authState.loading ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <Chrome className="mr-2 h-4 w-4" />
-                        )}
-                        Continue with Google
+                        Switch to {loginType === 'email' ? 'Phone' : 'Email'}
                     </Button>
+                </form>
+            </CardContent>
+        </Card>
+    )
+}
 
-                    {/* Divider */}
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-background px-2 text-muted-foreground">
-                                Or continue with email
-                            </span>
-                        </div>
-                    </div>
+export function ProfileForm() {
+    const { authState, updateProfile, uploadPhoto } = useAuth()
+    const [name, setName] = useState(authState.user?.name || '')
+    const [success, setSuccess] = useState('')
+    const [loading, setLoading] = useState(false)
 
-                    {/* Email Login Form */}
-                    <form onSubmit={handleSendOTP} className="space-y-4">
-                        <div>
-                            <Input
-                                type="email"
-                                placeholder="Enter your email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                disabled={authState.loading}
-                                required
-                            />
-                        </div>
+    const handleUpdateProfile = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setLoading(true)
+        try {
+            await updateProfile(name)
+            setSuccess('Profile updated!')
+        } catch (error) {
+            console.error('Failed to update profile:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
 
-                        {authState.error && (
-                            <Alert variant="destructive">
-                                <AlertTitle>Error</AlertTitle>
-                                <AlertDescription>
-                                    {authState.error}
-                                </AlertDescription>
-                            </Alert>
+    const handlePhotoUpload = async (
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        setLoading(true)
+        try {
+            await uploadPhoto(file)
+            setSuccess('Photo uploaded!')
+        } catch (error) {
+            console.error('Failed to upload photo:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+                <CardTitle>Profile</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleUpdateProfile}>
+                    <FieldSet>
+                        <FieldGroup>
+                            <Field>
+                                <FieldLabel htmlFor="name">Name</FieldLabel>
+                                <Input
+                                    id="name"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                />
+                            </Field>
+                            <Field>
+                                <FieldLabel htmlFor="photo">Photo</FieldLabel>
+                                <Input
+                                    id="photo"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handlePhotoUpload}
+                                />
+                            </Field>
+                        </FieldGroup>
+                    </FieldSet>
+                    {success && (
+                        <Alert className="mt-4">
+                            <AlertDescription>{success}</AlertDescription>
+                        </Alert>
+                    )}
+                    {authState.error && (
+                        <Alert variant="destructive" className="mt-4">
+                            <AlertDescription>
+                                {authState.error}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    <Button type="submit" className="mt-4" disabled={loading}>
+                        {loading && (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         )}
-
-                        <Button
-                            type="submit"
-                            className="w-full"
-                            disabled={authState.loading || !email}
-                        >
-                            {authState.loading && (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            )}
-                            Send OTP
-                        </Button>
-                    </form>
-                </div>
+                        Update Profile
+                    </Button>
+                </form>
             </CardContent>
         </Card>
     )

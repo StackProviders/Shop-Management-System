@@ -18,13 +18,13 @@ export function UserMenu() {
 
     if (!user) return null
 
-    const initials = user.displayName
-        ? user.displayName
+    const initials = user.name
+        ? user.name
               .split(' ')
               .map((n) => n[0])
               .join('')
               .toUpperCase()
-        : user.email?.charAt(0).toUpperCase() || 'U'
+        : user.email?.[0].toUpperCase() || 'U'
 
     return (
         <DropdownMenu>
@@ -35,8 +35,8 @@ export function UserMenu() {
                 >
                     <Avatar className="h-10 w-10">
                         <AvatarImage
-                            src={user.photoURL}
-                            alt={user.displayName || user.email}
+                            src={user.photo || ''}
+                            alt={user.name || user.email || ''}
                         />
                         <AvatarFallback>{initials}</AvatarFallback>
                     </Avatar>
@@ -46,7 +46,7 @@ export function UserMenu() {
                 <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">
-                            {user.displayName || 'User'}
+                            {user.name || 'User'}
                         </p>
                         <p className="text-xs leading-none text-muted-foreground">
                             {user.email}

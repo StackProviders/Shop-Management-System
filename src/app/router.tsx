@@ -1,5 +1,5 @@
 import { createBrowserRouter, RouterProvider } from 'react-router'
-import { ProtectedRoute } from '@/components/auth/protected-route'
+import { ProtectedRoute, PublicRoute } from '@/components/auth/auth-guard'
 import { ShopSelectionPage } from '@/components/shop/shop-selection'
 import { ShopDashboard } from '@/components/shop/shop-dashboard'
 import { Suspense } from 'react'
@@ -15,17 +15,21 @@ const createAppRouter = () =>
         {
             path: '/auth',
             element: (
-                <Suspense fallback={<div>Loading...</div>}>
-                    <AuthPage />
-                </Suspense>
+                <PublicRoute>
+                    <Suspense fallback={<div>Loading...</div>}>
+                        <AuthPage />
+                    </Suspense>
+                </PublicRoute>
             )
         },
         {
             path: '/auth/callback',
             element: (
-                <Suspense fallback={<div>Loading...</div>}>
-                    <AuthCallback />
-                </Suspense>
+                <PublicRoute>
+                    <Suspense fallback={<div>Loading...</div>}>
+                        <AuthCallback />
+                    </Suspense>
+                </PublicRoute>
             )
         },
         {

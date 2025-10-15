@@ -68,8 +68,8 @@ export function ShopProvider({ children }: { children: ReactNode }) {
             members: [
                 {
                     userId: user.uid,
-                    email: user.email,
-                    displayName: user.displayName,
+                    email: user.email ?? '',
+                    name: user.name ?? '',
                     role: ShopRole.OWNER,
                     joinedAt: new Date(),
                     permissions: []

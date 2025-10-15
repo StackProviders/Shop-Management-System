@@ -7,114 +7,143 @@ import {
 } from 'react'
 import {
     logout,
+    onAuthStateChange,
     sendOTP,
     verifyOTP,
-    loginWithGoogle,
-    onAuthStateChange
-} from '@/services/auth'
-import { User, AuthState } from '@/types/auth'
+    updateProfile,
+    uploadPhoto,
+    initAuth,
+    initSession
+} from '@/services/auth/index'
+import { AuthState, User } from '@/services/auth/types'
 
 const AuthContext = createContext<{
     authState: AuthState
-    logout: () => Promise<void>
-    sendOTP: (email: string) => Promise<void>
-    verifyOTP: (email: string, otp: string) => Promise<User>
-    loginWithGoogle: () => Promise<void>
+    logout: (revokeDevice?: boolean) => Promise<void>
+    sendOTP: (identifier: string, type: 'email' | 'phone') => Promise<void>
+    verifyOTP: (
+        identifier: string,
+        otp: string,
+        trustDevice?: boolean
+    ) => Promise<User>
+    updateProfile: (name?: string, photo?: string) => Promise<void>
+    uploadPhoto: (file: File) => Promise<string>
 } | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [authState, setAuthState] = useState<AuthState>({
         user: null,
         loading: true,
-        error: null
+        error: null,
+        isAuthenticated: false
     })
 
     useEffect(() => {
+        let mounted = true
+        let initialized = false
+
         const unsubscribe = onAuthStateChange((user) => {
-            setAuthState((prev) => ({
-                ...prev,
-                user,
-                loading: false,
-                error: null
-            }))
+            if (mounted && initialized) {
+                setAuthState({
+                    user,
+                    loading: false,
+                    error: null,
+                    isAuthenticated: !!user
+                })
+            }
         })
 
-        return unsubscribe
+        const init = async () => {
+            const cachedUser = await initSession()
+            if (mounted) {
+                setAuthState({
+                    user: cachedUser,
+                    loading: !cachedUser,
+                    error: null,
+                    isAuthenticated: !!cachedUser
+                })
+            }
+
+            await initAuth()
+            initialized = true
+            if (mounted) {
+                setAuthState((prev) => ({ ...prev, loading: false }))
+            }
+        }
+
+        init()
+
+        return () => {
+            mounted = false
+            unsubscribe()
+        }
     }, [])
 
-    const handleVerifyOTP = async (email: string, otp: string) => {
-        setAuthState((prev) => ({ ...prev, loading: true, error: null }))
+    const handleSendOTP = async (
+        identifier: string,
+        type: 'email' | 'phone'
+    ) => {
         try {
-            const user = await verifyOTP(email, otp)
-            setAuthState((prev) => ({
-                ...prev,
-                user,
-                loading: false,
-                error: null
-            }))
-            return user
+            await sendOTP(identifier, type)
         } catch (error) {
             const errorMessage =
-                error instanceof Error
-                    ? error.message
-                    : 'Invalid OTP. Please try again.'
-            setAuthState((prev) => ({
-                ...prev,
-                loading: false,
-                error: errorMessage
-            }))
+                error instanceof Error ? error.message : 'Failed to send OTP'
+            setAuthState((prev) => ({ ...prev, error: errorMessage }))
             throw error
         }
     }
 
-    const handleLoginWithGoogle = async () => {
-        setAuthState((prev) => ({ ...prev, loading: true, error: null }))
+    const handleLogout = async (revokeDevice: boolean = false) => {
         try {
-            await loginWithGoogle()
-            setAuthState((prev) => ({ ...prev, loading: false }))
+            await logout(revokeDevice)
         } catch (error) {
             setAuthState((prev) => ({
                 ...prev,
-                loading: false,
-                error:
-                    error instanceof Error
-                        ? error.message
-                        : 'Google login failed'
-            }))
-            throw error
-        }
-    }
-
-    const handleLogout = async () => {
-        setAuthState((prev) => ({ ...prev, loading: true, error: null }))
-        try {
-            await logout()
-            setAuthState((prev) => ({ ...prev, loading: false }))
-        } catch (error) {
-            setAuthState((prev) => ({
-                ...prev,
-                loading: false,
                 error: error instanceof Error ? error.message : 'Logout failed'
             }))
             throw error
         }
     }
 
-    const handleSendOTP = async (email: string) => {
-        setAuthState((prev) => ({ ...prev, loading: true, error: null }))
+    const handleVerifyOTP = async (
+        identifier: string,
+        otp: string,
+        trustDevice: boolean = false
+    ) => {
         try {
-            await sendOTP(email)
-            setAuthState((prev) => ({ ...prev, loading: false, error: null }))
+            const user = await verifyOTP(identifier, otp, trustDevice)
+            return user
+        } catch (error) {
+            const errorMessage =
+                error instanceof Error ? error.message : 'Invalid OTP'
+            setAuthState((prev) => ({ ...prev, error: errorMessage }))
+            throw error
+        }
+    }
+
+    const handleUpdateProfile = async (name?: string, photo?: string) => {
+        try {
+            await updateProfile(name, photo)
         } catch (error) {
             const errorMessage =
                 error instanceof Error
                     ? error.message
-                    : 'Failed to send OTP. Please try again.'
-            setAuthState((prev) => ({
-                ...prev,
-                loading: false,
-                error: errorMessage
-            }))
+                    : 'Failed to update profile'
+            setAuthState((prev) => ({ ...prev, error: errorMessage }))
+            throw error
+        }
+    }
+
+    const handleUploadPhoto = async (file: File) => {
+        try {
+            const photoURL = await uploadPhoto(file)
+            return photoURL
+        } catch (error) {
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to upload photo'
+            setAuthState((prev) => ({ ...prev, error: errorMessage }))
             throw error
         }
     }
@@ -124,7 +153,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout: handleLogout,
         sendOTP: handleSendOTP,
         verifyOTP: handleVerifyOTP,
-        loginWithGoogle: handleLoginWithGoogle
+        updateProfile: handleUpdateProfile,
+        uploadPhoto: handleUploadPhoto
     }
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

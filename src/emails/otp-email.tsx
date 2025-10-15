@@ -92,9 +92,7 @@ export const OTPEmail = ({ otp = '123456' }: OTPEmailProps) => (
                     <Text style={footerText}>
                         © {new Date().getFullYear()} Shop Management System
                     </Text>
-                    <Text style={footerSubtext}>
-                        Secure authentication powered by Firebase
-                    </Text>
+                    <Text style={footerSubtext}>Secure OTP authentication</Text>
                 </Section>
             </Container>
         </Body>

@@ -8,6 +8,7 @@
   "permissions": [
     "core:default",
     "process:default",
-    "shell:default"
+    "shell:default",
+    "store:default"
   ]
 }
