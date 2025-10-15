@@ -114,7 +114,7 @@ export function ShopDashboard() {
 
                         <div className="flex items-center space-x-4">
                             <div className="text-sm text-gray-600">
-                                Welcome, {user.displayName || user.email}
+                                Welcome, {user.name || user.email}
                             </div>
                             <Button
                                 variant="outline"

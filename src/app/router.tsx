@@ -4,7 +4,6 @@ import { ShopSelectionPage } from '@/components/shop/shop-selection'
 import { ShopDashboard } from '@/components/shop/shop-dashboard'
 import { Suspense } from 'react'
 import AuthPage from '@/components/auth/auth-page'
-import AuthCallback from './routes/auth-callback'
 
 const createAppRouter = () =>
     createBrowserRouter([
@@ -18,16 +17,6 @@ const createAppRouter = () =>
                 <PublicRoute>
                     <Suspense fallback={<div>Loading...</div>}>
                         <AuthPage />
-                    </Suspense>
-                </PublicRoute>
-            )
-        },
-        {
-            path: '/auth/callback',
-            element: (
-                <PublicRoute>
-                    <Suspense fallback={<div>Loading...</div>}>
-                        <AuthCallback />
                     </Suspense>
                 </PublicRoute>
             )
