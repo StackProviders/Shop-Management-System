@@ -49,15 +49,15 @@ jobs:
 
             - name: Extract android signing key from env
               run: |
-                  echo "${{ secrets.ANDROID_RELEASE_KEYSTORE }}" > src-tauri/gen/android/release.jks.base64
+                  echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" > src-tauri/gen/android/release.jks.base64
                   base64 -d src-tauri/gen/android/release.jks.base64 > src-tauri/gen/android/release.decrypted.jks
 
             - name: Sign APK
               run: |
                   ${{ env.ANDROID_HOME }}/build-tools/34.0.0/apksigner sign --ks src-tauri/gen/android/release.decrypted.jks \
-                    --ks-key-alias ${{ secrets.ANDROID_RELEASE_KEY }} \
-                    --ks-pass pass:${{ secrets.ANDROID_RELEASE_PASSWORD }} \
-                    --key-pass pass:${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }} \
+                    --ks-key-alias ${{ secrets.ANDROID_KEY_ALIAS }} \
+                    --ks-pass pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
+                    --key-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} \
                     --out src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-signed.apk \
                     src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
 
