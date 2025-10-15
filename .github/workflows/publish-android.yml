@@ -17,6 +17,14 @@ jobs:
               with:
                   version: 8
 
+            - name: setup node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: lts/*
+
+            - name: Install dependencies
+              run: pnpm install
+
             - name: Setup Java
               uses: actions/setup-java@v4
               with:
@@ -29,21 +37,18 @@ jobs:
             - name: Install NDK
               run: sdkmanager "ndk;27.0.11902837"
 
-            - name: setup node
-              uses: actions/setup-node@v4
-              with:
-                  node-version: lts/*
-
             - name: install Rust stable
               uses: dtolnay/rust-toolchain@stable
               with:
                   targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
 
-            - name: Install dependencies
-              run: pnpm install
+            - name: Remove existing Android project if present
+              run: rm -rf src-tauri/gen/android
 
             - name: Initialize Android project
               run: pnpm tauri android init
+              env:
+                  NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.11902837
 
             - name: Build app bundle
               run: pnpm tauri android build -v
