@@ -54,7 +54,7 @@ jobs:
                   NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.11902837
 
             - name: Build app bundle
-              run: pnpm tauri android build -v -- --features tauri/native-tls-vendored
+              run: pnpm tauri android build -v
               env:
                   NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.11902837
 
