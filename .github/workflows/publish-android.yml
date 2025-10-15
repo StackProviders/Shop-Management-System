@@ -42,6 +42,9 @@ jobs:
               with:
                   targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
 
+            - name: Install OpenSSL
+              run: sudo apt-get update && sudo apt-get install -y libssl-dev pkg-config
+
             - name: Remove existing Android project if present
               run: rm -rf src-tauri/gen/android
 
@@ -51,7 +54,7 @@ jobs:
                   NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.11902837
 
             - name: Build app bundle
-              run: pnpm tauri android build -v
+              run: pnpm tauri android build -v -- --features tauri/native-tls-vendored
               env:
                   NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.11902837
 
