@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +10,6 @@ import {
     FieldDescription
 } from '@/components/ui/field'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2, Mail, Phone, ArrowLeft } from 'lucide-react'
 import Logo from '../logo'
 import { PhoneInput } from '../ui/phone-input'
@@ -29,11 +28,26 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
     const [loginType, setLoginType] = useState<LoginType>('email')
     const [step, setStep] = useState<Step>('input')
     const [identifier, setIdentifier] = useState('')
-    const [trustDevice, setTrustDevice] = useState(false)
     const [loading, setLoading] = useState(false)
     const [fieldError, setFieldError] = useState('')
     const [otpError, setOtpError] = useState('')
-    const { sendOTP, verifyOTP } = useAuth()
+    const { sendOTP, verifyOTP, authState, checkDeviceAndLogin } = useAuth()
+
+    // Auto-redirect if already authenticated via trusted device
+    useEffect(() => {
+        if (authState.isAuthenticated && !authState.loading) {
+            onSuccess?.()
+        }
+    }, [authState.isAuthenticated, authState.loading, onSuccess])
+
+    // Show loading state during initial auth check
+    if (authState.loading) {
+        return (
+            <div className="flex min-h-screen items-center justify-center p-4">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        )
+    }
 
     const handleSendOTP = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -50,6 +64,14 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
 
         setLoading(true)
         try {
+            // Check if device is trusted first
+            const user = await checkDeviceAndLogin(identifier)
+            if (user) {
+                onSuccess?.()
+                return
+            }
+
+            // Device not trusted, send OTP
             await sendOTP(identifier, loginType)
             setStep('verify')
         } catch (error) {
@@ -67,7 +89,7 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
         setOtpError('')
         setLoading(true)
         try {
-            await verifyOTP(identifier, otp, trustDevice)
+            await verifyOTP(identifier, otp, true)
             onSuccess?.()
         } catch (error) {
             setOtpError(
@@ -117,24 +139,6 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
                                     error={otpError}
                                     disabled={loading}
                                 />
-
-                                <div className="flex items-start space-x-2">
-                                    <Checkbox
-                                        id="trust"
-                                        checked={trustDevice}
-                                        onCheckedChange={(checked) =>
-                                            setTrustDevice(checked as boolean)
-                                        }
-                                        className="mt-0.5"
-                                        disabled={loading}
-                                    />
-                                    <label
-                                        htmlFor="trust"
-                                        className="text-sm cursor-pointer leading-tight"
-                                    >
-                                        Remember this device for 30 days
-                                    </label>
-                                </div>
                             </div>
 
                             <Button

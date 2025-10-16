@@ -74,7 +74,11 @@ export const verifyTrustedDevice = async (): Promise<string | null> => {
     }
 
     const deviceData = deviceDoc.data()
-    if (deviceData.revoked || new Date() > deviceData.expiresAt.toDate()) {
+    const now = new Date()
+    const expiresAt = deviceData.expiresAt.toDate()
+
+    if (deviceData.revoked || now > expiresAt) {
+        await revokeExpiredDevice(userId, deviceId)
         await clearDeviceSession()
         return null
     }
@@ -86,6 +90,24 @@ export const verifyTrustedDevice = async (): Promise<string | null> => {
     }
 
     return userId
+}
+
+const revokeExpiredDevice = async (
+    userId: string,
+    deviceId: string
+): Promise<void> => {
+    try {
+        const deviceDoc = doc(
+            db,
+            COLLECTIONS.USERS,
+            userId,
+            COLLECTIONS.TRUSTED_DEVICES,
+            deviceId
+        )
+        await updateDoc(deviceDoc, { revoked: true })
+    } catch (error) {
+        console.error('Failed to revoke expired device:', error)
+    }
 }
 
 export const revokeDevice = async (userId: string): Promise<void> => {

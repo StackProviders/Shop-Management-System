@@ -22,6 +22,7 @@ import {
     onAuthStateChange,
     initSession
 } from './session.service'
+import { cleanupExpiredDevices } from './cleanup.service'
 
 export const sendOTP = async (
     identifier: string,
@@ -44,6 +45,7 @@ export const verifyOTP = async (
     if (!user) throw new Error('User not found')
 
     await updateUserLastLogin(uid)
+    cleanupExpiredDevices(uid).catch(console.error)
 
     if (shouldTrustDevice) {
         await trustDevice(uid)
@@ -61,6 +63,26 @@ export const loginWithTrustedDevice = async (): Promise<User | null> => {
     if (!user) return null
 
     await updateUserLastLogin(userId)
+    cleanupExpiredDevices(userId).catch(console.error)
+    setCurrentUser(user)
+
+    return user
+}
+
+export const checkDeviceAndLogin = async (
+    identifier: string
+): Promise<User | null> => {
+    const type = identifier.includes('@') ? 'email' : 'phone'
+    const uid = await ensureUserExists(identifier, type)
+
+    const userId = await verifyTrustedDevice()
+    if (!userId || userId !== uid) return null
+
+    const user = await getUserById(userId)
+    if (!user) return null
+
+    await updateUserLastLogin(userId)
+    cleanupExpiredDevices(userId).catch(console.error)
     setCurrentUser(user)
 
     return user
@@ -90,13 +112,14 @@ export const uploadPhoto = async (file: File): Promise<string> => {
 export const logout = async (
     shouldRevokeDevice: boolean = false
 ): Promise<void> => {
-    const user = getCurrentUser()
-
-    if (shouldRevokeDevice && user) {
-        await revokeDevice(user.uid)
+    if (shouldRevokeDevice) {
+        const user = getCurrentUser()
+        if (user) {
+            await revokeDevice(user.uid)
+            await clearDeviceSession()
+        }
     }
 
-    await clearDeviceSession()
     setCurrentUser(null)
 }
 
@@ -106,9 +129,16 @@ export const initAuth = async (): Promise<void> => {
         setCurrentUser(cachedUser)
     }
 
-    const user = await loginWithTrustedDevice()
-    if (user && (!cachedUser || user.uid !== cachedUser.uid)) {
-        setCurrentUser(user)
+    try {
+        const user = await loginWithTrustedDevice()
+        if (user && (!cachedUser || user.uid !== cachedUser.uid)) {
+            setCurrentUser(user)
+        }
+    } catch (error) {
+        console.error('Auto-login failed:', error)
+        if (cachedUser) {
+            setCurrentUser(null)
+        }
     }
 }
 

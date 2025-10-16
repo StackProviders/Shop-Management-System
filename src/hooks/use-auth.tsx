@@ -13,7 +13,8 @@ import {
     updateProfile,
     uploadPhoto,
     initAuth,
-    initSession
+    initSession,
+    checkDeviceAndLogin
 } from '@/services/auth/index'
 import { AuthState, User } from '@/services/auth/types'
 
@@ -26,6 +27,7 @@ const AuthContext = createContext<{
         otp: string,
         trustDevice?: boolean
     ) => Promise<User>
+    checkDeviceAndLogin: (identifier: string) => Promise<User | null>
     updateProfile: (name?: string, photo?: string) => Promise<void>
     uploadPhoto: (file: File) => Promise<string>
 } | null>(null)
@@ -148,11 +150,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }
 
+    const handleCheckDeviceAndLogin = async (
+        identifier: string
+    ): Promise<User | null> => {
+        try {
+            return await checkDeviceAndLogin(identifier)
+        } catch (error) {
+            console.error('Device check failed:', error)
+            return null
+        }
+    }
+
     const value = {
         authState,
         logout: handleLogout,
         sendOTP: handleSendOTP,
         verifyOTP: handleVerifyOTP,
+        checkDeviceAndLogin: handleCheckDeviceAndLogin,
         updateProfile: handleUpdateProfile,
         uploadPhoto: handleUploadPhoto
     }

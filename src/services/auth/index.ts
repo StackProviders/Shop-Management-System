@@ -2,6 +2,7 @@ export {
     sendOTP,
     verifyOTP,
     loginWithTrustedDevice,
+    checkDeviceAndLogin,
     updateProfile,
     uploadPhoto,
     logout,
