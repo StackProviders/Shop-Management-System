@@ -28,13 +28,23 @@ jobs:
               run: |
                   curl -L -o latest.json https://github.com/${{ github.repository }}/releases/download/v${{ steps.package-version.outputs.version}}/latest.json
 
-            - name: Add Android URL to latest.json
+            - name: Download Windows exe signature
+              run: |
+                  curl -L -o Shop.Management.System_${{ steps.package-version.outputs.version}}_x64-setup.exe.sig https://github.com/${{ github.repository }}/releases/download/v${{ steps.package-version.outputs.version}}/Shop.Management.System_${{ steps.package-version.outputs.version}}_x64-setup.exe.sig
+
+            - name: Add Android and Windows exe to latest.json
               run: |
                   node -e "
                   const fs = require('fs');
                   const data = JSON.parse(fs.readFileSync('latest.json', 'utf8'));
+                  const exeSig = fs.readFileSync('Shop.Management.System_${{ steps.package-version.outputs.version}}_x64-setup.exe.sig', 'utf8');
                   data.platforms['android-aarch64'] = {
+                    signature: '',
                     url: 'https://github.com/${{ github.repository }}/releases/download/v${{ steps.package-version.outputs.version}}/Shop.Management.System-${{ steps.package-version.outputs.version}}.apk'
+                  };
+                  data.platforms['windows-x86_64-setup'] = {
+                    signature: exeSig,
+                    url: 'https://github.com/${{ github.repository }}/releases/download/v${{ steps.package-version.outputs.version}}/Shop.Management.System_${{ steps.package-version.outputs.version}}_x64-setup.exe'
                   };
                   fs.writeFileSync('latest.json', JSON.stringify(data, null, 2));
                   "

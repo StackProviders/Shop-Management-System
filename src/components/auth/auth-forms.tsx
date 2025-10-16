@@ -25,7 +25,7 @@ type LoginType = 'email' | 'phone'
 type Step = 'input' | 'verify'
 
 export function LoginForm({ onSuccess }: AuthFormProps) {
-    const [loginType, setLoginType] = useState<LoginType>('email')
+    const [loginType, setLoginType] = useState<LoginType>('phone')
     const [step, setStep] = useState<Step>('input')
     const [identifier, setIdentifier] = useState('')
     const [loading, setLoading] = useState(false)
@@ -105,7 +105,7 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
 
     if (step === 'verify') {
         return (
-            <div className="flex min-h-screen items-center justify-center p-4">
+            <div className="flex items-center justify-center p-4">
                 <Card className="w-full max-w-sm rounded-3xl md:rounded-4xl px-4 py-8 md:px-6 md:py-10">
                     <CardContent>
                         <div className="flex flex-col items-center space-y-5">
@@ -153,8 +153,8 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center p-4">
-            <Card className="w-full max-w-sm rounded-3xl md:rounded-4xl px-4 py-8 md:px-6 md:py-10">
+        <div className="flex items-center justify-center p-4">
+            <Card className="w-full max-w-sm rounded-xl">
                 <CardContent>
                     <form
                         onSubmit={handleSendOTP}
@@ -224,7 +224,7 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
                                 ) : (
                                     <Phone className="h-4 w-4" />
                                 )}
-                                Continue
+                                Login
                             </Button>
                             <Button
                                 type="button"
