@@ -1,5 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuth } from '@/hooks/use-auth'
+import { useAuthStore } from '@/stores/auth-store'
+import {
+    saveLastLoginType,
+    getLastLoginType
+} from '@/services/auth/storage.service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -25,7 +30,8 @@ type LoginType = 'email' | 'phone'
 type Step = 'input' | 'verify'
 
 export function LoginForm({ onSuccess }: AuthFormProps) {
-    const [loginType, setLoginType] = useState<LoginType>('phone')
+    const { lastLoginType, setLastLoginType } = useAuthStore()
+    const [loginType, setLoginType] = useState<LoginType>(lastLoginType)
     const [step, setStep] = useState<Step>('input')
     const [identifier, setIdentifier] = useState('')
     const [loading, setLoading] = useState(false)
@@ -34,65 +40,85 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
     const { sendOTP, verifyOTP, authState, checkDeviceAndLogin } = useAuth()
 
     useEffect(() => {
+        getLastLoginType().then((type) => {
+            setLoginType(type)
+            setLastLoginType(type)
+        })
+    }, [])
+
+    useEffect(() => {
         if (authState.isAuthenticated && !authState.loading) {
             onSuccess?.()
         }
     }, [authState.isAuthenticated, authState.loading, onSuccess])
 
-    const handleSendOTP = async (e: React.FormEvent) => {
-        e.preventDefault()
+    const toggleLoginType = useCallback(() => {
+        const newType = loginType === 'email' ? 'phone' : 'email'
+        setLoginType(newType)
+        setLastLoginType(newType)
+        saveLastLoginType(newType)
+        setIdentifier('')
         setFieldError('')
+    }, [loginType, setLastLoginType])
 
-        if (!identifier.trim()) {
-            setFieldError(
-                loginType === 'email'
-                    ? 'Email address is required'
-                    : 'Phone number is required'
-            )
-            return
-        }
+    const handleSendOTP = useCallback(
+        async (e: React.FormEvent) => {
+            e.preventDefault()
+            setFieldError('')
 
-        setLoading(true)
-        try {
-            // Check if device is trusted first
-            const user = await checkDeviceAndLogin(identifier)
-            if (user) {
-                onSuccess?.()
+            if (!identifier.trim()) {
+                setFieldError(
+                    loginType === 'email'
+                        ? 'Email address is required'
+                        : 'Phone number is required'
+                )
                 return
             }
 
-            // Device not trusted, send OTP
-            await sendOTP(identifier, loginType)
-            setStep('verify')
-        } catch (error) {
-            setFieldError(
-                error instanceof Error
-                    ? error.message
-                    : 'Failed to send verification code'
-            )
-        } finally {
-            setLoading(false)
-        }
-    }
+            setLoading(true)
+            try {
+                const user = await checkDeviceAndLogin(identifier)
+                if (user) {
+                    onSuccess?.()
+                    return
+                }
 
-    const handleVerifyOTP = async (otp: string) => {
-        setOtpError('')
-        setLoading(true)
-        try {
-            await verifyOTP(identifier, otp, true)
-            onSuccess?.()
-        } catch (error) {
-            setOtpError(
-                error instanceof Error
-                    ? error.message
-                    : 'Invalid verification code'
-            )
-        } finally {
-            setLoading(false)
-        }
-    }
+                await sendOTP(identifier, loginType)
+                setStep('verify')
+            } catch (error) {
+                setFieldError(
+                    error instanceof Error
+                        ? error.message
+                        : 'Failed to send verification code'
+                )
+            } finally {
+                setLoading(false)
+            }
+        },
+        [identifier, loginType, checkDeviceAndLogin, sendOTP, onSuccess]
+    )
 
-    const handleResendOTP = async () => {
+    const handleVerifyOTP = useCallback(
+        async (otp: string) => {
+            setOtpError('')
+            setLoading(true)
+            try {
+                await verifyOTP(identifier, otp, true)
+                onSuccess?.()
+            } catch (error) {
+                setOtpError(
+                    error instanceof Error
+                        ? error.message
+                        : 'Invalid verification code'
+                )
+            } finally {
+                setLoading(false)
+            }
+        },
+        [identifier, verifyOTP, onSuccess]
+    )
+
+    const handleResendOTP = useCallback(async () => {
         setOtpError('')
         try {
             await sendOTP(identifier, loginType)
@@ -101,7 +127,23 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
                 error instanceof Error ? error.message : 'Failed to resend code'
             )
         }
-    }
+    }, [identifier, loginType, sendOTP])
+
+    const handleBackToLogin = useCallback(() => {
+        setStep('input')
+        setOtpError('')
+        setFieldError('')
+    }, [])
+
+    const handleIdentifierChange = useCallback((value: string) => {
+        setIdentifier(value)
+        setFieldError('')
+    }, [])
+
+    const isSubmitDisabled = useMemo(
+        () => loading || !identifier.trim(),
+        [loading, identifier]
+    )
 
     if (step === 'verify') {
         return (
@@ -135,11 +177,7 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
                                 type="button"
                                 variant="ghost"
                                 className="w-full rounded-xl"
-                                onClick={() => {
-                                    setStep('input')
-                                    setOtpError('')
-                                    setFieldError('')
-                                }}
+                                onClick={handleBackToLogin}
                                 disabled={loading}
                             >
                                 <ArrowLeft className="h-4 w-4" />
@@ -181,10 +219,11 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
                                                     'border-destructive focus-visible:ring-destructive'
                                             )}
                                             value={identifier}
-                                            onChange={(e) => {
-                                                setIdentifier(e.target.value)
-                                                setFieldError('')
-                                            }}
+                                            onChange={(e) =>
+                                                handleIdentifierChange(
+                                                    e.target.value
+                                                )
+                                            }
                                             required
                                         />
                                     ) : (
@@ -192,10 +231,7 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
                                             id="identifier"
                                             placeholder="Enter phone number"
                                             value={identifier}
-                                            onChange={(value) => {
-                                                setIdentifier(value)
-                                                setFieldError('')
-                                            }}
+                                            onChange={handleIdentifierChange}
                                         />
                                     )}
                                     <FieldDescription
@@ -215,7 +251,7 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
                                 type="submit"
                                 className="w-full rounded-xl"
                                 size="lg"
-                                disabled={loading || !identifier.trim()}
+                                disabled={isSubmitDisabled}
                             >
                                 {loading ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -230,15 +266,7 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
                                 type="button"
                                 variant="link"
                                 className="w-full text-sm text-muted-foreground hover:text-foreground"
-                                onClick={() => {
-                                    setLoginType(
-                                        loginType === 'email'
-                                            ? 'phone'
-                                            : 'email'
-                                    )
-                                    setIdentifier('')
-                                    setFieldError('')
-                                }}
+                                onClick={toggleLoginType}
                                 disabled={loading}
                             >
                                 Use{' '}

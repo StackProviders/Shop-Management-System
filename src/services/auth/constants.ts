@@ -14,5 +14,6 @@ export const STORE_KEYS = {
     DEVICE_TOKEN: 'deviceToken',
     USER_ID: 'userId',
     USER_SESSION: 'userSession',
-    LOGOUT_FLAG: 'logoutFlag'
+    LOGOUT_FLAG: 'logoutFlag',
+    LAST_LOGIN_TYPE: 'lastLoginType'
 } as const

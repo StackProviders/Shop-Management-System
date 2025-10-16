@@ -31,3 +31,17 @@ export const clearLogoutFlag = async (): Promise<void> => {
     await store.delete(STORE_KEYS.LOGOUT_FLAG)
     await store.save()
 }
+
+export const saveLastLoginType = async (
+    type: 'email' | 'phone'
+): Promise<void> => {
+    await store.set(STORE_KEYS.LAST_LOGIN_TYPE, type)
+    await store.save()
+}
+
+export const getLastLoginType = async (): Promise<'email' | 'phone'> => {
+    return (
+        (await store.get<'email' | 'phone'>(STORE_KEYS.LAST_LOGIN_TYPE)) ||
+        'phone'
+    )
+}
