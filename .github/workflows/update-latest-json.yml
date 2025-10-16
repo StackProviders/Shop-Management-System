@@ -1,0 +1,48 @@
+name: 'update-latest-json'
+
+on:
+    workflow_run:
+        workflows: ['publish-android']
+        types:
+            - completed
+
+jobs:
+    update-json:
+        runs-on: ubuntu-latest
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: setup node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: lts/*
+
+            - name: Get package version
+              id: package-version
+              run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+            - name: Download latest.json
+              run: |
+                  curl -L -o latest.json https://github.com/${{ github.repository }}/releases/download/v${{ steps.package-version.outputs.version}}/latest.json
+
+            - name: Add Android URL to latest.json
+              run: |
+                  node -e "
+                  const fs = require('fs');
+                  const data = JSON.parse(fs.readFileSync('latest.json', 'utf8'));
+                  data.platforms['android-aarch64'] = {
+                    url: 'https://github.com/${{ github.repository }}/releases/download/v${{ steps.package-version.outputs.version}}/Shop.Management.System-${{ steps.package-version.outputs.version}}.apk'
+                  };
+                  fs.writeFileSync('latest.json', JSON.stringify(data, null, 2));
+                  "
+
+            - name: Upload updated latest.json
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: v${{ steps.package-version.outputs.version}}
+                  files: latest.json
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}

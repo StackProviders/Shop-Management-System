@@ -12,6 +12,8 @@ jobs:
     publish-tauri:
         permissions:
             contents: write
+        outputs:
+            version: ${{ steps.package-version.outputs.version }}
         strategy:
             fail-fast: false
             matrix:
