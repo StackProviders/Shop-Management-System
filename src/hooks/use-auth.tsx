@@ -1,10 +1,4 @@
-import {
-    createContext,
-    useContext,
-    useEffect,
-    useState,
-    ReactNode
-} from 'react'
+import { createContext, useContext, useEffect, ReactNode } from 'react'
 import {
     logout,
     onAuthStateChange,
@@ -16,10 +10,10 @@ import {
     initSession,
     checkDeviceAndLogin
 } from '@/services/auth/index'
-import { AuthState, User } from '@/services/auth/types'
+import { User } from '@/services/auth/types'
+import { useAuthStore } from '@/stores/auth-store'
 
 const AuthContext = createContext<{
-    authState: AuthState
     logout: (revokeDevice?: boolean) => Promise<void>
     sendOTP: (identifier: string, type: 'email' | 'phone') => Promise<void>
     verifyOTP: (
@@ -33,12 +27,7 @@ const AuthContext = createContext<{
 } | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [authState, setAuthState] = useState<AuthState>({
-        user: null,
-        loading: true,
-        error: null,
-        isAuthenticated: false
-    })
+    const { setUser, setLoading, setError, reset } = useAuthStore()
 
     useEffect(() => {
         let mounted = true
@@ -46,30 +35,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const unsubscribe = onAuthStateChange((user) => {
             if (mounted && initialized) {
-                setAuthState({
-                    user,
-                    loading: false,
-                    error: null,
-                    isAuthenticated: !!user
-                })
+                setUser(user)
+                setLoading(false)
             }
         })
 
         const init = async () => {
             const cachedUser = await initSession()
             if (mounted) {
-                setAuthState({
-                    user: cachedUser,
-                    loading: !cachedUser,
-                    error: null,
-                    isAuthenticated: !!cachedUser
-                })
+                setUser(cachedUser)
+                setLoading(!cachedUser)
             }
 
             await initAuth()
             initialized = true
             if (mounted) {
-                setAuthState((prev) => ({ ...prev, loading: false }))
+                setLoading(false)
             }
         }
 
@@ -79,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             mounted = false
             unsubscribe()
         }
-    }, [])
+    }, [setUser, setLoading])
 
     const handleSendOTP = async (
         identifier: string,
@@ -90,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             const errorMessage =
                 error instanceof Error ? error.message : 'Failed to send OTP'
-            setAuthState((prev) => ({ ...prev, error: errorMessage }))
+            setError(errorMessage)
             throw error
         }
     }
@@ -98,11 +79,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const handleLogout = async (revokeDevice: boolean = false) => {
         try {
             await logout(revokeDevice)
+            reset()
         } catch (error) {
-            setAuthState((prev) => ({
-                ...prev,
-                error: error instanceof Error ? error.message : 'Logout failed'
-            }))
+            setError(error instanceof Error ? error.message : 'Logout failed')
             throw error
         }
     }
@@ -118,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             const errorMessage =
                 error instanceof Error ? error.message : 'Invalid OTP'
-            setAuthState((prev) => ({ ...prev, error: errorMessage }))
+            setError(errorMessage)
             throw error
         }
     }
@@ -131,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 error instanceof Error
                     ? error.message
                     : 'Failed to update profile'
-            setAuthState((prev) => ({ ...prev, error: errorMessage }))
+            setError(errorMessage)
             throw error
         }
     }
@@ -145,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 error instanceof Error
                     ? error.message
                     : 'Failed to upload photo'
-            setAuthState((prev) => ({ ...prev, error: errorMessage }))
+            setError(errorMessage)
             throw error
         }
     }
@@ -162,7 +141,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const value = {
-        authState,
         logout: handleLogout,
         sendOTP: handleSendOTP,
         verifyOTP: handleVerifyOTP,
@@ -176,8 +154,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
     const context = useContext(AuthContext)
+    const authState = useAuthStore()
     if (!context) {
         throw new Error('useAuth must be used within an AuthProvider')
     }
-    return context
+    return { ...context, authState }
 }

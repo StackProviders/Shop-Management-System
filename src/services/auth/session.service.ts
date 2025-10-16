@@ -10,11 +10,13 @@ const authListeners: ((user: User | null) => void)[] = []
 
 export const setCurrentUser = (user: User | null): void => {
     currentUser = user
+
     if (user) {
-        saveUserSession(user)
+        saveUserSession(user).catch(console.error)
     } else {
-        clearUserSession()
+        clearUserSession().catch(console.error)
     }
+
     authListeners.forEach((cb) => cb(user))
 }
 

@@ -112,15 +112,14 @@ export const uploadPhoto = async (file: File): Promise<string> => {
 export const logout = async (
     shouldRevokeDevice: boolean = false
 ): Promise<void> => {
-    if (shouldRevokeDevice) {
-        const user = getCurrentUser()
-        if (user) {
-            await revokeDevice(user.uid)
-            await clearDeviceSession()
-        }
-    }
+    const user = getCurrentUser()
 
     setCurrentUser(null)
+
+    if (shouldRevokeDevice && user) {
+        await revokeDevice(user.uid)
+        await clearDeviceSession()
+    }
 }
 
 export const initAuth = async (): Promise<void> => {

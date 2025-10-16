@@ -13,6 +13,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
+import { useNavigate } from 'react-router'
 
 interface LogoutButtonProps {
     variant?:
@@ -34,16 +35,16 @@ export function LogoutButton({
     showConfirm = true
 }: LogoutButtonProps) {
     const { logout, authState } = useAuth()
+    const navigate = useNavigate()
     const [isLoggingOut, setIsLoggingOut] = useState(false)
 
     const handleLogout = async () => {
         setIsLoggingOut(true)
         try {
             await logout()
-            window.location.href = '/auth'
+            navigate('/auth')
         } catch (error) {
             console.error('Logout failed:', error)
-        } finally {
             setIsLoggingOut(false)
         }
     }

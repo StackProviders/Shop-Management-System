@@ -33,21 +33,11 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
     const [otpError, setOtpError] = useState('')
     const { sendOTP, verifyOTP, authState, checkDeviceAndLogin } = useAuth()
 
-    // Auto-redirect if already authenticated via trusted device
     useEffect(() => {
         if (authState.isAuthenticated && !authState.loading) {
             onSuccess?.()
         }
     }, [authState.isAuthenticated, authState.loading, onSuccess])
-
-    // Show loading state during initial auth check
-    if (authState.loading) {
-        return (
-            <div className="flex min-h-screen items-center justify-center p-4">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-        )
-    }
 
     const handleSendOTP = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -283,7 +273,7 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
 }
 
 export function ProfileForm() {
-    const { authState, updateProfile, uploadPhoto } = useAuth()
+    const { updateProfile, uploadPhoto, authState } = useAuth()
     const [name, setName] = useState(authState.user?.name || '')
     const [success, setSuccess] = useState('')
     const [loading, setLoading] = useState(false)

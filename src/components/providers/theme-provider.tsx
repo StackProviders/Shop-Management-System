@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useState } from 'react'
+import { LazyStore } from '@tauri-apps/plugin-store'
 
 type Theme = 'dark' | 'light' | 'system'
 
 type ThemeProviderProps = {
     children: React.ReactNode
     defaultTheme?: Theme
-    storageKey?: string
 }
 
 type ThemeProviderState = {
@@ -19,20 +19,23 @@ const initialState: ThemeProviderState = {
 }
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
+const store = new LazyStore('settings.json')
 
 export function ThemeProvider({
     children,
     defaultTheme = 'system',
-    storageKey = 'vite-ui-theme',
     ...props
 }: ThemeProviderProps) {
-    const [theme, setTheme] = useState<Theme>(
-        () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
-    )
+    const [theme, setTheme] = useState<Theme>(defaultTheme)
+
+    useEffect(() => {
+        store.get<Theme>('theme').then((savedTheme) => {
+            if (savedTheme) setTheme(savedTheme)
+        })
+    }, [])
 
     useEffect(() => {
         const root = window.document.documentElement
-
         root.classList.remove('light', 'dark')
 
         if (theme === 'system') {
@@ -41,7 +44,6 @@ export function ThemeProvider({
             ).matches
                 ? 'dark'
                 : 'light'
-
             root.classList.add(systemTheme)
             return
         }
@@ -52,8 +54,8 @@ export function ThemeProvider({
     const value = {
         theme,
         setTheme: (theme: Theme) => {
-            localStorage.setItem(storageKey, theme)
             setTheme(theme)
+            store.set('theme', theme).then(() => store.save())
         }
     }
 
@@ -66,9 +68,7 @@ export function ThemeProvider({
 
 export const useTheme = () => {
     const context = useContext(ThemeProviderContext)
-
     if (context === undefined)
         throw new Error('useTheme must be used within a ThemeProvider')
-
     return context
 }

@@ -1,7 +1,7 @@
 import { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router'
-import { useAuth } from '@/hooks/use-auth'
-import { Loader2 } from 'lucide-react'
+import { useAuthStore } from '@/stores/auth-store'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
 interface AuthGuardProps {
     children: ReactNode
@@ -14,18 +14,16 @@ export function AuthGuard({
     requireAuth = true,
     redirectTo
 }: AuthGuardProps) {
-    const { authState } = useAuth()
+    const { isAuthenticated, loading, user } = useAuthStore()
     const location = useLocation()
 
-    if (authState.loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-        )
+    console.log({ isAuthenticated, user })
+
+    if (loading) {
+        return <LoadingSpinner fullScreen />
     }
 
-    if (requireAuth && !authState.isAuthenticated) {
+    if (requireAuth && !isAuthenticated) {
         return (
             <Navigate
                 to={redirectTo || '/auth'}
@@ -35,7 +33,7 @@ export function AuthGuard({
         )
     }
 
-    if (!requireAuth && authState.isAuthenticated) {
+    if (!requireAuth && isAuthenticated) {
         return <Navigate to={redirectTo || '/shops'} replace />
     }
 
@@ -43,9 +41,17 @@ export function AuthGuard({
 }
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
-    return <AuthGuard requireAuth>{children}</AuthGuard>
+    return (
+        <AuthGuard requireAuth redirectTo="/auth">
+            {children}
+        </AuthGuard>
+    )
 }
 
 export function PublicRoute({ children }: { children: ReactNode }) {
-    return <AuthGuard requireAuth={false}>{children}</AuthGuard>
+    return (
+        <AuthGuard requireAuth={false} redirectTo="/shops">
+            {children}
+        </AuthGuard>
+    )
 }
