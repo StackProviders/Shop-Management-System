@@ -2,17 +2,21 @@ import React, { useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Field, FieldGroup, FieldLabel, FieldSet } from '@/components/ui/field'
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle
-} from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+    Field,
+    FieldGroup,
+    FieldLabel,
+    FieldSet,
+    FieldDescription
+} from '@/components/ui/field'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Loader2, Mail, Phone } from 'lucide-react'
+import { Loader2, Mail, Phone, ArrowLeft } from 'lucide-react'
+import Logo from '../logo'
+import { PhoneInput } from '../ui/phone-input'
+import { OTPInput } from './otp-input'
+import { cn } from '@/lib/utils'
+import { Alert, AlertDescription } from '../ui/alert'
 
 interface AuthFormProps {
     onSuccess?: () => void
@@ -25,193 +29,252 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
     const [loginType, setLoginType] = useState<LoginType>('email')
     const [step, setStep] = useState<Step>('input')
     const [identifier, setIdentifier] = useState('')
-    const [otp, setOtp] = useState('')
     const [trustDevice, setTrustDevice] = useState(false)
-    const [success, setSuccess] = useState('')
     const [loading, setLoading] = useState(false)
-    const { sendOTP, verifyOTP, authState } = useAuth()
+    const [fieldError, setFieldError] = useState('')
+    const [otpError, setOtpError] = useState('')
+    const { sendOTP, verifyOTP } = useAuth()
 
     const handleSendOTP = async (e: React.FormEvent) => {
         e.preventDefault()
+        setFieldError('')
+
+        if (!identifier.trim()) {
+            setFieldError(
+                loginType === 'email'
+                    ? 'Email address is required'
+                    : 'Phone number is required'
+            )
+            return
+        }
+
         setLoading(true)
         try {
             await sendOTP(identifier, loginType)
-            setSuccess('OTP sent successfully!')
             setStep('verify')
         } catch (error) {
-            console.error('Failed to send OTP:', error)
+            setFieldError(
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to send verification code'
+            )
         } finally {
             setLoading(false)
         }
     }
 
-    const handleVerifyOTP = async (e: React.FormEvent) => {
-        e.preventDefault()
+    const handleVerifyOTP = async (otp: string) => {
+        setOtpError('')
         setLoading(true)
         try {
             await verifyOTP(identifier, otp, trustDevice)
             onSuccess?.()
         } catch (error) {
-            console.error('OTP verification failed:', error)
+            setOtpError(
+                error instanceof Error
+                    ? error.message
+                    : 'Invalid verification code'
+            )
         } finally {
             setLoading(false)
         }
     }
 
+    const handleResendOTP = async () => {
+        setOtpError('')
+        try {
+            await sendOTP(identifier, loginType)
+        } catch (error) {
+            setOtpError(
+                error instanceof Error ? error.message : 'Failed to resend code'
+            )
+        }
+    }
+
     if (step === 'verify') {
         return (
-            <Card className="w-full max-w-md mx-auto">
-                <CardHeader className="text-center">
-                    <CardTitle>Verify OTP</CardTitle>
-                    <CardDescription>
-                        Enter the 6-digit code sent to {identifier}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleVerifyOTP}>
-                        <FieldSet>
-                            <FieldGroup>
-                                <Field>
-                                    <FieldLabel htmlFor="otp">
-                                        OTP Code
-                                    </FieldLabel>
-                                    <Input
-                                        id="otp"
-                                        type="text"
-                                        maxLength={6}
-                                        value={otp}
-                                        onChange={(e) => setOtp(e.target.value)}
-                                        required
+            <div className="flex min-h-screen items-center justify-center p-4">
+                <Card className="w-full max-w-sm rounded-3xl md:rounded-4xl px-4 py-8 md:px-6 md:py-10">
+                    <CardContent>
+                        <div className="flex flex-col items-center space-y-5">
+                            <div className="space-y-3 w-full">
+                                <Logo size="md" showTagline />
+                                <div className="text-center space-y-1">
+                                    <p className="text-muted-foreground text-sm">
+                                        We sent a code to
+                                    </p>
+                                    <p className="text-sm font-semibold">
+                                        {identifier}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="w-full space-y-4">
+                                <OTPInput
+                                    onComplete={handleVerifyOTP}
+                                    onManualSubmit={handleVerifyOTP}
+                                    onResend={handleResendOTP}
+                                    error={otpError}
+                                    disabled={loading}
+                                />
+
+                                <div className="flex items-start space-x-2">
+                                    <Checkbox
+                                        id="trust"
+                                        checked={trustDevice}
+                                        onCheckedChange={(checked) =>
+                                            setTrustDevice(checked as boolean)
+                                        }
+                                        className="mt-0.5"
+                                        disabled={loading}
                                     />
-                                </Field>
-                            </FieldGroup>
-                        </FieldSet>
-                        <div className="flex items-center space-x-2 mt-4">
-                            <Checkbox
-                                id="trust"
-                                checked={trustDevice}
-                                onCheckedChange={(checked) =>
-                                    setTrustDevice(checked as boolean)
-                                }
-                            />
-                            <label
-                                htmlFor="trust"
-                                className="text-sm cursor-pointer"
+                                    <label
+                                        htmlFor="trust"
+                                        className="text-sm cursor-pointer leading-tight"
+                                    >
+                                        Remember this device for 30 days
+                                    </label>
+                                </div>
+                            </div>
+
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                className="w-full rounded-xl"
+                                onClick={() => {
+                                    setStep('input')
+                                    setOtpError('')
+                                    setFieldError('')
+                                }}
+                                disabled={loading}
                             >
-                                Trust this device for 30 days
-                            </label>
+                                <ArrowLeft className="h-4 w-4" />
+                                Back to Login
+                            </Button>
                         </div>
-                        {authState.error && (
-                            <Alert variant="destructive" className="mt-4">
-                                <AlertDescription>
-                                    {authState.error}
-                                </AlertDescription>
-                            </Alert>
-                        )}
-                        <Button
-                            type="submit"
-                            className="w-full mt-4"
-                            disabled={loading}
-                        >
-                            {loading && (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            )}
-                            Verify & Login
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            className="w-full mt-2"
-                            onClick={() => setStep('input')}
-                        >
-                            Back
-                        </Button>
-                    </form>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
         )
     }
 
     return (
-        <Card className="w-full max-w-md mx-auto">
-            <CardHeader className="text-center">
-                <CardTitle>Welcome</CardTitle>
-                <CardDescription>
-                    Login with{' '}
-                    {loginType === 'email' ? 'Email' : 'Phone Number'}
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleSendOTP}>
-                    <FieldSet>
-                        <FieldGroup>
-                            <Field>
-                                <FieldLabel htmlFor="identifier">
-                                    {loginType === 'email'
-                                        ? 'Email'
-                                        : 'Phone Number'}
-                                </FieldLabel>
-                                <Input
-                                    id="identifier"
-                                    type={
-                                        loginType === 'email' ? 'email' : 'tel'
-                                    }
-                                    placeholder={
+        <div className="flex min-h-screen items-center justify-center p-4">
+            <Card className="w-full max-w-sm rounded-3xl md:rounded-4xl px-4 py-8 md:px-6 md:py-10">
+                <CardContent>
+                    <form
+                        onSubmit={handleSendOTP}
+                        className="flex flex-col items-center space-y-5"
+                    >
+                        <Logo size="md" showTagline />
+
+                        <FieldSet className="w-full">
+                            <FieldGroup>
+                                <Field>
+                                    <FieldLabel htmlFor="identifier">
+                                        {loginType === 'email'
+                                            ? 'Email Address'
+                                            : 'Phone Number'}
+                                    </FieldLabel>
+                                    {loginType === 'email' ? (
+                                        <Input
+                                            id="identifier"
+                                            type="email"
+                                            placeholder="you@example.com"
+                                            className={cn(
+                                                'rounded-xl',
+                                                fieldError &&
+                                                    'border-destructive focus-visible:ring-destructive'
+                                            )}
+                                            value={identifier}
+                                            onChange={(e) => {
+                                                setIdentifier(e.target.value)
+                                                setFieldError('')
+                                            }}
+                                            required
+                                        />
+                                    ) : (
+                                        <PhoneInput
+                                            id="identifier"
+                                            placeholder="Enter phone number"
+                                            value={identifier}
+                                            onChange={(value) => {
+                                                setIdentifier(value)
+                                                setFieldError('')
+                                            }}
+                                        />
+                                    )}
+                                    <FieldDescription
+                                        className={
+                                            fieldError ? 'text-destructive' : ''
+                                        }
+                                    >
+                                        {fieldError ||
+                                            "We'll send you a secure verification code"}
+                                    </FieldDescription>
+                                </Field>
+                            </FieldGroup>
+                        </FieldSet>
+
+                        <div className="w-full space-y-2">
+                            <Button
+                                type="submit"
+                                className="w-full rounded-xl"
+                                size="lg"
+                                disabled={loading || !identifier.trim()}
+                            >
+                                {loading ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : loginType === 'email' ? (
+                                    <Mail className="h-4 w-4" />
+                                ) : (
+                                    <Phone className="h-4 w-4" />
+                                )}
+                                Continue
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="link"
+                                className="w-full text-sm text-muted-foreground hover:text-foreground"
+                                onClick={() => {
+                                    setLoginType(
                                         loginType === 'email'
-                                            ? 'your@email.com'
-                                            : '+1234567890'
-                                    }
-                                    value={identifier}
-                                    onChange={(e) =>
-                                        setIdentifier(e.target.value)
-                                    }
-                                    required
-                                />
-                            </Field>
-                        </FieldGroup>
-                    </FieldSet>
-                    {success && (
-                        <Alert className="mt-4">
-                            <AlertDescription>{success}</AlertDescription>
-                        </Alert>
-                    )}
-                    {authState.error && (
-                        <Alert variant="destructive" className="mt-4">
-                            <AlertDescription>
-                                {authState.error}
-                            </AlertDescription>
-                        </Alert>
-                    )}
-                    <Button
-                        type="submit"
-                        className="w-full mt-4"
-                        disabled={loading}
-                    >
-                        {loading && (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        )}
-                        {loginType === 'email' ? (
-                            <Mail className="mr-2 h-4 w-4" />
-                        ) : (
-                            <Phone className="mr-2 h-4 w-4" />
-                        )}
-                        Login
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="link"
-                        className="w-full mt-2"
-                        onClick={() =>
-                            setLoginType(
-                                loginType === 'email' ? 'phone' : 'email'
-                            )
-                        }
-                    >
-                        Switch to {loginType === 'email' ? 'Phone' : 'Email'}
-                    </Button>
-                </form>
-            </CardContent>
-        </Card>
+                                            ? 'phone'
+                                            : 'email'
+                                    )
+                                    setIdentifier('')
+                                    setFieldError('')
+                                }}
+                                disabled={loading}
+                            >
+                                Use{' '}
+                                {loginType === 'email'
+                                    ? 'phone number'
+                                    : 'email'}{' '}
+                                instead
+                            </Button>
+                        </div>
+
+                        <p className="text-center text-xs text-muted-foreground px-2">
+                            By continuing, you agree to Stack Provider{' '}
+                            <a
+                                href="#"
+                                className="underline hover:text-foreground transition-colors"
+                            >
+                                Terms of Service
+                            </a>{' '}
+                            and{' '}
+                            <a
+                                href="#"
+                                className="underline hover:text-foreground transition-colors"
+                            >
+                                Privacy Policy
+                            </a>
+                        </p>
+                    </form>
+                </CardContent>
+            </Card>
+        </div>
     )
 }
 

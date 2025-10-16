@@ -4,15 +4,21 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AuthProvider } from '@/hooks/use-auth'
 import { ShopProvider } from '@/hooks/use-shop'
+import { ThemeProvider } from '@/components/providers/theme-provider'
 
 export default function AppProvider({ children }: { children: ReactNode }) {
     return (
         <Suspense fallback={<>Loading...</>}>
             <ErrorBoundary FallbackComponent={AppErrorPage}>
                 <TooltipProvider>
-                    <AuthProvider>
-                        <ShopProvider>{children}</ShopProvider>
-                    </AuthProvider>
+                    <ThemeProvider
+                        defaultTheme="system"
+                        storageKey="stack-provider-ui-theme"
+                    >
+                        <AuthProvider>
+                            <ShopProvider>{children}</ShopProvider>
+                        </AuthProvider>
+                    </ThemeProvider>
                 </TooltipProvider>
             </ErrorBoundary>
         </Suspense>
