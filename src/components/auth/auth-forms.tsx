@@ -5,7 +5,7 @@ import {
     saveLastLoginType,
     getLastLoginType
 } from '@/services/auth/storage.service'
-import { Button } from '@/components/ui/button'
+import { Button, SubmitButton } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
     Field,
@@ -147,156 +147,149 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
 
     if (step === 'verify') {
         return (
-            <div className="flex items-center justify-center p-4">
-                <Card className="w-full max-w-sm rounded-3xl md:rounded-4xl px-4 py-8 md:px-6 md:py-10">
-                    <CardContent>
-                        <div className="flex flex-col items-center space-y-5">
-                            <div className="space-y-3 w-full">
-                                <Logo size="md" showTagline />
-                                <div className="text-center space-y-1">
-                                    <p className="text-muted-foreground text-sm">
-                                        We sent a code to
-                                    </p>
-                                    <p className="text-sm font-semibold">
-                                        {identifier}
-                                    </p>
-                                </div>
+            <Card className="rounded-xl">
+                <CardContent>
+                    <div className="flex flex-col items-center space-y-5">
+                        <div className="space-y-3 w-full">
+                            <Logo size="md" showTagline />
+                            <div className="text-center space-y-1">
+                                <p className="text-muted-foreground text-sm">
+                                    We sent a code to
+                                </p>
+                                <p className="text-sm font-semibold">
+                                    {identifier}
+                                </p>
                             </div>
-
-                            <div className="w-full space-y-4">
-                                <OTPInput
-                                    onComplete={handleVerifyOTP}
-                                    onManualSubmit={handleVerifyOTP}
-                                    onResend={handleResendOTP}
-                                    error={otpError}
-                                    disabled={loading}
-                                />
-                            </div>
-
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                className="w-full rounded-xl"
-                                onClick={handleBackToLogin}
-                                disabled={loading}
-                            >
-                                <ArrowLeft className="h-4 w-4" />
-                                Back to Login
-                            </Button>
                         </div>
-                    </CardContent>
-                </Card>
-            </div>
+
+                        <div className="w-full space-y-4">
+                            <OTPInput
+                                onComplete={handleVerifyOTP}
+                                onManualSubmit={handleVerifyOTP}
+                                onResend={handleResendOTP}
+                                error={otpError}
+                                disabled={loading}
+                            />
+                        </div>
+
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            className="w-full rounded-xl"
+                            onClick={handleBackToLogin}
+                            disabled={loading}
+                        >
+                            <ArrowLeft className="size-4" />
+                            Back to Login
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
         )
     }
 
     return (
-        <div className="flex items-center justify-center p-4">
-            <Card className="w-full max-w-sm rounded-xl">
-                <CardContent>
-                    <form
-                        onSubmit={handleSendOTP}
-                        className="flex flex-col items-center space-y-5"
-                    >
-                        <Logo size="md" showTagline />
+        <Card className="rounded-xl">
+            <CardContent>
+                <form
+                    onSubmit={handleSendOTP}
+                    className="flex flex-col items-center space-y-5"
+                >
+                    <Logo size="md" showTagline />
 
-                        <FieldSet className="w-full">
-                            <FieldGroup>
-                                <Field>
-                                    <FieldLabel htmlFor="identifier">
-                                        {loginType === 'email'
-                                            ? 'Email Address'
-                                            : 'Phone Number'}
-                                    </FieldLabel>
-                                    {loginType === 'email' ? (
-                                        <Input
-                                            id="identifier"
-                                            type="email"
-                                            placeholder="you@example.com"
-                                            className={cn(
-                                                'rounded-xl',
-                                                fieldError &&
-                                                    'border-destructive focus-visible:ring-destructive'
-                                            )}
-                                            value={identifier}
-                                            onChange={(e) =>
-                                                handleIdentifierChange(
-                                                    e.target.value
-                                                )
-                                            }
-                                            required
-                                        />
-                                    ) : (
-                                        <PhoneInput
-                                            id="identifier"
-                                            placeholder="Enter phone number"
-                                            value={identifier}
-                                            onChange={handleIdentifierChange}
-                                        />
-                                    )}
-                                    <FieldDescription
-                                        className={
-                                            fieldError ? 'text-destructive' : ''
+                    <FieldSet className="w-full">
+                        <FieldGroup>
+                            <Field>
+                                <FieldLabel htmlFor="identifier">
+                                    {loginType === 'email'
+                                        ? 'Email Address'
+                                        : 'Phone Number'}
+                                </FieldLabel>
+                                {loginType === 'email' ? (
+                                    <Input
+                                        id="identifier"
+                                        type="email"
+                                        placeholder="you@example.com"
+                                        className={cn(
+                                            'rounded-xl',
+                                            fieldError &&
+                                                'border-destructive focus-visible:ring-destructive'
+                                        )}
+                                        value={identifier}
+                                        onChange={(e) =>
+                                            handleIdentifierChange(
+                                                e.target.value
+                                            )
                                         }
-                                    >
-                                        {fieldError ||
-                                            "We'll send you a secure verification code"}
-                                    </FieldDescription>
-                                </Field>
-                            </FieldGroup>
-                        </FieldSet>
-
-                        <div className="w-full space-y-2">
-                            <Button
-                                type="submit"
-                                className="w-full rounded-xl"
-                                size="lg"
-                                disabled={isSubmitDisabled}
-                            >
-                                {loading ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : loginType === 'email' ? (
-                                    <Mail className="h-4 w-4" />
+                                        required
+                                    />
                                 ) : (
-                                    <Phone className="h-4 w-4" />
+                                    <PhoneInput
+                                        id="identifier"
+                                        placeholder="Enter phone number"
+                                        value={identifier}
+                                        onChange={handleIdentifierChange}
+                                    />
                                 )}
-                                Login
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="link"
-                                className="w-full text-sm text-muted-foreground hover:text-foreground"
-                                onClick={toggleLoginType}
-                                disabled={loading}
-                            >
-                                Use{' '}
-                                {loginType === 'email'
-                                    ? 'phone number'
-                                    : 'email'}{' '}
-                                instead
-                            </Button>
-                        </div>
+                                <FieldDescription
+                                    className={
+                                        fieldError ? 'text-destructive' : ''
+                                    }
+                                >
+                                    {fieldError ||
+                                        "We'll send you a secure verification code"}
+                                </FieldDescription>
+                            </Field>
+                        </FieldGroup>
+                    </FieldSet>
 
-                        <p className="text-center text-xs text-muted-foreground px-2">
-                            By continuing, you agree to Stack Provider{' '}
-                            <a
-                                href="#"
-                                className="underline hover:text-foreground transition-colors"
-                            >
-                                Terms of Service
-                            </a>{' '}
-                            and{' '}
-                            <a
-                                href="#"
-                                className="underline hover:text-foreground transition-colors"
-                            >
-                                Privacy Policy
-                            </a>
-                        </p>
-                    </form>
-                </CardContent>
-            </Card>
-        </div>
+                    <div className="w-full space-y-2">
+                        <SubmitButton
+                            type="submit"
+                            className="w-full rounded-xl"
+                            size="lg"
+                            disabled={isSubmitDisabled}
+                            loading={loading}
+                        >
+                            {loginType === 'email' ? (
+                                <Mail className="size-4" />
+                            ) : (
+                                <Phone className="size-4" />
+                            )}
+                            Continue
+                        </SubmitButton>
+                        <Button
+                            type="button"
+                            variant="link"
+                            className="w-full text-sm text-muted-foreground hover:text-foreground"
+                            onClick={toggleLoginType}
+                            disabled={loading}
+                        >
+                            Use{' '}
+                            {loginType === 'email' ? 'phone number' : 'email'}{' '}
+                            instead
+                        </Button>
+                    </div>
+
+                    <p className="text-center text-xs text-muted-foreground px-2">
+                        By continuing, you agree to Stack Provider{' '}
+                        <a
+                            href="#"
+                            className="underline hover:text-foreground transition-colors"
+                        >
+                            Terms of Service
+                        </a>{' '}
+                        and{' '}
+                        <a
+                            href="#"
+                            className="underline hover:text-foreground transition-colors"
+                        >
+                            Privacy Policy
+                        </a>
+                    </p>
+                </form>
+            </CardContent>
+        </Card>
     )
 }
 
@@ -377,7 +370,7 @@ export function ProfileForm() {
                     )}
                     <Button type="submit" className="mt-4" disabled={loading}>
                         {loading && (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="mr-2 size-4 animate-spin" />
                         )}
                         Update Profile
                     </Button>

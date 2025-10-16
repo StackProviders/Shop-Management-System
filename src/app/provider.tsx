@@ -11,10 +11,7 @@ export default function AppProvider({ children }: { children: ReactNode }) {
         <Suspense fallback={<>Loading...</>}>
             <ErrorBoundary FallbackComponent={AppErrorPage}>
                 <TooltipProvider>
-                    <ThemeProvider
-                        defaultTheme="system"
-                        storageKey="stack-provider-ui-theme"
-                    >
+                    <ThemeProvider defaultTheme="system">
                         <AuthProvider>
                             <ShopProvider>{children}</ShopProvider>
                         </AuthProvider>

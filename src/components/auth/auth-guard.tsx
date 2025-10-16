@@ -1,7 +1,7 @@
 import { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router'
 import { useAuthStore } from '@/stores/auth-store'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { Spinner } from '../ui/spinner'
 
 interface AuthGuardProps {
     children: ReactNode
@@ -18,7 +18,7 @@ export function AuthGuard({
     const location = useLocation()
 
     if (loading) {
-        return <LoadingSpinner fullScreen />
+        return <Spinner className="size-8" fullScreen />
     }
 
     if (requireAuth && !isAuthenticated) {

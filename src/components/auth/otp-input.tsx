@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { Button, SubmitButton } from '@/components/ui/button'
 import {
     InputOTP,
     InputOTPGroup,
@@ -98,6 +98,7 @@ export function OTPInput({
                     onChange={handleChange}
                     disabled={disabled}
                     autoFocus
+                    containerClassName="justify-center"
                 >
                     <InputOTPGroup>
                         <InputOTPSlot
@@ -149,19 +150,22 @@ export function OTPInput({
                 </InputOTP>
             </div>
 
-            <FieldDescription className={error ? 'text-destructive' : ''}>
+            <FieldDescription
+                className={cn('text-center', error && 'text-destructive')}
+            >
                 {error || 'Code will auto-submit when complete'}
             </FieldDescription>
 
-            <Button
+            <SubmitButton
                 type="button"
                 className="w-full rounded-xl"
                 size="lg"
                 disabled={disabled || value.length !== 6}
                 onClick={handleManualSubmit}
+                loading={disabled}
             >
-                {disabled ? 'Verifying...' : 'Verify Code'}
-            </Button>
+                Verify Code
+            </SubmitButton>
 
             <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
