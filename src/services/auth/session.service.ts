@@ -2,7 +2,8 @@ import { User } from './types'
 import {
     saveUserSession,
     getUserSession,
-    clearUserSession
+    clearUserSession,
+    clearLogoutFlag
 } from './storage.service'
 
 let currentUser: User | null = null
@@ -13,11 +14,15 @@ export const setCurrentUser = (user: User | null): void => {
 
     if (user) {
         saveUserSession(user).catch(console.error)
+        clearLogoutFlag().catch(console.error)
+        authListeners.forEach((cb) => cb(user))
     } else {
-        clearUserSession().catch(console.error)
+        clearUserSession()
+            .then(() => {
+                authListeners.forEach((cb) => cb(null))
+            })
+            .catch(console.error)
     }
-
-    authListeners.forEach((cb) => cb(user))
 }
 
 export const getCurrentUser = (): User | null => currentUser

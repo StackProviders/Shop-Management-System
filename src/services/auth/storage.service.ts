@@ -17,3 +17,17 @@ export const clearUserSession = async (): Promise<void> => {
     await store.delete(STORE_KEYS.USER_SESSION)
     await store.save()
 }
+
+export const setLogoutFlag = async (): Promise<void> => {
+    await store.set(STORE_KEYS.LOGOUT_FLAG, true)
+    await store.save()
+}
+
+export const getLogoutFlag = async (): Promise<boolean> => {
+    return (await store.get<boolean>(STORE_KEYS.LOGOUT_FLAG)) || false
+}
+
+export const clearLogoutFlag = async (): Promise<void> => {
+    await store.delete(STORE_KEYS.LOGOUT_FLAG)
+    await store.save()
+}

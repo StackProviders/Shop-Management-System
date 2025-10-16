@@ -14,10 +14,8 @@ export function AuthGuard({
     requireAuth = true,
     redirectTo
 }: AuthGuardProps) {
-    const { isAuthenticated, loading, user } = useAuthStore()
+    const { isAuthenticated, loading } = useAuthStore()
     const location = useLocation()
-
-    console.log({ isAuthenticated, user })
 
     if (loading) {
         return <LoadingSpinner fullScreen />

@@ -78,8 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const handleLogout = async (revokeDevice: boolean = false) => {
         try {
-            await logout(revokeDevice)
             reset()
+            await logout(revokeDevice)
         } catch (error) {
             setError(error instanceof Error ? error.message : 'Logout failed')
             throw error

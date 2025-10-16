@@ -4,7 +4,6 @@ import {
     where,
     getDocs,
     updateDoc,
-    doc,
     Timestamp
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'

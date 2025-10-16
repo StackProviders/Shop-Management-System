@@ -23,6 +23,7 @@ import {
     initSession
 } from './session.service'
 import { cleanupExpiredDevices } from './cleanup.service'
+import { getLogoutFlag, setLogoutFlag } from './storage.service'
 
 export const sendOTP = async (
     identifier: string,
@@ -114,6 +115,7 @@ export const logout = async (
 ): Promise<void> => {
     const user = getCurrentUser()
 
+    await setLogoutFlag()
     setCurrentUser(null)
 
     if (shouldRevokeDevice && user) {
@@ -126,18 +128,21 @@ export const initAuth = async (): Promise<void> => {
     const cachedUser = await initSession()
     if (cachedUser) {
         setCurrentUser(cachedUser)
+        return
+    }
+
+    const logoutFlag = await getLogoutFlag()
+    if (logoutFlag) {
+        return
     }
 
     try {
         const user = await loginWithTrustedDevice()
-        if (user && (!cachedUser || user.uid !== cachedUser.uid)) {
+        if (user) {
             setCurrentUser(user)
         }
     } catch (error) {
         console.error('Auto-login failed:', error)
-        if (cachedUser) {
-            setCurrentUser(null)
-        }
     }
 }
 
