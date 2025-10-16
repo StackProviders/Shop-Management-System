@@ -1,6 +1,5 @@
 import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
-import { Updater } from '@/features/updater'
 import { ArrowLeft } from 'lucide-react'
 
 export function SettingsPage() {
@@ -17,10 +16,6 @@ export function SettingsPage() {
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                         Settings
                     </h1>
-                </div>
-
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <Updater />
                 </div>
             </div>
         </div>

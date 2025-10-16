@@ -1,0 +1,120 @@
+import { platform as tauriPlatform } from '@tauri-apps/plugin-os'
+
+/**
+ * Platform detection utilities using Tauri OS plugin for accurate platform detection
+ */
+
+export type Platform =
+    | 'android'
+    | 'ios'
+    | 'windows'
+    | 'macos'
+    | 'linux'
+    | 'mobile-web'
+
+export interface PlatformInfo {
+    platform: Platform
+    isMobile: boolean
+    isDesktop: boolean
+    isAndroid: boolean
+    isIOS: boolean
+    isTauri: boolean
+    userAgent: string
+}
+
+/**
+ * Detect the current platform using Tauri OS plugin when available, fallback to user agent
+ */
+export function detectPlatform(): PlatformInfo {
+    const isTauri = typeof window !== 'undefined' && '__TAURI__' in window
+    let platform: Platform
+    let isAndroid = false
+    let isIOS = false
+
+    const currentPlatform = tauriPlatform()
+
+    switch (currentPlatform) {
+        case 'android':
+            platform = 'android'
+            isAndroid = true
+            break
+        case 'ios':
+            platform = 'ios'
+            isIOS = true
+            break
+        case 'windows':
+            platform = 'windows'
+            break
+        case 'macos':
+            platform = 'macos'
+            break
+        case 'linux':
+            platform = 'linux'
+            break
+        default:
+            platform = 'mobile-web'
+    }
+
+    const isMobile = isAndroid || isIOS || platform === 'mobile-web'
+
+    return {
+        platform,
+        isMobile,
+        isDesktop: !isMobile && isTauri,
+        isAndroid,
+        isIOS,
+        isTauri,
+        userAgent: navigator.userAgent
+    }
+}
+
+/**
+ * Get the appropriate platform string for the updater API
+ * Always returns mobile platform strings since we only use mobile updater
+ */
+export async function getUpdaterPlatformString(): Promise<string> {
+    const platformInfo = await detectPlatform()
+
+    if (platformInfo.isAndroid) {
+        return 'android-aarch64'
+    } else if (platformInfo.isIOS) {
+        return 'darwin-aarch64' // iOS uses darwin-aarch64 in the API
+    } else {
+        // Default to android for mobile web and desktop
+        return 'android-aarch64'
+    }
+}
+
+/**
+ * Synchronous version for backward compatibility
+ * Uses user agent detection as fallback
+ */
+export function detectPlatformSync(): PlatformInfo {
+    const userAgent = navigator.userAgent.toLowerCase()
+    const isTauri = typeof window !== 'undefined' && '__TAURI__' in window
+
+    const isAndroid = /android/i.test(userAgent)
+    const isIOS = /iphone|ipad|ipod/i.test(userAgent)
+    const isMobile = isAndroid || isIOS || /mobile/i.test(userAgent)
+
+    let platform: Platform
+    if (isAndroid) {
+        platform = 'android'
+    } else if (isIOS) {
+        platform = 'ios'
+    } else if (isTauri) {
+        platform = 'mobile-web' // Will be overridden by async version
+    } else {
+        platform = 'mobile-web'
+    }
+
+    return {
+        platform,
+        isMobile,
+        isDesktop: !isMobile && isTauri,
+        isAndroid,
+        isIOS,
+        isTauri,
+        userAgent: navigator.userAgent
+    }
+}

@@ -11,9 +11,13 @@ pub async fn send_sms(
     phone_number: String,
     message: String,
 ) -> Result<String, String> {
-    log::info!("SMS Request - Phone: {}, Message: {}", phone_number, message);
+    log::info!(
+        "SMS Request - Phone: {}, Message: {}",
+        phone_number,
+        message
+    );
     log::debug!("API Key: {}", api_key);
-    
+
     let sender_id = "8809617613576";
     let url = format!(
         "https://bulksmsbd.net/api/smsapi?api_key={}&type=text&number={}&senderid={}&message={}",
@@ -41,18 +45,25 @@ pub async fn send_sms(
         202 => {
             log::info!("SMS sent successfully to {}", phone_number);
             Ok("SMS sent successfully".to_string())
-        },
+        }
         1001 => {
             log::error!("Invalid phone number: {}", phone_number);
             Err("Invalid phone number".to_string())
-        },
+        }
         1006 => {
             log::error!("SMS send failed for {}", phone_number);
             Err("SMS send failed".to_string())
-        },
+        }
         _ => {
-            log::error!("Unknown error code: {} for {}", sms_response.response_code, phone_number);
-            Err(format!("Unknown error code: {}", sms_response.response_code))
-        },
+            log::error!(
+                "Unknown error code: {} for {}",
+                sms_response.response_code,
+                phone_number
+            );
+            Err(format!(
+                "Unknown error code: {}",
+                sms_response.response_code
+            ))
+        }
     }
 }

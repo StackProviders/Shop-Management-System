@@ -9,6 +9,32 @@
     "core:default",
     "process:default",
     "shell:default",
-    "store:default"
+    "store:default",
+    "os:default",
+    "upload:default",
+    "fs:default",
+    {
+      "identifier": "http:default",
+      "allow": [{ "url": "https://*.stackproviders.workers.dev" }]
+    },
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        { "path": "$DOWNLOAD" },
+        { "path": "$DOWNLOAD/**/*" },
+        { "path": "$TEMP" },
+        { "path": "$TEMP/**/*" }
+      ]
+    },
+    {
+      "identifier": "shell:allow-open",
+      "allow": [
+        { "url": "file://**/*.apk" },
+        { "url": "file://**/*.exe" },
+        { "url": "file://**/*.dmg" },
+        { "url": "file://**/*.app" },
+        { "url": "file://**/*" }
+      ]
+    }
   ]
 }
