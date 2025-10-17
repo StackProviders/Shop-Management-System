@@ -2,27 +2,29 @@ import './global.css'
 
 import AppRouter from '@/app/router'
 import AppProvider from '@/app/provider'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { checkForAppUpdates } from '@/lib/updater'
 import { detectPlatform } from '@/utils/platform-detection'
 import { MobileUpdaterProvider } from '@/components/providers/mobile-updater-provider'
 
 export default function App() {
-    const { isDesktop, isMobile } = detectPlatform()
+    const { isDesktop, isMobile } = useMemo(() => detectPlatform(), [])
 
     useEffect(() => {
         if (isDesktop) {
             checkForAppUpdates(false)
         }
-    }, [])
+    }, [isDesktop])
 
-    console.log({ isDesktop, isMobile })
+    const content = <AppRouter />
 
     return (
         <AppProvider>
-            <MobileUpdaterProvider>
-                <AppRouter />
-            </MobileUpdaterProvider>
+            {isMobile ? (
+                <MobileUpdaterProvider>{content}</MobileUpdaterProvider>
+            ) : (
+                content
+            )}
         </AppProvider>
     )
 }

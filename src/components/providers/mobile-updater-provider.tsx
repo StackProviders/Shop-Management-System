@@ -3,7 +3,9 @@ import {
     useContext,
     useEffect,
     useState,
-    ReactNode
+    ReactNode,
+    useMemo,
+    useCallback
 } from 'react'
 import { mobileUpdater, MobileUpdaterState } from '@/services/mobile-updater'
 import { Button } from '@/components/ui/button'
@@ -59,85 +61,87 @@ export function MobileUpdaterProvider({
     const [isOnline, setIsOnline] = useState(navigator.onLine)
 
     useEffect(() => {
-        // Subscribe to updater state changes
-        const unsubscribe = mobileUpdater.subscribe((newState) => {
-            setState(newState)
-        })
+        const unsubscribe = mobileUpdater.subscribe(setState)
 
-        // Listen for online/offline events
         const handleOnline = () => setIsOnline(true)
         const handleOffline = () => setIsOnline(false)
 
         window.addEventListener('online', handleOnline)
         window.addEventListener('offline', handleOffline)
 
-        // Check if app was updated on mount
         mobileUpdater.showUpdateSuccessMessage()
-
-        // Enable auto-check on mount only if online
-        if (isOnline) {
-            mobileUpdater.setEnabled(true)
-        } else {
-            mobileUpdater.setEnabled(false)
-        }
+        mobileUpdater.setEnabled(navigator.onLine)
 
         return () => {
             unsubscribe()
             window.removeEventListener('online', handleOnline)
             window.removeEventListener('offline', handleOffline)
         }
+    }, [])
+
+    useEffect(() => {
+        mobileUpdater.setEnabled(isOnline)
     }, [isOnline])
 
-    const checkForUpdates = async () => {
+    const checkForUpdates = useCallback(async () => {
         try {
             await mobileUpdater.checkForUpdates()
         } catch (error) {
             console.error('Failed to check for updates:', error)
         }
-    }
+    }, [])
 
-    const downloadAndInstall = async () => {
+    const downloadAndInstall = useCallback(async () => {
         try {
             await mobileUpdater.downloadUpdate()
         } catch (error) {
             console.error('Failed to download update:', error)
         }
-    }
+    }, [])
 
-    const installUpdate = async () => {
+    const installUpdate = useCallback(async () => {
         try {
             await mobileUpdater.installUpdate()
         } catch (error) {
             console.error('Failed to install update:', error)
         }
-    }
+    }, [])
 
-    const setEnabled = (enabled: boolean) => {
+    const setEnabled = useCallback((enabled: boolean) => {
         mobileUpdater.setEnabled(enabled)
-    }
+    }, [])
 
-    const clearDownloadedState = () => {
+    const clearDownloadedState = useCallback(() => {
         mobileUpdater.clearDownloadedState()
-    }
+    }, [])
 
-    const contextValue: MobileUpdaterContextType = {
-        state,
-        checkForUpdates,
-        downloadAndInstall,
-        installUpdate,
-        setEnabled,
-        clearDownloadedState,
-        isChecking: state.status === 'checking',
-        isDownloading: state.status === 'downloading',
-        isInstalling: state.status === 'installing',
-        hasUpdate: state.status === 'available',
-        isDownloaded: state.status === 'downloaded',
-        hasError: state.status === 'error',
-        isUpToDate: state.status === 'up-to-date'
-    }
+    const contextValue = useMemo<MobileUpdaterContextType>(
+        () => ({
+            state,
+            checkForUpdates,
+            downloadAndInstall,
+            installUpdate,
+            setEnabled,
+            clearDownloadedState,
+            isChecking: state.status === 'checking',
+            isDownloading: state.status === 'downloading',
+            isInstalling: state.status === 'installing',
+            hasUpdate: state.status === 'available',
+            isDownloaded: state.status === 'downloaded',
+            hasError: state.status === 'error',
+            isUpToDate: state.status === 'up-to-date'
+        }),
+        [
+            state,
+            checkForUpdates,
+            downloadAndInstall,
+            installUpdate,
+            setEnabled,
+            clearDownloadedState
+        ]
+    )
 
-    // Helper functions for UI
-    const getStatusIcon = () => {
+    const getStatusIcon = useMemo(() => {
         if (state.status === 'checking')
             return <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
         if (state.status === 'available')
@@ -151,9 +155,9 @@ export function MobileUpdaterProvider({
         if (state.status === 'error')
             return <AlertCircle className="h-5 w-5 text-red-500" />
         return <Smartphone className="h-5 w-5 text-blue-500" />
-    }
+    }, [state.status])
 
-    const getStatusText = () => {
+    const getStatusText = useMemo(() => {
         if (state.status === 'checking') return 'Checking for updates...'
         if (state.status === 'available')
             return `Update available: v${state.update?.version}`
@@ -164,9 +168,15 @@ export function MobileUpdaterProvider({
         if (state.status === 'installing') return 'Installing update...'
         if (state.status === 'error') return `Error: ${state.error}`
         return 'App Updates'
-    }
+    }, [
+        state.status,
+        state.update?.version,
+        state.progress,
+        state.downloadedVersion,
+        state.error
+    ])
 
-    const formatDate = (dateString: string) => {
+    const formatDate = useCallback((dateString: string) => {
         try {
             return new Date(dateString).toLocaleDateString('en-US', {
                 year: 'numeric',
@@ -176,22 +186,26 @@ export function MobileUpdaterProvider({
         } catch {
             return dateString
         }
-    }
+    }, [])
 
-    const isButtonDisabled =
-        state.status === 'checking' ||
-        state.status === 'downloading' ||
-        state.status === 'installing'
-
-    // Only show UI when updates are available, downloading, downloaded, or installing
-    // Don't show when up-to-date, idle, or offline
-    const shouldShowUI =
-        (state.status === 'available' ||
+    const isButtonDisabled = useMemo(
+        () =>
+            state.status === 'checking' ||
             state.status === 'downloading' ||
-            state.status === 'downloaded' ||
-            state.status === 'installing' ||
-            state.status === 'error') &&
-        isOnline
+            state.status === 'installing',
+        [state.status]
+    )
+
+    const shouldShowUI = useMemo(
+        () =>
+            (state.status === 'available' ||
+                state.status === 'downloading' ||
+                state.status === 'downloaded' ||
+                state.status === 'installing' ||
+                state.status === 'error') &&
+            isOnline,
+        [state.status, isOnline]
+    )
 
     return (
         <MobileUpdaterContext.Provider value={contextValue}>
@@ -223,10 +237,10 @@ export function MobileUpdaterProvider({
                         <CardContent className="space-y-3">
                             {/* Status display */}
                             <div className="flex items-center space-x-2 p-2 border rounded-lg bg-gray-50 dark:bg-gray-800">
-                                {getStatusIcon()}
+                                {getStatusIcon}
                                 <div className="flex-1">
                                     <p className="text-xs font-medium">
-                                        {getStatusText()}
+                                        {getStatusText}
                                     </p>
                                     {state.progress !== undefined &&
                                         state.status === 'downloading' && (

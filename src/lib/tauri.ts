@@ -10,8 +10,6 @@ export const sendSMS = async (
         throw new Error('All parameters must be non-empty strings')
     }
 
-    console.log({ apiKey, phoneNumber, message })
-
     await invoke('send_sms', { apiKey, phoneNumber, message })
 }
 
