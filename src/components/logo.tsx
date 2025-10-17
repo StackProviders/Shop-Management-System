@@ -2,12 +2,21 @@ import darkLogo from '@/assets/logo/dark-logo.svg'
 import lightLogo from '@/assets/logo/light-logo.svg'
 import { useTheme } from '@/components/providers/theme-provider'
 import { cn } from '@/lib/utils'
-import { useEffect, useState } from 'react'
+import { useDeferredValue, useSyncExternalStore } from 'react'
 
 interface LogoProps {
     logoClassName?: string
     size?: 'sm' | 'md' | 'lg'
     showTagline?: boolean
+}
+
+const getSystemTheme = () =>
+    window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+
+const subscribe = (callback: () => void) => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    mediaQuery.addEventListener('change', callback)
+    return () => mediaQuery.removeEventListener('change', callback)
 }
 
 export default function Logo({
@@ -16,11 +25,13 @@ export default function Logo({
     showTagline = false
 }: LogoProps) {
     const { theme } = useTheme()
-    const [mounted, setMounted] = useState(false)
-
-    useEffect(() => {
-        setMounted(true)
-    }, [])
+    const systemTheme = useSyncExternalStore(
+        subscribe,
+        getSystemTheme,
+        () => 'light'
+    )
+    const resolvedTheme = theme === 'system' ? systemTheme : theme
+    const deferredTheme = useDeferredValue(resolvedTheme)
 
     const sizeClasses = {
         sm: 'size-6',
@@ -34,17 +45,16 @@ export default function Logo({
         lg: 'text-2xl md:text-3xl'
     }
 
-    if (!mounted) {
-        return <div className={sizeClasses[size]} />
-    }
-
     return (
         <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-1.5">
                 <img
-                    src={theme === 'dark' ? lightLogo : darkLogo}
+                    src={deferredTheme === 'dark' ? darkLogo : lightLogo}
                     alt="Stack Provider Logo"
-                    className={sizeClasses[size]}
+                    className={cn(
+                        sizeClasses[size],
+                        'transition-opacity duration-200'
+                    )}
                 />
                 <div
                     className={cn(

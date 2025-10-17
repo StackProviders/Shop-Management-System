@@ -4,12 +4,13 @@ import { ShopSelectionPage } from '@/components/shop/shop-selection'
 import { ShopDashboard } from '@/components/shop/shop-dashboard'
 import { Suspense } from 'react'
 import AuthPage from '@/app/routes/auth'
+import HomePage from '@/app/routes/home'
 
 const createAppRouter = () =>
     createBrowserRouter([
         {
             path: '/',
-            lazy: () => import('@/app/routes/home')
+            element: <HomePage />
         },
         {
             path: '/auth',

@@ -2,9 +2,12 @@ import { check } from '@tauri-apps/plugin-updater'
 import { ask, message } from '@tauri-apps/plugin-dialog'
 import { relaunch, exit } from '@tauri-apps/plugin-process'
 
-export async function checkForAppUpdates(onUserClick: boolean = false) {
+export async function checkForAppUpdates(onUserClick: false) {
     const update = await check()
-    if (update?.available) {
+    if (!update?.available) {
+        console.log('No update available')
+    } else if (update?.available) {
+        console.log('Update available!', update.version, update.body)
         const yes = await ask(
             `Update to ${update.version} is available!\n\nRelease notes: ${update.body}`,
             {
