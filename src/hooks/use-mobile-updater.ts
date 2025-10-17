@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { mobileUpdater, MobileUpdaterState } from '../services/mobile-updater'
+import { mobileUpdater, MobileUpdaterState } from '@/services/mobile-updater'
 
 export function useMobileUpdater() {
     const [state, setState] = useState<MobileUpdaterState>(() =>

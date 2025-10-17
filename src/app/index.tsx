@@ -5,7 +5,7 @@ import AppProvider from '@/app/provider'
 import { useEffect } from 'react'
 import { checkForAppUpdates } from '@/lib/updater'
 import { detectPlatform } from '@/utils/platform-detection'
-import { MobileUpdaterProvider } from '@/features/updater/context/mobile-updater-context'
+import { MobileUpdaterProvider } from '@/components/providers/mobile-updater-provider'
 
 export default function App() {
     const { isDesktop, isMobile } = detectPlatform()

@@ -12,7 +12,6 @@
     "barcode-scanner:allow-cancel",
     "barcode-scanner:allow-vibrate",
     "barcode-scanner:allow-check-permissions",
-    "barcode-scanner:allow-request-permissions",
-    "shell:allow-execute"
+    "barcode-scanner:allow-request-permissions"
  ]
 }

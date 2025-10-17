@@ -13,6 +13,7 @@
     "os:default",
     "upload:default",
     "fs:default",
+    "shell:allow-execute",
     {
       "identifier": "http:default",
       "allow": [{ "url": "https://*.stackproviders.workers.dev" }]
@@ -34,6 +35,22 @@
         { "url": "file://**/*.dmg" },
         { "url": "file://**/*.app" },
         { "url": "file://**/*" }
+      ]
+    },
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        { "url": "file:*" },
+        { "url": "https://*" },
+        { "url": "http://*" }
+      ]
+    },
+    {
+      "identifier": "opener:allow-open-path",
+      "allow": [
+        { "path": "$DOWNLOAD/Shop-Management-System-*.apk" },
+        { "path": "$APPDATA/files/Download/Shop-Management-System-*.apk" },
+        { "path": "$APPDATA/Download/Shop-Management-System-*.apk" }
       ]
     }
   ]

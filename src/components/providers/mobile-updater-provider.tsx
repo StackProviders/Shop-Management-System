@@ -5,7 +5,7 @@ import {
     useState,
     ReactNode
 } from 'react'
-import { mobileUpdater, MobileUpdaterState } from '../services/mobile-updater'
+import { mobileUpdater, MobileUpdaterState } from '@/services/mobile-updater'
 import { Button } from '@/components/ui/button'
 import {
     Card,

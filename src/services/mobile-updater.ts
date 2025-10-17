@@ -5,7 +5,7 @@ import { download } from '@tauri-apps/plugin-upload'
 import { exists, remove } from '@tauri-apps/plugin-fs'
 import { downloadDir } from '@tauri-apps/api/path'
 import { join } from '@tauri-apps/api/path'
-import { Command } from '@tauri-apps/plugin-shell'
+import { openPath, openUrl } from '@tauri-apps/plugin-opener'
 
 export interface MobileUpdateInfo {
     version: string
@@ -391,52 +391,47 @@ export class MobileUpdaterService {
             this.updateState({ status: 'installing', error: undefined })
 
             const currentPlatform = await getCurrentPlatform()
-            const downloadedFilePath = this.currentState.downloadedFilePath
+            // const downloadedFilePath = this.currentState.downloadedFilePath
 
             if (currentPlatform === 'android-aarch64') {
-                if (downloadedFilePath) {
+                // Prefer installing from the already-downloaded APK using Opener's openPath
+                const localPath = this.currentState.downloadedFilePath
+                console.log('localPath', localPath)
+                if (localPath) {
                     try {
-                        const fileExists = await exists(downloadedFilePath)
-                        if (!fileExists) {
+                        const fileExists = await exists(localPath)
+                        if (!fileExists)
                             throw new Error('Downloaded file not found')
-                        }
-
-                        // Use Android intent to install APK
-                        const command = Command.create('am', [
-                            'start',
-                            '-a',
-                            'android.intent.action.VIEW',
-                            '-t',
-                            'application/vnd.android.package-archive',
-                            '-d',
-                            `file://${downloadedFilePath}`,
-                            '-f',
-                            '0x10000000'
-                        ])
-
-                        await command.execute()
+                        await openPath(localPath)
                         this.showInstallNotification()
+                        setTimeout(() => {
+                            this.clearDownloadedState()
+                        }, 2000)
+                        return
+                    } catch (autoInstallError) {
+                        console.warn(
+                            'Local install failed, falling back to URL:',
+                            autoInstallError
+                        )
+                    }
+                }
 
+                // Fallback: open the HTTPS download URL so the system package installer handles it.
+                if (this.currentState.downloadUrl) {
+                    try {
+                        await openUrl(this.currentState.downloadUrl)
+                        this.showInstallNotification()
                         setTimeout(() => {
                             this.clearDownloadedState()
                         }, 2000)
                     } catch (autoInstallError) {
                         console.error('Installation failed:', autoInstallError)
-                        alert(
-                            `Installation failed. Please install manually from Downloads folder: Shop-Management-System-${this.currentState.update?.version || 'latest'}.apk`
-                        )
+                        window.open(this.currentState.downloadUrl, '_blank')
                         this.updateState({
                             status: 'downloaded',
                             error: undefined
                         })
                     }
-                } else if (this.currentState.downloadUrl) {
-                    // Fallback to direct URL download
-                    window.open(this.currentState.downloadUrl, '_blank')
-                    this.updateState({
-                        status: 'downloaded',
-                        error: undefined
-                    })
                 }
             } else if (currentPlatform === 'darwin-aarch64') {
                 // For iOS, redirect to App Store or show instructions
