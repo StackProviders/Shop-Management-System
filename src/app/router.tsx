@@ -3,7 +3,7 @@ import { ProtectedRoute, PublicRoute } from '@/components/auth/auth-guard'
 import { ShopSelectionPage } from '@/components/shop/shop-selection'
 import { ShopDashboard } from '@/components/shop/shop-dashboard'
 import { Suspense } from 'react'
-import AuthPage from '@/components/auth/auth-page'
+import AuthPage from '@/app/routes/auth'
 
 const createAppRouter = () =>
     createBrowserRouter([
