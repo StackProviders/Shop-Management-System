@@ -1,7 +1,6 @@
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import { ProtectedRoute, PublicRoute } from '@/components/auth/auth-guard'
-import { ShopSelectionPage } from '@/components/shop/shop-selection'
-import { ShopDashboard } from '@/components/shop/shop-dashboard'
+import ShopsPage from '@/app/routes/shops'
 import { Suspense } from 'react'
 import AuthPage from '@/app/routes/auth'
 import HomePage from '@/app/routes/home'
@@ -26,15 +25,7 @@ const createAppRouter = () =>
             path: '/shops',
             element: (
                 <ProtectedRoute>
-                    <ShopSelectionPage />
-                </ProtectedRoute>
-            )
-        },
-        {
-            path: '/dashboard',
-            element: (
-                <ProtectedRoute>
-                    <ShopDashboard />
+                    <ShopsPage />
                 </ProtectedRoute>
             )
         },

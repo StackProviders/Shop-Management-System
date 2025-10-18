@@ -1,6 +1,4 @@
-import { LogoutButton } from '../auth'
-
-export function ShopSelectionPage() {
+export default function ShopsPage() {
     return (
         <div className="min-h-screen w-full bg-background relative">
             {/*  Diagonal Cross Grid Background */}
@@ -22,9 +20,7 @@ export function ShopSelectionPage() {
       `
                 }}
             />
-            <div className="relative z-10">
-                <LogoutButton variant="destructive" size="lg" />
-            </div>
+            <div className="relative z-10"></div>
         </div>
     )
 }
