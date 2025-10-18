@@ -1,3 +1,5 @@
+import ShopDashboard from '@/components/shop/shop-dashboard'
+
 export default function ShopsPage() {
     return (
         <div className="min-h-screen w-full bg-background relative">
@@ -20,7 +22,11 @@ export default function ShopsPage() {
       `
                 }}
             />
-            <div className="relative z-10"></div>
+            <div className="relative z-10 flex min-h-screen justify-center items-start sm:items-center p-2 sm:p-4">
+                <div className="w-full max-w-full sm:max-w-7xl">
+                    <ShopDashboard />
+                </div>
+            </div>
         </div>
     )
 }

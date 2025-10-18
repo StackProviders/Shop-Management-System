@@ -6,6 +6,7 @@ import { AuthProvider } from '@/hooks/use-auth'
 import { ShopProvider } from '@/hooks/use-shop'
 import { ThemeProvider } from '@/components/providers/theme-provider'
 import { ThemeSwitcher } from '@/components/theme-switcher'
+import { Toaster } from '@/components/ui/sonner'
 
 export default function AppProvider({ children }: { children: ReactNode }) {
     return (
@@ -16,7 +17,8 @@ export default function AppProvider({ children }: { children: ReactNode }) {
                         <AuthProvider>
                             <ShopProvider>
                                 {children}
-                                <ThemeSwitcher className="absolute bottom-4 right-4" />
+                                <ThemeSwitcher className="fixed bottom-2 sm:bottom-4 right-2 sm:right-4 z-[9999]" />
+                                <Toaster />
                             </ShopProvider>
                         </AuthProvider>
                     </ThemeProvider>
