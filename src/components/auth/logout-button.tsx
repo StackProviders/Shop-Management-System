@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useAuth } from '@/hooks/use-auth'
-import { Button } from '@/components/ui/button'
-import { LogOut, Loader2 } from 'lucide-react'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { LogOut } from 'lucide-react'
+import { VariantProps } from 'class-variance-authority'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -14,23 +15,20 @@ import {
     AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
 import { useNavigate } from 'react-router'
+import { Spinner } from '@/components/ui/spinner'
 
 interface LogoutButtonProps {
-    variant?:
-        | 'default'
-        | 'destructive'
-        | 'outline'
-        | 'secondary'
-        | 'ghost'
-        | 'link'
-    size?: 'default' | 'sm' | 'lg' | 'icon'
+    variant?: VariantProps<typeof buttonVariants>['variant']
+    size?: VariantProps<typeof buttonVariants>['size']
+    mode?: VariantProps<typeof buttonVariants>['mode']
     showIcon?: boolean
     showConfirm?: boolean
 }
 
 export function LogoutButton({
     variant = 'ghost',
-    size = 'default',
+    size = 'md',
+    mode,
     showIcon = true,
     showConfirm = true
 }: LogoutButtonProps) {
@@ -38,32 +36,44 @@ export function LogoutButton({
     const navigate = useNavigate()
     const [isLoggingOut, setIsLoggingOut] = useState(false)
 
-    const handleLogout = async () => {
+    const handleLogout = useCallback(async () => {
         setIsLoggingOut(true)
         try {
             await logout()
-            navigate('/auth')
+            navigate('/auth', { replace: true })
         } catch (error) {
             console.error('Logout failed:', error)
             setIsLoggingOut(false)
         }
-    }
+    }, [logout, navigate])
+
+    const isDisabled = isLoggingOut || authState.loading
+    const isIconSize = size === 'icon'
+
+    const buttonContent = useMemo(
+        () => (
+            <>
+                {isLoggingOut ? (
+                    <Spinner className="size-4" />
+                ) : (
+                    showIcon && <LogOut className="size-4" />
+                )}
+                {!isIconSize && <span>Logout</span>}
+            </>
+        ),
+        [isLoggingOut, showIcon, isIconSize]
+    )
 
     const LogoutBtn = (
         <Button
             variant={variant}
             size={size}
+            mode={mode}
             onClick={showConfirm ? undefined : handleLogout}
-            disabled={isLoggingOut || authState.loading}
+            disabled={isDisabled}
+            aria-label="Logout"
         >
-            {isLoggingOut ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-                showIcon && <LogOut className="h-4 w-4" />
-            )}
-            {size !== 'icon' && (
-                <span className={showIcon ? 'ml-2' : ''}>Logout</span>
-            )}
+            {buttonContent}
         </Button>
     )
 
@@ -83,19 +93,20 @@ export function LogoutButton({
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel disabled={isLoggingOut}>
+                        Cancel
+                    </AlertDialogCancel>
                     <AlertDialogAction
                         onClick={handleLogout}
-                        disabled={isLoggingOut}
+                        disabled={isDisabled}
+                        variant="destructive"
                     >
                         {isLoggingOut ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Logging out...
-                            </>
+                            <Spinner className="size-4" />
                         ) : (
-                            'Logout'
+                            showIcon && <LogOut className="size-4" />
                         )}
+                        <span>Logout</span>
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
