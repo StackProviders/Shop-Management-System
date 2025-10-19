@@ -11,17 +11,19 @@ import {
     FieldSet
 } from '@/components/ui/field'
 import { toast } from 'sonner'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { shopSchema, type ShopFormData } from '@/lib/validations'
+import { Shop, ShopStatus } from '@/types/shop'
 
 interface ShopModalProps {
     mode?: 'create' | 'edit'
-    initialData?: { id?: string; name: string }
+    initialData?: Shop
     trigger?: React.ReactNode
     open?: boolean
     onOpenChange?: (open: boolean) => void
-    onSuccess?: () => void
+    onCreate?: (data: ShopFormData) => Promise<void>
+    onUpdate?: (shopId: string, data: ShopFormData) => Promise<void>
 }
 
 export default function ShopModal({
@@ -30,7 +32,8 @@ export default function ShopModal({
     trigger,
     open: controlledOpen,
     onOpenChange,
-    onSuccess
+    onCreate,
+    onUpdate
 }: ShopModalProps) {
     const [internalOpen, setInternalOpen] = useState(false)
     const open = controlledOpen ?? internalOpen
@@ -38,45 +41,53 @@ export default function ShopModal({
     const form = useForm<ShopFormData>({
         resolver: zodResolver(shopSchema),
         defaultValues: {
-            name: ''
+            shopname: '',
+            status: ShopStatus.ACTIVE
         }
     })
 
     useEffect(() => {
         if (open) {
             if (initialData) {
-                form.reset({ name: initialData.name })
+                form.reset({
+                    shopname: initialData.shopname,
+                    logo_url: initialData.logo_url || '',
+                    phone_number: initialData.phone_number || '',
+                    email: initialData.email || '',
+                    shop_type: initialData.shop_type || '',
+                    shop_category: initialData.shop_category || '',
+                    shop_address: initialData.shop_address || '',
+                    signature: initialData.signature || '',
+                    status: initialData.status
+                })
             } else {
-                form.reset({ name: '' })
+                form.reset()
             }
         }
     }, [open, initialData, form])
 
-    const onSubmit = async (data: ShopFormData) => {
+    const onSubmit: SubmitHandler<ShopFormData> = async (data) => {
         try {
-            // Simulate API call - replace with actual API
-            await new Promise((resolve) => setTimeout(resolve, 500))
-
             if (mode === 'create') {
-                // TODO: Replace with actual create API call
-                // await createShop({ name: data.name })
+                await onCreate?.(data)
                 toast.success('Shop created', {
-                    description: `"${data.name}" has been created successfully.`
+                    description: `"${data.shopname}" has been created successfully.`
                 })
             } else {
-                // TODO: Replace with actual update API call
-                // await updateShop(initialData?.id, { name: data.name })
+                if (!initialData?.id) throw new Error('Shop ID is required')
+                await onUpdate?.(initialData.id, data)
                 toast.success('Shop updated', {
-                    description: `Shop name has been updated to "${data.name}".`
+                    description: `Shop has been updated successfully.`
                 })
             }
 
             setOpen(false)
             form.reset()
-            onSuccess?.()
-        } catch {
+        } catch (err) {
             toast.error(
-                `Failed to ${mode === 'create' ? 'create' : 'update'} shop. Please try again.`
+                err instanceof Error
+                    ? err.message
+                    : `Failed to ${mode === 'create' ? 'create' : 'update'} shop`
             )
         }
     }
@@ -100,16 +111,16 @@ export default function ShopModal({
                 <FieldSet>
                     <FieldGroup>
                         <Controller
-                            name="name"
+                            name="shopname"
                             control={form.control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor="shop-name">
+                                    <FieldLabel htmlFor="shopname">
                                         Shop Name
                                     </FieldLabel>
                                     <Input
                                         {...field}
-                                        id="shop-name"
+                                        id="shopname"
                                         type="text"
                                         placeholder="Enter shop name"
                                         disabled={form.formState.isSubmitting}

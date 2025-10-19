@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useMemo, ReactNode } from 'react'
 import {
     Search,
     RefreshCw,
@@ -6,7 +6,8 @@ import {
     Store,
     X,
     Inbox,
-    Plus
+    Plus,
+    Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input, InputWrapper } from '@/components/ui/input'
@@ -16,16 +17,46 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Heading4 } from '@/components/ui/typography'
 import { LogoutButton } from '../auth'
 import { useAuth } from '@/hooks/use-auth'
+import { useShops } from '@/hooks/use-shops'
+import { Shop } from '@/types/shop'
+import { ShopFormData } from '@/lib/validations'
+import { toast } from 'sonner'
+
+const EmptyState = ({
+    title,
+    description,
+    action
+}: {
+    title: string
+    description: string
+    action?: ReactNode
+}) => (
+    <div className="flex flex-col items-center gap-3 p-6 text-center">
+        <Inbox className="size-12 text-muted-foreground" />
+        <div>
+            <p className="font-medium text-sm">{title}</p>
+            <p className="text-muted-foreground text-xs">{description}</p>
+        </div>
+        {action}
+    </div>
+)
+
+const LoadingState = () => (
+    <div className="flex justify-center items-center p-12">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+    </div>
+)
 
 export default function ShopDashboard() {
     const [searchQuery, setSearchQuery] = useState('')
     const [createModalOpen, setCreateModalOpen] = useState(false)
     const [editModalOpen, setEditModalOpen] = useState(false)
-    const [editingShop, setEditingShop] = useState<
-        { id: string; name: string } | undefined
-    >()
+    const [editingShop, setEditingShop] = useState<Shop | undefined>()
     const inputRef = useRef<HTMLInputElement>(null)
     const { authState } = useAuth()
+    const { shops, loading, refresh, create, update, remove } = useShops(
+        authState.user?.uid
+    )
 
     const handleClearInput = () => {
         setSearchQuery('')
@@ -34,42 +65,74 @@ export default function ShopDashboard() {
         }
     }
 
-    const handleEditShop = (shopId: string) => {
-        const shop = shops.find((s) => s.id === shopId)
-        if (shop) {
-            setEditingShop({ id: shop.id, name: shop.name })
-            setEditModalOpen(true)
+    const handleEditShop = async (shopId: string) => {
+        const shop = shops.find((s) => s.shopId === shopId)
+        if (!shop) return
+
+        try {
+            const { getShop } = await import('@/services/shop')
+            const shopData = await getShop(shopId)
+            if (shopData) {
+                setEditingShop(shopData)
+                setEditModalOpen(true)
+            }
+        } catch {
+            toast.error('Failed to load shop details')
         }
     }
 
-    // Mock data for shops
-    const shops = [
-        {
-            id: '1',
-            name: 'Shakib Electronics',
-            status: 'current',
-            syncStatus: 'off' as const,
-            isCurrent: true,
-            description:
-                'Electronics and gadgets store with latest technology products'
-        },
-        {
-            id: '2',
-            name: 'Tech Solutions Ltd',
-            status: 'active',
-            syncStatus: 'on' as const,
-            isCurrent: false,
-            description: 'Professional IT services and software solutions'
-        },
-        {
-            id: '3',
-            name: 'Digital products and online services marketplace',
-            status: 'active',
-            syncStatus: 'on' as const,
-            isCurrent: false,
-            description: 'Digital products and online services marketplace'
+    const handleDeleteShop = async (shopId: string) => {
+        try {
+            await remove(shopId)
+            toast.success('Shop deleted successfully')
+        } catch {
+            toast.error('Failed to delete shop')
         }
-    ]
+    }
+
+    const handleCreateShop = async (data: ShopFormData) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { status, ...shopData } = data
+        await create(shopData)
+    }
+
+    const handleUpdateShop = async (shopId: string, data: ShopFormData) => {
+        await update(shopId, data)
+    }
+
+    const { myShops, sharedShops } = useMemo(() => {
+        const filtered = searchQuery
+            ? shops.filter((shop) =>
+                  shop.shopName
+                      .toLowerCase()
+                      .includes(searchQuery.toLowerCase())
+              )
+            : shops
+
+        return {
+            myShops: filtered.filter((shop) => shop.isOwner),
+            sharedShops: filtered.filter((shop) => !shop.isOwner)
+        }
+    }, [shops, searchQuery])
+
+    const renderShopList = (shopList: typeof shops) => (
+        <div className="space-y-3">
+            {shopList.map((shop) => (
+                <ShopItem
+                    key={shop.shopId}
+                    shop={{
+                        id: shop.shopId,
+                        name: shop.shopName,
+                        status: 'active',
+                        isCurrent: false
+                    }}
+                    onOpen={(shopId) => console.log('Opening shop:', shopId)}
+                    onEdit={handleEditShop}
+                    onDelete={handleDeleteShop}
+                />
+            ))}
+        </div>
+    )
 
     return (
         <>
@@ -101,7 +164,7 @@ export default function ShopDashboard() {
                 </div>
 
                 {/* Main Content */}
-                <div className="p-4 sm:p-6 pt-2 sm:!pt-4">
+                <div className="p-4 sm:p-6 pt-2 sm:!pt-4 min-h-[400px]">
                     <Tabs
                         defaultValue="my_shop"
                         className="text-sm text-muted-foreground"
@@ -123,73 +186,47 @@ export default function ShopDashboard() {
                                 size="sm"
                                 mode="icon"
                                 className="mb-0.5"
+                                onClick={refresh}
+                                disabled={loading}
                             >
-                                <RefreshCw className="size-4" />
+                                <RefreshCw
+                                    className={`size-4 ${loading ? 'animate-spin' : ''}`}
+                                />
                             </Button>
                         </div>
                         <TabsContent value="shared_shop">
-                            <div className="flex flex-col items-center gap-3 p-6 text-center">
-                                <Inbox className="size-12 text-muted-foreground" />
-                                <div>
-                                    <p className="font-medium text-sm">
-                                        No items yet
-                                    </p>
-                                    <p className="text-muted-foreground text-xs">
-                                        Get started by creating your first item
-                                    </p>
-                                </div>
-                                <Button
-                                    size="sm"
-                                    onClick={() => setCreateModalOpen(true)}
-                                >
-                                    <Plus className="size-4" />
-                                    Create Shop
-                                </Button>
-                            </div>
+                            {loading ? (
+                                <LoadingState />
+                            ) : sharedShops.length === 0 ? (
+                                <EmptyState
+                                    title="No shared shops"
+                                    description="Shops shared with you will appear here"
+                                />
+                            ) : (
+                                renderShopList(sharedShops)
+                            )}
                         </TabsContent>
                         <TabsContent value="my_shop">
-                            {shops.length === 0 ? (
-                                <div className="flex flex-col items-center gap-3 p-6 text-center">
-                                    <Inbox className="size-12 text-muted-foreground" />
-                                    <div>
-                                        <p className="font-medium text-sm">
-                                            No shops yet
-                                        </p>
-                                        <p className="text-muted-foreground text-xs">
-                                            Create your first shop to get
-                                            started
-                                        </p>
-                                    </div>
-                                    <Button
-                                        size="sm"
-                                        onClick={() => setCreateModalOpen(true)}
-                                    >
-                                        <Plus className="size-4" />
-                                        Create Shop
-                                    </Button>
-                                </div>
+                            {loading ? (
+                                <LoadingState />
+                            ) : myShops.length === 0 ? (
+                                <EmptyState
+                                    title="No shops yet"
+                                    description="Create your first shop to get started"
+                                    action={
+                                        <Button
+                                            size="sm"
+                                            onClick={() =>
+                                                setCreateModalOpen(true)
+                                            }
+                                        >
+                                            <Plus className="size-4" />
+                                            Create Shop
+                                        </Button>
+                                    }
+                                />
                             ) : (
-                                <div className="space-y-3">
-                                    {shops.map((shop) => (
-                                        <ShopItem
-                                            key={shop.id}
-                                            shop={shop}
-                                            onOpen={(shopId) =>
-                                                console.log(
-                                                    'Opening shop:',
-                                                    shopId
-                                                )
-                                            }
-                                            onEdit={handleEditShop}
-                                            onDelete={(shopId) =>
-                                                console.log(
-                                                    'Deleting shop:',
-                                                    shopId
-                                                )
-                                            }
-                                        />
-                                    ))}
-                                </div>
+                                renderShopList(myShops)
                             )}
                         </TabsContent>
                     </Tabs>
@@ -212,28 +249,20 @@ export default function ShopDashboard() {
                             trigger={<Button>Create Shop</Button>}
                             open={createModalOpen}
                             onOpenChange={setCreateModalOpen}
-                            onSuccess={() => {
-                                setCreateModalOpen(false)
-                                console.log('Shop created successfully')
-                            }}
+                            onCreate={handleCreateShop}
                         />
                         <LogoutButton variant="destructive" />
                     </div>
                 </div>
             </div>
 
-            {/* Edit Shop Modal */}
-            {editModalOpen && (
+            {editModalOpen && editingShop && (
                 <CreateShop
                     mode="edit"
                     open={editModalOpen}
                     onOpenChange={setEditModalOpen}
                     initialData={editingShop}
-                    onSuccess={() => {
-                        setEditModalOpen(false)
-                        setEditingShop(undefined)
-                        console.log('Shop updated successfully')
-                    }}
+                    onUpdate={handleUpdateShop}
                 />
             )}
         </>

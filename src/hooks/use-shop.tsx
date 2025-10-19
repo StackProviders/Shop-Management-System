@@ -6,7 +6,7 @@ import {
     ReactNode
 } from 'react'
 import { getUserShops, createShop as createShopService } from '@/services/shop'
-import { UserShopAccess, Shop, ShopRole } from '@/types/shop'
+import { UserShopAccess, Shop } from '@/types/shop'
 import { useCurrentUser } from '@/hooks/use-user'
 
 interface ShopContextType {
@@ -62,20 +62,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     ) => {
         if (!user) throw new Error('User not authenticated')
 
-        const newShop = await createShopService({
-            ...shopData,
-            ownerId: user.uid,
-            members: [
-                {
-                    userId: user.uid,
-                    email: user.email ?? '',
-                    displayName: user.name ?? '',
-                    role: ShopRole.OWNER,
-                    joinedAt: new Date(),
-                    permissions: []
-                }
-            ]
-        })
+        const newShop = await createShopService(user.uid, shopData)
 
         // Refresh shops to include the new one
         await refreshShops()

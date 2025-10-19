@@ -179,7 +179,7 @@ export function OTPInput({
                     disabled={!canResend}
                     onClick={handleResend}
                     size="sm"
-                    variant="link"
+                    mode="link"
                 >
                     Resend Code
                 </Button>

@@ -18,13 +18,6 @@ export const ROLE_PERMISSIONS: Record<ShopRole, ShopPermission[]> = {
         { resource: 'reports', actions: ['read', 'write', 'delete'] },
         { resource: 'settings', actions: ['read', 'write'] }
     ],
-    [ShopRole.SALES_MANAGER]: [
-        { resource: 'shop', actions: ['read'] },
-        { resource: 'members', actions: ['read'] },
-        { resource: 'inventory', actions: ['read', 'write'] },
-        { resource: 'sales', actions: ['read', 'write', 'delete'] },
-        { resource: 'reports', actions: ['read', 'write'] }
-    ],
     [ShopRole.MANAGER]: [
         { resource: 'shop', actions: ['read'] },
         { resource: 'members', actions: ['read'] },
@@ -32,13 +25,7 @@ export const ROLE_PERMISSIONS: Record<ShopRole, ShopPermission[]> = {
         { resource: 'sales', actions: ['read', 'write'] },
         { resource: 'reports', actions: ['read', 'write'] }
     ],
-    [ShopRole.ACCOUNTING]: [
-        { resource: 'shop', actions: ['read'] },
-        { resource: 'sales', actions: ['read'] },
-        { resource: 'reports', actions: ['read', 'write'] },
-        { resource: 'billing', actions: ['read', 'write'] }
-    ],
-    [ShopRole.SALES_STAFF]: [
+    [ShopRole.STAFF]: [
         { resource: 'shop', actions: ['read'] },
         { resource: 'inventory', actions: ['read'] },
         { resource: 'sales', actions: ['read', 'write'] }
@@ -54,7 +41,7 @@ export const ROLE_PERMISSIONS: Record<ShopRole, ShopPermission[]> = {
 export function hasPermission(
     userPermissions: ShopPermission[],
     resource: string,
-    action: string
+    action: 'read' | 'write' | 'delete'
 ): boolean {
     return userPermissions.some(
         (permission) =>
@@ -76,21 +63,14 @@ export function canManageShop(role: ShopRole): boolean {
 }
 
 export function canAccessReports(role: ShopRole): boolean {
-    return [
-        ShopRole.OWNER,
-        ShopRole.ADMIN,
-        ShopRole.SALES_MANAGER,
-        ShopRole.MANAGER,
-        ShopRole.ACCOUNTING
-    ].includes(role)
+    return [ShopRole.OWNER, ShopRole.ADMIN, ShopRole.MANAGER].includes(role)
 }
 
 export function canAccessInventory(role: ShopRole): boolean {
     return [
         ShopRole.OWNER,
         ShopRole.ADMIN,
-        ShopRole.SALES_MANAGER,
         ShopRole.MANAGER,
-        ShopRole.SALES_STAFF
+        ShopRole.STAFF
     ].includes(role)
 }

@@ -1,56 +1,54 @@
 export enum ShopRole {
     OWNER = 'owner',
     ADMIN = 'admin',
-    SALES_MANAGER = 'sales_manager',
     MANAGER = 'manager',
-    ACCOUNTING = 'accounting',
-    SALES_STAFF = 'sales_staff',
+    STAFF = 'staff',
     VIEWER = 'viewer'
 }
 
-export interface ShopMember {
-    userId: string
-    email: string
-    displayName?: string
-    role: ShopRole
-    joinedAt: Date
-    permissions: ShopPermission[]
+export enum ShopStatus {
+    ACTIVE = 'active',
+    INACTIVE = 'inactive',
+    SUSPENDED = 'suspended'
 }
 
 export interface ShopPermission {
-    resource: string // e.g., 'inventory', 'sales', 'reports', 'settings'
-    actions: string[] // e.g., ['read', 'write', 'delete']
+    resource: string
+    actions: ('read' | 'write' | 'delete')[]
 }
 
 export interface Shop {
     id: string
-    name: string
-    description?: string
-    address?: string
-    phone?: string
+    shopname: string
+    logo_url?: string
+    phone_number?: string
     email?: string
-    logo?: string
-    ownerId: string
-    members: ShopMember[]
-    settings: ShopSettings
+    shop_type?: string
+    shop_category?: string
+    shop_address?: string
+    signature?: string
+    status: ShopStatus
+    created_userId: string
     createdAt: Date
     updatedAt: Date
 }
 
-export interface ShopSettings {
-    currency: string
-    timezone: string
-    businessHours: {
-        open: string
-        close: string
-        days: number[] // 0-6 (Sunday-Saturday)
-    }
-    features: {
-        inventory: boolean
-        sales: boolean
-        reports: boolean
-        multiLocation: boolean
-    }
+export interface ShopMember {
+    id: string
+    shopId: string
+    userId: string
+    role: ShopRole
+    permissions: ShopPermission[]
+    invitedBy: string
+    joinedAt: Date
+    createdAt: Date
+    updatedAt: Date
+}
+
+export interface ShopMemberWithUser extends ShopMember {
+    email?: string
+    displayName?: string
+    photoURL?: string
 }
 
 export interface UserShopAccess {
@@ -59,5 +57,4 @@ export interface UserShopAccess {
     role: ShopRole
     permissions: ShopPermission[]
     isOwner: boolean
-    isAdmin: boolean
 }

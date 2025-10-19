@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { MoreVertical, Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge, BadgeDot } from '@/components/ui/badge'
@@ -7,6 +8,16 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle
+} from '@/components/ui/alert-dialog'
 import {
     Item,
     ItemActions,
@@ -35,9 +46,16 @@ export default function ShopItem({
     onEdit,
     onDelete
 }: ShopItemProps) {
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+
     const getShopIcon = () => {
         // You can customize this based on shop type or category
         return <Store className="size-4" />
+    }
+
+    const handleDelete = () => {
+        onDelete?.(shop.id)
+        setDeleteDialogOpen(false)
     }
 
     return (
@@ -78,7 +96,7 @@ export default function ShopItem({
                     )}
                 </ItemContent>
 
-                <ItemActions className="flex flex-col sm:flex-row gap-2 sm:gap-1">
+                <ItemActions className="flex flex-col sm:flex-row gap-2">
                     <Button size="sm" onClick={() => onOpen?.(shop.id)}>
                         Open
                     </Button>
@@ -93,10 +111,12 @@ export default function ShopItem({
                             <DropdownMenuItem onClick={() => onEdit?.(shop.id)}>
                                 Rename
                             </DropdownMenuItem>
-                            <DropdownMenuItem>Open</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onOpen?.(shop.id)}>
+                                Open
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
-                                onClick={() => onDelete?.(shop.id)}
+                                onClick={() => setDeleteDialogOpen(true)}
                             >
                                 Delete
                             </DropdownMenuItem>
@@ -104,6 +124,30 @@ export default function ShopItem({
                     </DropdownMenu>
                 </ItemActions>
             </Item>
+
+            <AlertDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Shop</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete &ldquo;{shop.name}
+                            &rdquo;? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            variant="destructive"
+                            onClick={handleDelete}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

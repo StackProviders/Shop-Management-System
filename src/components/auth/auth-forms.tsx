@@ -260,7 +260,8 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
                         </SubmitButton>
                         <Button
                             type="button"
-                            variant="link"
+                            variant="ghost"
+                            mode="link"
                             className="w-full text-sm text-muted-foreground hover:text-foreground"
                             onClick={toggleLoginType}
                             disabled={loading}
