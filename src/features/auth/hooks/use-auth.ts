@@ -1,10 +1,14 @@
 import { useAuthStore } from '@/stores/auth-store'
-import { authApi, deviceApi, userApi } from '../api'
+import { authApi, userApi } from '../api'
 import { setCurrentUser } from '@/services/auth/session.service'
 import { setLogoutFlag } from '@/services/auth/storage.service'
+import {
+    clearDeviceSession,
+    revokeDevice
+} from '@/services/auth/device.service'
 
 export const useAuth = () => {
-    const { setUser, setError, reset } = useAuthStore()
+    const { setError, reset } = useAuthStore()
 
     const sendOTP = async (identifier: string, type: 'email' | 'phone') => {
         try {
@@ -36,7 +40,7 @@ export const useAuth = () => {
 
     const checkDeviceAndLogin = async (identifier: string) => {
         try {
-            const user = await authApi.checkTrustedDevice(identifier)
+            const user = await authApi.checkDeviceAndLogin(identifier)
             if (user) setCurrentUser(user)
             return user
         } catch (error) {
@@ -45,14 +49,14 @@ export const useAuth = () => {
         }
     }
 
-    const logout = async (revokeDevice: boolean = false) => {
+    const logout = async (shouldRevokeDevice: boolean = false) => {
         try {
             reset()
-            if (revokeDevice) {
+            if (shouldRevokeDevice) {
                 const user = useAuthStore.getState().user
-                if (user) await deviceApi.revoke(user.uid)
+                if (user) await revokeDevice(user.uid)
             }
-            await deviceApi.clearSession()
+            await clearDeviceSession()
             await setLogoutFlag()
             setCurrentUser(null)
         } catch (error) {
@@ -63,9 +67,7 @@ export const useAuth = () => {
 
     const updateProfile = async (name?: string, photo?: string) => {
         try {
-            const user = useAuthStore.getState().user
-            if (!user) throw new Error('User not authenticated')
-            await userApi.updateProfile(user.uid, name, photo)
+            await userApi.updateProfile(name, photo)
         } catch (error) {
             const message =
                 error instanceof Error
@@ -78,9 +80,7 @@ export const useAuth = () => {
 
     const uploadPhoto = async (file: File) => {
         try {
-            const user = useAuthStore.getState().user
-            if (!user) throw new Error('User not authenticated')
-            return await userApi.uploadPhoto(user.uid, file)
+            return await userApi.uploadPhoto(file)
         } catch (error) {
             const message =
                 error instanceof Error

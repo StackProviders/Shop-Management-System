@@ -1,4 +1,4 @@
-import { LoginForm, ProfileForm } from '@/components/auth/auth-forms'
+import { LoginForm, ProfileForm } from '@/features/auth/components'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router'

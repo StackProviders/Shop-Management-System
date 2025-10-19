@@ -1,24 +1,14 @@
 import {
-    updateUserProfile,
-    uploadUserPhoto,
-    getUserById
-} from '@/services/auth/user.service'
-import type { User } from '@/services/auth/types'
+    updateProfile as updateProfileService,
+    uploadPhoto as uploadPhotoService
+} from '@/services/auth'
 
 export const userApi = {
-    async getById(userId: string): Promise<User | null> {
-        return await getUserById(userId)
+    updateProfile: async (name?: string, photo?: string): Promise<void> => {
+        return updateProfileService(name, photo)
     },
 
-    async updateProfile(
-        userId: string,
-        name?: string,
-        photo?: string
-    ): Promise<void> {
-        await updateUserProfile(userId, name, photo)
-    },
-
-    async uploadPhoto(userId: string, file: File): Promise<string> {
-        return await uploadUserPhoto(userId, file)
+    uploadPhoto: async (file: File): Promise<string> => {
+        return uploadPhotoService(file)
     }
 }

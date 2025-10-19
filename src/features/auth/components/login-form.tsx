@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { useAuth } from '@/hooks/use-auth'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuthStore } from '@/stores/auth-store'
 import {
     saveLastLoginType,
@@ -14,46 +13,51 @@ import {
     FieldSet,
     FieldDescription
 } from '@/components/ui/field'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Mail, Phone, ArrowLeft } from 'lucide-react'
-import Logo from '../logo'
-import { PhoneInput } from '../ui/phone-input'
-import { OTPInput } from './otp-input'
+import { Card, CardContent } from '@/components/ui/card'
+import { Mail, Phone, ArrowLeft } from 'lucide-react'
+import Logo from '@/components/logo'
+import { PhoneInput } from '@/components/ui/phone-input'
+import { OTPInput } from '@/components/auth/otp-input'
 import { cn } from '@/lib/utils'
-import { Alert, AlertDescription } from '../ui/alert'
+import { useAuthActions } from '../hooks'
+import { LoginType } from '../types'
 
-interface AuthFormProps {
+interface LoginFormProps {
     onSuccess?: () => void
 }
 
-type LoginType = 'email' | 'phone'
 type Step = 'input' | 'verify'
 
-export function LoginForm({ onSuccess }: AuthFormProps) {
-    const { lastLoginType, setLastLoginType } = useAuthStore()
+export function LoginForm({ onSuccess }: LoginFormProps) {
+    const {
+        lastLoginType,
+        setLastLoginType,
+        isAuthenticated,
+        loading: authLoading
+    } = useAuthStore()
     const [loginType, setLoginType] = useState<LoginType>(lastLoginType)
     const [step, setStep] = useState<Step>('input')
     const [identifier, setIdentifier] = useState('')
     const [loading, setLoading] = useState(false)
     const [fieldError, setFieldError] = useState('')
     const [otpError, setOtpError] = useState('')
-    const { sendOTP, verifyOTP, authState, checkDeviceAndLogin } = useAuth()
+    const { sendOTP, verifyOTP, checkDeviceAndLogin } = useAuthActions()
 
     useEffect(() => {
         getLastLoginType().then((type) => {
             setLoginType(type)
             setLastLoginType(type)
         })
-    }, [])
+    }, [setLastLoginType])
 
     useEffect(() => {
-        if (authState.isAuthenticated && !authState.loading) {
+        if (isAuthenticated && !authLoading) {
             onSuccess?.()
         }
-    }, [authState.isAuthenticated, authState.loading, onSuccess])
+    }, [isAuthenticated, authLoading, onSuccess])
 
     const toggleLoginType = useCallback(() => {
-        const newType = loginType === 'email' ? 'phone' : 'email'
+        const newType: LoginType = loginType === 'email' ? 'phone' : 'email'
         setLoginType(newType)
         setLastLoginType(newType)
         saveLastLoginType(newType)
@@ -288,93 +292,6 @@ export function LoginForm({ onSuccess }: AuthFormProps) {
                             Privacy Policy
                         </a>
                     </p>
-                </form>
-            </CardContent>
-        </Card>
-    )
-}
-
-export function ProfileForm() {
-    const { updateProfile, uploadPhoto, authState } = useAuth()
-    const [name, setName] = useState(authState.user?.name || '')
-    const [success, setSuccess] = useState('')
-    const [loading, setLoading] = useState(false)
-
-    const handleUpdateProfile = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setLoading(true)
-        try {
-            await updateProfile(name)
-            setSuccess('Profile updated!')
-        } catch (error) {
-            console.error('Failed to update profile:', error)
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const handlePhotoUpload = async (
-        e: React.ChangeEvent<HTMLInputElement>
-    ) => {
-        const file = e.target.files?.[0]
-        if (!file) return
-        setLoading(true)
-        try {
-            await uploadPhoto(file)
-            setSuccess('Photo uploaded!')
-        } catch (error) {
-            console.error('Failed to upload photo:', error)
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    return (
-        <Card className="max-w-2xl mx-auto">
-            <CardHeader>
-                <CardTitle>Profile</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleUpdateProfile}>
-                    <FieldSet>
-                        <FieldGroup>
-                            <Field>
-                                <FieldLabel htmlFor="name">Name</FieldLabel>
-                                <Input
-                                    id="name"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                />
-                            </Field>
-                            <Field>
-                                <FieldLabel htmlFor="photo">Photo</FieldLabel>
-                                <Input
-                                    id="photo"
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handlePhotoUpload}
-                                />
-                            </Field>
-                        </FieldGroup>
-                    </FieldSet>
-                    {success && (
-                        <Alert className="mt-4">
-                            <AlertDescription>{success}</AlertDescription>
-                        </Alert>
-                    )}
-                    {authState.error && (
-                        <Alert variant="destructive" className="mt-4">
-                            <AlertDescription>
-                                {authState.error}
-                            </AlertDescription>
-                        </Alert>
-                    )}
-                    <Button type="submit" className="mt-4" disabled={loading}>
-                        {loading && (
-                            <Loader2 className="mr-2 size-4 animate-spin" />
-                        )}
-                        Update Profile
-                    </Button>
                 </form>
             </CardContent>
         </Card>

@@ -1,50 +1,42 @@
+import { User } from '../types'
 import {
     sendOTP as sendOTPService,
-    verifyOTP as verifyOTPService
-} from '@/services/auth/otp.service'
-import {
-    ensureUserExists,
-    updateUserLastLogin
-} from '@/services/auth/user.service'
-import {
-    trustDevice,
-    verifyTrustedDevice
-} from '@/services/auth/device.service'
-import type { User } from '@/services/auth/types'
+    verifyOTP as verifyOTPService,
+    loginWithTrustedDevice,
+    checkDeviceAndLogin as checkDeviceService,
+    logout as logoutService,
+    initAuth as initAuthService
+} from '@/services/auth'
 
 export const authApi = {
-    async sendOTP(identifier: string, type: 'email' | 'phone'): Promise<void> {
-        const uid = await ensureUserExists(identifier, type)
-        await sendOTPService(identifier, uid)
+    sendOTP: async (
+        identifier: string,
+        type: 'email' | 'phone'
+    ): Promise<void> => {
+        return sendOTPService(identifier, type)
     },
 
-    async verifyOTP(
+    verifyOTP: async (
         identifier: string,
         otp: string,
-        shouldTrustDevice: boolean = false
-    ): Promise<User> {
-        const uid = await ensureUserExists(
-            identifier,
-            identifier.includes('@') ? 'email' : 'phone'
-        )
-        await verifyOTPService(uid, otp)
-
-        if (shouldTrustDevice) {
-            await trustDevice(uid)
-        }
-
-        await updateUserLastLogin(uid)
-        const { getUserById } = await import('@/services/auth/user.service')
-        const user = await getUserById(uid)
-        if (!user) throw new Error('User not found')
-        return user
+        trustDevice?: boolean
+    ): Promise<User> => {
+        return verifyOTPService(identifier, otp, trustDevice)
     },
 
-    async checkTrustedDevice(identifier: string): Promise<User | null> {
-        const userId = await verifyTrustedDevice()
-        if (!userId) return null
+    checkDeviceAndLogin: async (identifier: string): Promise<User | null> => {
+        return checkDeviceService(identifier)
+    },
 
-        const { getUserById } = await import('@/services/auth/user.service')
-        return await getUserById(userId)
+    loginWithTrustedDevice: async (): Promise<User | null> => {
+        return loginWithTrustedDevice()
+    },
+
+    logout: async (revokeDevice?: boolean): Promise<void> => {
+        return logoutService(revokeDevice)
+    },
+
+    initAuth: async (): Promise<void> => {
+        return initAuthService()
     }
 }

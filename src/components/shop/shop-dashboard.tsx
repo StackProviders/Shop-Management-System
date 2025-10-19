@@ -101,13 +101,14 @@ export default function ShopDashboard() {
     }
 
     const { myShops, sharedShops } = useMemo(() => {
+        const shopList = Array.isArray(shops) ? shops : []
         const filtered = searchQuery
-            ? shops.filter((shop) =>
+            ? shopList.filter((shop) =>
                   shop.shopName
                       .toLowerCase()
                       .includes(searchQuery.toLowerCase())
               )
-            : shops
+            : shopList
 
         return {
             myShops: filtered.filter((shop) => shop.isOwner),
@@ -189,7 +190,7 @@ export default function ShopDashboard() {
                                 size="sm"
                                 mode="icon"
                                 className="mb-0.5"
-                                onClick={refresh}
+                                onClick={() => refresh()}
                                 disabled={loading}
                             >
                                 <RefreshCw

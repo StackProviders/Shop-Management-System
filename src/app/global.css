@@ -118,7 +118,7 @@
     }
     html {
         /* For native desktop app feeling disallow text selection. */
-        @apply select-none;
+        /* @apply select-none; */
 
         /* Disable overscroll/bouncing */
         @apply h-full overscroll-none;
