@@ -99,7 +99,10 @@ export const getUserShops = async (
                 shopName: shopData.shopname,
                 role: memberData.role,
                 permissions: memberData.permissions,
-                isOwner: shopData.created_userId === userId
+                isOwner: shopData.created_userId === userId,
+                logoUrl: shopData.logo_url,
+                shopCategory: shopData.shop_category,
+                shopAddress: shopData.shop_address
             })
         }
     }

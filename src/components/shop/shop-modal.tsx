@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { Button, SubmitButton } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ResponsiveDialog } from '@/components/modal'
 import {
@@ -155,15 +155,13 @@ export default function ShopModal({
                     >
                         Cancel
                     </Button>
-                    <Button
+                    <SubmitButton
                         type="submit"
                         size="md"
-                        disabled={form.formState.isSubmitting}
+                        loading={form.formState.isSubmitting}
                     >
-                        {form.formState.isSubmitting
-                            ? 'Saving...'
-                            : submitLabel}
-                    </Button>
+                        {submitLabel}
+                    </SubmitButton>
                 </div>
             </form>
         </ResponsiveDialog>

@@ -27,6 +27,7 @@ import {
     ItemTitle
 } from '@/components/ui/item'
 import { getPlatform } from '@/utils/platform-detection'
+import { Image } from '../ui/image'
 
 interface ShopItemProps {
     shop: {
@@ -35,6 +36,8 @@ interface ShopItemProps {
         status: string
         isCurrent: boolean
         description?: string
+        logo_url?: string
+        shop_category?: string
     }
     onOpen?: (shopId: string) => void
     onEdit?: (shopId: string) => void
@@ -49,11 +52,6 @@ export default function ShopItem({
 }: ShopItemProps) {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
     const { isMobile } = getPlatform()
-
-    const getShopIcon = () => {
-        // You can customize this based on shop type or category
-        return <Store className="size-4" />
-    }
 
     const handleDelete = () => {
         onDelete?.(shop.id)
@@ -71,11 +69,15 @@ export default function ShopItem({
                     variant="icon"
                     className="bg-primary/10 text-primary"
                 >
-                    {getShopIcon()}
+                    {shop.logo_url ? (
+                        <Image src={shop.logo_url} alt={shop.name} />
+                    ) : (
+                        <Store className="size-4" />
+                    )}
                 </ItemMedia>
 
                 <ItemContent className="flex-1 min-w-0">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                    <div className="flex flex-col gap-0.5">
                         <div className="flex items-center gap-2 min-w-0">
                             <ItemTitle className="text-foreground font-semibold truncate">
                                 {shop.name}
@@ -89,13 +91,15 @@ export default function ShopItem({
                                 </Badge>
                             )}
                         </div>
-                    </div>
 
-                    {shop.description && (
-                        <ItemDescription className="text-muted-foreground text-sm">
-                            {shop.description}
+                        <ItemDescription>
+                            <span className="text-xs text-muted-foreground truncate">
+                                {shop.shop_category || (
+                                    <span className="italic">No category</span>
+                                )}
+                            </span>
                         </ItemDescription>
-                    )}
+                    </div>
                 </ItemContent>
 
                 <ItemActions className="flex items-center gap-2">

@@ -6,7 +6,18 @@ mod commands;
 pub fn run() {
     env_logger::init();
 
+    let cache_config = tauri_plugin_cache::CacheConfig {
+        cache_dir: Some("image_cache".into()),
+        cache_file_name: Some("images.json".into()),
+        cleanup_interval: Some(300),
+        default_compression: Some(true),
+        compression_level: Some(6),
+        compression_threshold: Some(10240),
+        compression_method: Some(tauri_plugin_cache::CompressionMethod::Zlib),
+    };
+
     let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_cache::init_with_config(cache_config))
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_upload::init())
         .plugin(tauri_plugin_http::init())

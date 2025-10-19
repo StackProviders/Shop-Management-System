@@ -13,10 +13,14 @@
     "os:default",
     "upload:default",
     "fs:default",
+    "cache:default",
     "shell:allow-execute",
     {
       "identifier": "http:default",
-      "allow": [{ "url": "https://*.stackproviders.workers.dev" }]
+      "allow": [
+        { "url": "https://*.stackproviders.workers.dev" },
+        { "url": "https://*" }
+      ]
     },
     {
       "identifier": "fs:scope",

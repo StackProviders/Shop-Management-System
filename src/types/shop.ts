@@ -57,4 +57,7 @@ export interface UserShopAccess {
     role: ShopRole
     permissions: ShopPermission[]
     isOwner: boolean
+    logoUrl?: string
+    shopCategory?: string
+    shopAddress?: string
 }

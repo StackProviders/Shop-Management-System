@@ -6,8 +6,7 @@ import {
     Store,
     X,
     Inbox,
-    Plus,
-    Loader2
+    Plus
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input, InputWrapper } from '@/components/ui/input'
@@ -21,6 +20,7 @@ import { useShops } from '@/hooks/use-shops'
 import { Shop } from '@/types/shop'
 import { ShopFormData } from '@/lib/validations'
 import { toast } from 'sonner'
+import { Spinner } from '@/components/ui/spinner'
 
 const EmptyState = ({
     title,
@@ -43,7 +43,7 @@ const EmptyState = ({
 
 const LoadingState = () => (
     <div className="flex justify-center items-center p-12">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        <Spinner className="size-6" />
     </div>
 )
 
@@ -124,7 +124,10 @@ export default function ShopDashboard() {
                         id: shop.shopId,
                         name: shop.shopName,
                         status: 'active',
-                        isCurrent: false
+                        isCurrent: false,
+                        logo_url: shop.logoUrl,
+                        shop_category: shop.shopCategory,
+                        description: shop.shopAddress
                     }}
                     onOpen={(shopId) => console.log('Opening shop:', shopId)}
                     onEdit={handleEditShop}
