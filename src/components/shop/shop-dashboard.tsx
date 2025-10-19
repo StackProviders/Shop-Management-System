@@ -15,6 +15,7 @@ import CreateShop from './shop-modal'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Heading4 } from '@/components/ui/typography'
 import { LogoutButton } from '../auth'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function ShopDashboard() {
     const [searchQuery, setSearchQuery] = useState('')
@@ -24,6 +25,7 @@ export default function ShopDashboard() {
         { id: string; name: string } | undefined
     >()
     const inputRef = useRef<HTMLInputElement>(null)
+    const { authState } = useAuth()
 
     const handleClearInput = () => {
         setSearchQuery('')
@@ -196,18 +198,15 @@ export default function ShopDashboard() {
                 {/* Footer */}
                 <div className="bg-muted/30 px-4 sm:px-6 py-4 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="text-xs sm:text-sm text-muted-foreground">
-                        Currently logged in with Phone:{' '}
+                        Currently logged in with{' '}
+                        {authState.user?.email ? 'Email' : 'Phone'}:{' '}
                         <span className="font-semibold text-foreground">
-                            1770322532
+                            {authState.user?.email ||
+                                authState.user?.phone ||
+                                'N/A'}
                         </span>
                     </div>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                        <Button
-                            variant="outline"
-                            className="border-primary text-primary hover:bg-primary/10 text-sm"
-                        >
-                            Restore backup
-                        </Button>
                         <CreateShop
                             mode="create"
                             trigger={<Button>Create Shop</Button>}
