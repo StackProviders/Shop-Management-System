@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, ReactNode } from 'react'
-import { onAuthStateChange, initAuth, initSession } from '@/services/auth/index'
+import { onAuthStateChange, initSession, initAuth } from '../services'
 import { useAuthStore } from '@/stores/auth-store'
-import { useAuthActions } from '@/features/auth/hooks/use-auth-actions'
+import { useAuthActions } from '../hooks/use-auth-actions'
+import type { User } from '../types'
 
 const AuthContext = createContext<ReturnType<typeof useAuthActions> | null>(
     null
@@ -15,7 +16,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         let mounted = true
         let initialized = false
 
-        const unsubscribe = onAuthStateChange((user) => {
+        const unsubscribe = onAuthStateChange((user: User | null) => {
             if (mounted && initialized) {
                 setUser(user)
                 setLoading(false)

@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
-import { useAuth } from '@/hooks/use-auth'
+import { useAuth } from '@/features/auth'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { LogOut } from 'lucide-react'
 import { VariantProps } from 'class-variance-authority'

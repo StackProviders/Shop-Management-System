@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { User } from '@/services/auth/types'
+import { User } from '@/features/auth/types'
 
 type LoginType = 'email' | 'phone'
 

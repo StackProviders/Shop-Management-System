@@ -1,9 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuthStore } from '@/stores/auth-store'
-import {
-    saveLastLoginType,
-    getLastLoginType
-} from '@/services/auth/storage.service'
+import { saveLastLoginType, getLastLoginType } from '@/features/auth/services'
 import { Button, SubmitButton } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -44,7 +41,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     const { sendOTP, verifyOTP, checkDeviceAndLogin } = useAuthActions()
 
     useEffect(() => {
-        getLastLoginType().then((type) => {
+        getLastLoginType().then((type: 'email' | 'phone') => {
             setLoginType(type)
             setLastLoginType(type)
         })

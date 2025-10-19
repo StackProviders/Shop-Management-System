@@ -15,12 +15,13 @@ import CreateShop from './shop-modal'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Heading4 } from '@/components/ui/typography'
 import { LogoutButton } from '../auth'
-import { useAuth } from '@/hooks/use-auth'
-import { useShops } from '@/hooks/use-shops'
 import { Shop } from '@/types/shop'
 import { ShopFormData } from '@/lib/validations'
 import { toast } from 'sonner'
 import { Spinner } from '@/components/ui/spinner'
+import { useCurrentUser } from '@/features/auth'
+import { useUserShops, useShopActions, shopApi } from '@/features/shop'
+import type { UserShopAccess } from '@/features/shop'
 
 const EmptyState = ({
     title,
@@ -53,10 +54,9 @@ export default function ShopDashboard() {
     const [editModalOpen, setEditModalOpen] = useState(false)
     const [editingShop, setEditingShop] = useState<Shop | undefined>()
     const inputRef = useRef<HTMLInputElement>(null)
-    const { authState } = useAuth()
-    const { shops, loading, refresh, create, update, remove } = useShops(
-        authState.user?.uid
-    )
+    const user = useCurrentUser()
+    const { userShops, loading, refreshShops } = useUserShops(user?.uid)
+    const { createShop, updateShop, deleteShop } = useShopActions()
 
     const handleClearInput = () => {
         setSearchQuery('')
@@ -66,12 +66,8 @@ export default function ShopDashboard() {
     }
 
     const handleEditShop = async (shopId: string) => {
-        const shop = shops.find((s) => s.shopId === shopId)
-        if (!shop) return
-
         try {
-            const { getShop } = await import('@/services/shop')
-            const shopData = await getShop(shopId)
+            const shopData = await shopApi.getShop(shopId)
             if (shopData) {
                 setEditingShop(shopData)
                 setEditModalOpen(true)
@@ -83,7 +79,8 @@ export default function ShopDashboard() {
 
     const handleDeleteShop = async (shopId: string) => {
         try {
-            await remove(shopId)
+            await deleteShop(shopId)
+            await refreshShops()
             toast.success('Shop deleted successfully')
         } catch {
             toast.error('Failed to delete shop')
@@ -91,17 +88,20 @@ export default function ShopDashboard() {
     }
 
     const handleCreateShop = async (data: ShopFormData) => {
+        if (!user?.uid) return
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { status, ...shopData } = data
-        await create(shopData)
+        await createShop(user.uid, shopData)
+        await refreshShops()
     }
 
     const handleUpdateShop = async (shopId: string, data: ShopFormData) => {
-        await update(shopId, data)
+        await updateShop(shopId, data)
+        await refreshShops()
     }
 
     const { myShops, sharedShops } = useMemo(() => {
-        const shopList = Array.isArray(shops) ? shops : []
+        const shopList = Array.isArray(userShops) ? userShops : []
         const filtered = searchQuery
             ? shopList.filter((shop) =>
                   shop.shopName
@@ -114,11 +114,11 @@ export default function ShopDashboard() {
             myShops: filtered.filter((shop) => shop.isOwner),
             sharedShops: filtered.filter((shop) => !shop.isOwner)
         }
-    }, [shops, searchQuery])
+    }, [userShops, searchQuery])
 
-    const renderShopList = (shopList: typeof shops) => (
+    const renderShopList = (shopList: typeof userShops) => (
         <div className="space-y-3">
-            {shopList.map((shop) => (
+            {shopList.map((shop: UserShopAccess) => (
                 <ShopItem
                     key={shop.shopId}
                     shop={{
@@ -190,7 +190,7 @@ export default function ShopDashboard() {
                                 size="sm"
                                 mode="icon"
                                 className="mb-0.5"
-                                onClick={() => refresh()}
+                                onClick={() => refreshShops()}
                                 disabled={loading}
                             >
                                 <RefreshCw
@@ -240,11 +240,9 @@ export default function ShopDashboard() {
                 <div className="bg-muted/30 px-4 sm:px-6 py-4 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="text-xs sm:text-sm text-muted-foreground">
                         Currently logged in with{' '}
-                        {authState.user?.email ? 'Email' : 'Phone'}:{' '}
+                        {user?.email ? 'Email' : 'Phone'}:{' '}
                         <span className="font-semibold text-foreground">
-                            {authState.user?.email ||
-                                authState.user?.phone ||
-                                'N/A'}
+                            {user?.email || user?.phone || 'N/A'}
                         </span>
                     </div>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">

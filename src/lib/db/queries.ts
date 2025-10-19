@@ -4,7 +4,11 @@ import {
     limit,
     orderBy
 } from 'firestore-repository/query'
-import { shopsCollection, shopMembersCollection } from './schema'
+import {
+    shopsCollection,
+    shopMembersCollection,
+    devicesCollection
+} from './schema'
 
 export const getUserShopsQuery = (userId: string) =>
     query(shopMembersCollection, $('userId', '==', userId))
@@ -33,3 +37,6 @@ export const getShopsByStatusQuery = (status: string) =>
         $('status', '==', status),
         orderBy('createdAt', 'desc')
     )
+
+export const getUserDevicesQuery = (userId: string) =>
+    query(devicesCollection, $('userId', '==', userId))

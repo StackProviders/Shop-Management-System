@@ -1,4 +1,4 @@
-import { useAuth } from '@/hooks/use-auth'
+import { useAuth } from '@/features/auth'
 import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,
@@ -21,7 +21,7 @@ export function UserMenu() {
     const initials = user.name
         ? user.name
               .split(' ')
-              .map((n) => n[0])
+              .map((n: string) => n[0])
               .join('')
               .toUpperCase()
         : user.email?.[0].toUpperCase() || 'U'

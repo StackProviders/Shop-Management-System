@@ -1,7 +1,4 @@
-import {
-    revokeDevice,
-    clearDeviceSession
-} from '@/services/auth/device.service'
+import { revokeDevice, clearDeviceSession } from '../services'
 
 export const deviceApi = {
     async revoke(userId: string): Promise<void> {

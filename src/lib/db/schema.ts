@@ -98,3 +98,28 @@ export const trustedDevicesCollection = rootCollection({
     // @ts-expect-error - firestore-repository DocumentData constraint issue
     data: data<TrustedDeviceData>()
 })
+
+export type DeviceData = Record<string, unknown> & {
+    userId: string
+    deviceId: string
+    deviceName?: string
+    trusted: boolean
+    lastUsed: Date
+    expiresAt: Date
+    createdAt: Date
+}
+
+export const devicesCollection = rootCollection({
+    name: 'devices',
+    id: mapTo('id'),
+    // @ts-expect-error - firestore-repository DocumentData constraint issue
+    data: data<DeviceData>()
+})
+
+export type OTPData = Record<string, unknown> & {
+    userId: string
+    code: string
+    expiresAt: Date
+    verified: boolean
+    createdAt: Date
+}

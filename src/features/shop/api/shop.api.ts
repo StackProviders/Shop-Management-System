@@ -9,7 +9,7 @@ import {
     addMemberToShop as addMemberService,
     updateMemberRole as updateMemberRoleService,
     removeMemberFromShop as removeMemberService
-} from '@/services/shop'
+} from '../services'
 import type {
     Shop,
     ShopMember,

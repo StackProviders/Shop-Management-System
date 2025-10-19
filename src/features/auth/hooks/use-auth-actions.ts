@@ -26,7 +26,7 @@ export function useAuthActions() {
         async (
             identifier: string,
             otp: string,
-            trustDevice = false
+            trustDevice = true
         ): Promise<User> => {
             try {
                 const user = await authApi.verifyOTP(
@@ -37,6 +37,7 @@ export function useAuthActions() {
                 setUser(user)
                 return user
             } catch (error) {
+                console.error('OTP verification failed:', error)
                 const errorMessage =
                     error instanceof Error ? error.message : 'Invalid OTP'
                 setError(errorMessage)
@@ -107,10 +108,23 @@ export function useAuthActions() {
         [setError]
     )
 
+    const isOTPRequired = useCallback(
+        async (identifier: string): Promise<boolean> => {
+            try {
+                return await authApi.isOTPRequired(identifier)
+            } catch (error) {
+                console.error('Failed to check OTP requirement:', error)
+                return true
+            }
+        },
+        []
+    )
+
     return {
         sendOTP,
         verifyOTP,
         checkDeviceAndLogin,
+        isOTPRequired,
         logout,
         updateProfile,
         uploadPhoto

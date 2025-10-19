@@ -6,7 +6,7 @@ import {
     checkDeviceAndLogin as checkDeviceService,
     logout as logoutService,
     initAuth as initAuthService
-} from '@/services/auth'
+} from '../services'
 
 export const authApi = {
     sendOTP: async (
@@ -38,5 +38,10 @@ export const authApi = {
 
     initAuth: async (): Promise<void> => {
         return initAuthService()
+    },
+
+    isOTPRequired: async (identifier: string): Promise<boolean> => {
+        const user = await checkDeviceService(identifier)
+        return user === null
     }
 }
