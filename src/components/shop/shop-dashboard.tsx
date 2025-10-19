@@ -20,8 +20,14 @@ import { ShopFormData } from '@/lib/validations'
 import { toast } from 'sonner'
 import { Spinner } from '@/components/ui/spinner'
 import { useCurrentUser } from '@/features/auth'
-import { useUserShops, useShopActions, shopApi } from '@/features/shop'
+import {
+    useUserShops,
+    useShopActions,
+    shopApi,
+    useCurrentShop
+} from '@/features/shop'
 import type { UserShopAccess } from '@/features/shop'
+import { useNavigate } from 'react-router'
 
 const EmptyState = ({
     title,
@@ -57,6 +63,8 @@ export default function ShopDashboard() {
     const user = useCurrentUser()
     const { userShops, loading, refreshShops } = useUserShops(user?.uid)
     const { createShop, updateShop, deleteShop } = useShopActions()
+    const { setCurrentShop } = useCurrentShop(userShops)
+    const navigate = useNavigate()
 
     const handleClearInput = () => {
         setSearchQuery('')
@@ -84,6 +92,14 @@ export default function ShopDashboard() {
             toast.success('Shop deleted successfully')
         } catch {
             toast.error('Failed to delete shop')
+        }
+    }
+
+    const handleOpenShop = (shopId: string) => {
+        const shop = userShops.find((s) => s.shopId === shopId)
+        if (shop) {
+            setCurrentShop(shop)
+            navigate('/')
         }
     }
 
@@ -130,7 +146,7 @@ export default function ShopDashboard() {
                         shop_category: shop.shopCategory,
                         description: shop.shopAddress
                     }}
-                    onOpen={(shopId) => console.log('Opening shop:', shopId)}
+                    onOpen={handleOpenShop}
                     onEdit={handleEditShop}
                     onDelete={handleDeleteShop}
                 />
