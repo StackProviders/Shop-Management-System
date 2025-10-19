@@ -1,23 +1,18 @@
-import { LazyStore } from '@tauri-apps/plugin-store'
 import { v4 as uuidv4 } from 'uuid'
-import { doc, getDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { trustedDevicesRepo } from '@/lib/db'
+import type { TrustedDeviceData } from '@/lib/db'
+import { authStore, STORE_KEYS, storeHelpers } from '@/lib/store'
 import { hashString } from './utils'
-import {
-    STORE_FILE,
-    STORE_KEYS,
-    COLLECTIONS,
-    DEVICE_TRUST_DAYS
-} from './constants'
-
-const store = new LazyStore(STORE_FILE)
+import { DEVICE_TRUST_DAYS } from './constants'
 
 export const getDeviceId = async (): Promise<string> => {
-    let deviceId = await store.get<string>(STORE_KEYS.DEVICE_ID)
+    let deviceId = await storeHelpers.get<string>(
+        authStore,
+        STORE_KEYS.DEVICE_ID
+    )
     if (!deviceId) {
         deviceId = uuidv4()
-        await store.set(STORE_KEYS.DEVICE_ID, deviceId)
-        await store.save()
+        await storeHelpers.set(authStore, STORE_KEYS.DEVICE_ID, deviceId)
     }
     return deviceId
 }
@@ -26,65 +21,56 @@ export const trustDevice = async (userId: string): Promise<void> => {
     const deviceId = await getDeviceId()
     const deviceToken = uuidv4()
     const deviceTokenHash = await hashString(deviceToken)
+    const now = new Date()
 
-    await setDoc(
-        doc(
-            db,
-            COLLECTIONS.USERS,
-            userId,
-            COLLECTIONS.TRUSTED_DEVICES,
-            deviceId
+    const trustedDevice: TrustedDeviceData & { id: string } = {
+        id: `${userId}_${deviceId}`,
+        deviceTokenHash,
+        deviceInfo: navigator.userAgent,
+        createdAt: now,
+        expiresAt: new Date(
+            Date.now() + DEVICE_TRUST_DAYS * 24 * 60 * 60 * 1000
         ),
-        {
-            deviceTokenHash,
-            deviceInfo: navigator.userAgent,
-            createdAt: Timestamp.now(),
-            expiresAt: Timestamp.fromDate(
-                new Date(Date.now() + DEVICE_TRUST_DAYS * 24 * 60 * 60 * 1000)
-            ),
-            revoked: false
-        }
-    )
+        revoked: false
+    }
 
-    await store.set(STORE_KEYS.DEVICE_TOKEN, deviceToken)
-    await store.set(STORE_KEYS.USER_ID, userId)
-    await store.save()
+    await trustedDevicesRepo.set(trustedDevice)
+
+    await storeHelpers.set(authStore, STORE_KEYS.DEVICE_TOKEN, deviceToken)
+    await storeHelpers.set(authStore, STORE_KEYS.USER_ID, userId)
 }
 
 export const verifyTrustedDevice = async (): Promise<string | null> => {
-    const deviceToken = await store.get<string>(STORE_KEYS.DEVICE_TOKEN)
-    const userId = await store.get<string>(STORE_KEYS.USER_ID)
+    const deviceToken = await storeHelpers.get<string>(
+        authStore,
+        STORE_KEYS.DEVICE_TOKEN
+    )
+    const userId = await storeHelpers.get<string>(authStore, STORE_KEYS.USER_ID)
 
     if (!deviceToken || !userId) return null
 
     const deviceId = await getDeviceId()
-    const deviceDoc = await getDoc(
-        doc(
-            db,
-            COLLECTIONS.USERS,
-            userId,
-            COLLECTIONS.TRUSTED_DEVICES,
-            deviceId
-        )
-    )
+    const device = await trustedDevicesRepo.get({ id: `${userId}_${deviceId}` })
 
-    if (!deviceDoc.exists()) {
+    if (!device) {
         await clearDeviceSession()
         return null
     }
 
-    const deviceData = deviceDoc.data()
     const now = new Date()
-    const expiresAt = deviceData.expiresAt.toDate()
+    const expiresAt =
+        device.expiresAt instanceof Date
+            ? device.expiresAt
+            : new Date(device.expiresAt)
 
-    if (deviceData.revoked || now > expiresAt) {
+    if (device.revoked || now > expiresAt) {
         await revokeExpiredDevice(userId, deviceId)
         await clearDeviceSession()
         return null
     }
 
     const deviceTokenHash = await hashString(deviceToken)
-    if (deviceData.deviceTokenHash !== deviceTokenHash) {
+    if (device.deviceTokenHash !== deviceTokenHash) {
         await clearDeviceSession()
         return null
     }
@@ -97,14 +83,12 @@ const revokeExpiredDevice = async (
     deviceId: string
 ): Promise<void> => {
     try {
-        const deviceDoc = doc(
-            db,
-            COLLECTIONS.USERS,
-            userId,
-            COLLECTIONS.TRUSTED_DEVICES,
-            deviceId
-        )
-        await updateDoc(deviceDoc, { revoked: true })
+        const device = await trustedDevicesRepo.get({
+            id: `${userId}_${deviceId}`
+        })
+        if (device) {
+            await trustedDevicesRepo.set({ ...device, revoked: true })
+        }
     } catch (error) {
         console.error('Failed to revoke expired device:', error)
     }
@@ -112,21 +96,13 @@ const revokeExpiredDevice = async (
 
 export const revokeDevice = async (userId: string): Promise<void> => {
     const deviceId = await getDeviceId()
-    const deviceDoc = doc(
-        db,
-        COLLECTIONS.USERS,
-        userId,
-        COLLECTIONS.TRUSTED_DEVICES,
-        deviceId
-    )
-    const docSnap = await getDoc(deviceDoc)
-    if (docSnap.exists()) {
-        await updateDoc(deviceDoc, { revoked: true })
+    const device = await trustedDevicesRepo.get({ id: `${userId}_${deviceId}` })
+    if (device) {
+        await trustedDevicesRepo.set({ ...device, revoked: true })
     }
 }
 
 export const clearDeviceSession = async (): Promise<void> => {
-    await store.delete(STORE_KEYS.DEVICE_TOKEN)
-    await store.delete(STORE_KEYS.USER_ID)
-    await store.save()
+    await storeHelpers.delete(authStore, STORE_KEYS.DEVICE_TOKEN)
+    await storeHelpers.delete(authStore, STORE_KEYS.USER_ID)
 }

@@ -32,6 +32,7 @@
     },
     "dependencies": {
         "@base-ui-components/react": "1.0.0-beta.4",
+        "@firestore-repository/firebase-js-sdk": "^0.4.2",
         "@hookform/resolvers": "^5.2.2",
         "@radix-ui/react-accordion": "^1.2.12",
         "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -68,6 +69,7 @@
         "cmdk": "^1.1.1",
         "date-fns": "^4.1.0",
         "firebase": "^12.4.0",
+        "firestore-repository": "^0.4.2",
         "input-otp": "^1.4.2",
         "lucide-react": "^0.544.0",
         "next-themes": "^0.4.6",
@@ -80,6 +82,7 @@
         "react-phone-number-input": "^3.4.12",
         "react-router": "^7.9.3",
         "sonner": "^2.0.7",
+        "swr": "^2.3.6",
         "tailwind-merge": "^3.3.1",
         "tailwindcss-animate": "^1.0.7",
         "tauri-plugin-cache-api": "^0.1.5",

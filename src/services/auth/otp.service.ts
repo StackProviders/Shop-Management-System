@@ -1,14 +1,7 @@
-import {
-    doc,
-    getDoc,
-    setDoc,
-    updateDoc,
-    deleteDoc,
-    Timestamp
-} from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { otpRequestsRepo } from '@/lib/db'
+import type { OTPRequestData } from '@/lib/db'
 import { generateOTP, hashString } from './utils'
-import { COLLECTIONS, OTP_EXPIRY_MINUTES, OTP_MAX_ATTEMPTS } from './constants'
+import { OTP_EXPIRY_MINUTES, OTP_MAX_ATTEMPTS } from './constants'
 import { sendSMS, sendEmail } from '@/lib/tauri'
 
 export const sendOTP = async (
@@ -17,15 +10,17 @@ export const sendOTP = async (
 ): Promise<void> => {
     const otp = generateOTP()
     const otpHash = await hashString(otp)
+    const now = new Date()
 
-    await setDoc(doc(db, COLLECTIONS.OTP_REQUESTS, uid), {
+    const otpRequest: OTPRequestData & { id: string } = {
+        id: uid,
         otpHash,
-        expiresAt: Timestamp.fromDate(
-            new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000)
-        ),
+        expiresAt: new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000),
         attempts: 0,
-        createdAt: Timestamp.now()
-    })
+        createdAt: now
+    }
+
+    await otpRequestsRepo.set(otpRequest)
 
     const isEmail = identifier.includes('@')
 
@@ -52,23 +47,27 @@ export const sendOTP = async (
 }
 
 export const verifyOTP = async (uid: string, otp: string): Promise<void> => {
-    const otpDoc = await getDoc(doc(db, COLLECTIONS.OTP_REQUESTS, uid))
+    const otpData = await otpRequestsRepo.get({ id: uid })
 
-    if (!otpDoc.exists()) throw new Error('Invalid OTP')
+    if (!otpData) throw new Error('Invalid OTP')
 
-    const otpData = otpDoc.data()
     if (otpData.attempts >= OTP_MAX_ATTEMPTS)
         throw new Error('Too many attempts')
 
     const otpHash = await hashString(otp)
     if (otpData.otpHash !== otpHash) {
-        await updateDoc(doc(db, COLLECTIONS.OTP_REQUESTS, uid), {
+        await otpRequestsRepo.set({
+            ...otpData,
             attempts: otpData.attempts + 1
         })
         throw new Error('Invalid OTP')
     }
 
-    if (new Date() > otpData.expiresAt.toDate()) throw new Error('OTP expired')
+    const expiresAt =
+        otpData.expiresAt instanceof Date
+            ? otpData.expiresAt
+            : new Date(otpData.expiresAt)
+    if (new Date() > expiresAt) throw new Error('OTP expired')
 
-    await deleteDoc(doc(db, COLLECTIONS.OTP_REQUESTS, uid))
+    await otpRequestsRepo.delete({ id: uid })
 }

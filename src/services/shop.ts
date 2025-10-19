@@ -1,17 +1,12 @@
 import {
-    collection,
-    doc,
-    addDoc,
-    updateDoc,
-    deleteDoc,
-    getDoc,
-    getDocs,
-    query,
-    where,
-    serverTimestamp,
-    Timestamp
-} from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+    shopsRepo,
+    shopMembersRepo,
+    usersRepo,
+    getUserShopsQuery,
+    getShopMembersQuery,
+    getShopMemberQuery
+} from '@/lib/db'
+import type { ShopData, ShopMemberData } from '@/lib/db'
 import {
     Shop,
     ShopMember,
@@ -29,80 +24,60 @@ export const createShop = async (
         'id' | 'created_userId' | 'createdAt' | 'updatedAt' | 'status'
     >
 ): Promise<Shop> => {
-    const shopRef = await addDoc(collection(db, 'shops'), {
+    const now = new Date()
+    const shopId = crypto.randomUUID()
+
+    const newShop: ShopData & { id: string } = {
+        id: shopId,
         ...shopData,
         created_userId: userId,
         status: ShopStatus.ACTIVE,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-    })
+        createdAt: now,
+        updatedAt: now
+    }
 
-    await addDoc(collection(db, 'shop_members'), {
-        shopId: shopRef.id,
+    await shopsRepo.set(newShop)
+
+    const ownerMember: ShopMemberData & { id: string } = {
+        id: crypto.randomUUID(),
+        shopId,
         userId,
         role: ShopRole.OWNER,
         permissions: [],
         invitedBy: userId,
-        joinedAt: serverTimestamp(),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-    })
-
-    return {
-        id: shopRef.id,
-        ...shopData,
-        created_userId: userId,
-        status: ShopStatus.ACTIVE,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        joinedAt: now,
+        createdAt: now,
+        updatedAt: now
     }
+
+    await shopMembersRepo.set(ownerMember)
+
+    return newShop
 }
 
 export const getShop = async (shopId: string): Promise<Shop | null> => {
-    const shopDoc = await getDoc(doc(db, 'shops', shopId))
-    if (!shopDoc.exists()) return null
-
-    const data = shopDoc.data()
-    return {
-        id: shopDoc.id,
-        ...data,
-        createdAt:
-            data.createdAt instanceof Timestamp
-                ? data.createdAt.toDate()
-                : new Date(),
-        updatedAt:
-            data.updatedAt instanceof Timestamp
-                ? data.updatedAt.toDate()
-                : new Date()
-    } as Shop
+    const shop = await shopsRepo.get({ id: shopId })
+    return shop ?? null
 }
 
 export const getUserShops = async (
     userId: string
 ): Promise<UserShopAccess[]> => {
-    const membersQuery = query(
-        collection(db, 'shop_members'),
-        where('userId', '==', userId)
-    )
-    const membersSnapshot = await getDocs(membersQuery)
-
+    const members = await shopMembersRepo.list(getUserShopsQuery(userId))
     const userShops: UserShopAccess[] = []
 
-    for (const memberDoc of membersSnapshot.docs) {
-        const memberData = memberDoc.data() as ShopMember
-        const shopDoc = await getDoc(doc(db, 'shops', memberData.shopId))
-
-        if (shopDoc.exists()) {
-            const shopData = shopDoc.data()
+    for (const member of members) {
+        const shop = await shopsRepo.get({ id: member.shopId })
+        if (shop) {
             userShops.push({
-                shopId: shopDoc.id,
-                shopName: shopData.shopname,
-                role: memberData.role,
-                permissions: memberData.permissions,
-                isOwner: shopData.created_userId === userId,
-                logoUrl: shopData.logo_url,
-                shopCategory: shopData.shop_category,
-                shopAddress: shopData.shop_address
+                shopId: shop.id,
+                shopName: shop.shopname,
+                role: member.role,
+                permissions: member.permissions,
+                isOwner: shop.created_userId === userId,
+                logoUrl: shop.logo_url,
+                shopCategory: shop.shop_category,
+                shopAddress: shop.shop_address
             })
         }
     }
@@ -118,16 +93,18 @@ export const addMemberToShop = async (
         'id' | 'shopId' | 'userId' | 'joinedAt' | 'createdAt' | 'updatedAt'
     >
 ): Promise<void> => {
-    const shopDoc = await getDoc(doc(db, 'shops', shopId))
-    if (!shopDoc.exists()) throw new Error('Shop not found')
+    const shop = await shopsRepo.get({ id: shopId })
+    if (!shop) throw new Error('Shop not found')
 
-    await addDoc(collection(db, 'shop_members'), {
+    const now = new Date()
+    await shopMembersRepo.set({
+        id: crypto.randomUUID(),
         shopId,
         userId,
         ...memberData,
-        joinedAt: serverTimestamp(),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        joinedAt: now,
+        createdAt: now,
+        updatedAt: now
     })
 }
 
@@ -137,20 +114,17 @@ export const updateMemberRole = async (
     newRole: ShopRole,
     newPermissions: ShopPermission[]
 ): Promise<void> => {
-    const membersQuery = query(
-        collection(db, 'shop_members'),
-        where('shopId', '==', shopId),
-        where('userId', '==', userId)
+    const members = await shopMembersRepo.list(
+        getShopMemberQuery(shopId, userId)
     )
-    const membersSnapshot = await getDocs(membersQuery)
+    if (members.length === 0) throw new Error('Member not found')
 
-    if (membersSnapshot.empty) throw new Error('Member not found')
-
-    const memberDoc = membersSnapshot.docs[0]
-    await updateDoc(doc(db, 'shop_members', memberDoc.id), {
+    const member = members[0]
+    await shopMembersRepo.set({
+        ...member,
         role: newRole,
         permissions: newPermissions,
-        updatedAt: serverTimestamp()
+        updatedAt: new Date()
     })
 }
 
@@ -158,68 +132,37 @@ export const removeMemberFromShop = async (
     shopId: string,
     userId: string
 ): Promise<void> => {
-    const membersQuery = query(
-        collection(db, 'shop_members'),
-        where('shopId', '==', shopId),
-        where('userId', '==', userId)
+    const members = await shopMembersRepo.list(
+        getShopMemberQuery(shopId, userId)
     )
-    const membersSnapshot = await getDocs(membersQuery)
+    if (members.length === 0) throw new Error('Member not found')
 
-    if (membersSnapshot.empty) throw new Error('Member not found')
-
-    await deleteDoc(doc(db, 'shop_members', membersSnapshot.docs[0].id))
+    await shopMembersRepo.delete({ id: members[0].id })
 }
 
 export const updateShop = async (
     shopId: string,
     updates: Partial<Shop>
 ): Promise<void> => {
-    await updateDoc(doc(db, 'shops', shopId), {
+    const shop = await shopsRepo.get({ id: shopId })
+    if (!shop) throw new Error('Shop not found')
+
+    await shopsRepo.set({
+        ...shop,
         ...updates,
-        updatedAt: serverTimestamp()
+        updatedAt: new Date()
     })
 }
 
 export const deleteShop = async (shopId: string): Promise<void> => {
-    await deleteDoc(doc(db, 'shops', shopId))
+    await shopsRepo.delete({ id: shopId })
 
-    const membersQuery = query(
-        collection(db, 'shop_members'),
-        where('shopId', '==', shopId)
-    )
-    const membersSnapshot = await getDocs(membersQuery)
-
-    for (const memberDoc of membersSnapshot.docs) {
-        await deleteDoc(doc(db, 'shop_members', memberDoc.id))
-    }
+    const members = await shopMembersRepo.list(getShopMembersQuery(shopId))
+    await shopMembersRepo.batchDelete(members.map((m) => ({ id: m.id })))
 }
 
 export const getShopMembers = async (shopId: string): Promise<ShopMember[]> => {
-    const membersQuery = query(
-        collection(db, 'shop_members'),
-        where('shopId', '==', shopId)
-    )
-    const membersSnapshot = await getDocs(membersQuery)
-
-    return membersSnapshot.docs.map((doc) => {
-        const data = doc.data()
-        return {
-            id: doc.id,
-            ...data,
-            joinedAt:
-                data.joinedAt instanceof Timestamp
-                    ? data.joinedAt.toDate()
-                    : new Date(),
-            createdAt:
-                data.createdAt instanceof Timestamp
-                    ? data.createdAt.toDate()
-                    : new Date(),
-            updatedAt:
-                data.updatedAt instanceof Timestamp
-                    ? data.updatedAt.toDate()
-                    : new Date()
-        } as ShopMember
-    })
+    return await shopMembersRepo.list(getShopMembersQuery(shopId))
 }
 
 export const getShopMembersWithUserData = async (
@@ -229,14 +172,12 @@ export const getShopMembersWithUserData = async (
     const membersWithUser: ShopMemberWithUser[] = []
 
     for (const member of members) {
-        const userDoc = await getDoc(doc(db, 'users', member.userId))
-        const userData = userDoc.exists() ? userDoc.data() : {}
-
+        const user = await usersRepo.get({ id: member.userId })
         membersWithUser.push({
             ...member,
-            email: userData.email,
-            displayName: userData.displayName,
-            photoURL: userData.photoURL
+            email: user?.email,
+            displayName: user?.displayName,
+            photoURL: user?.photoURL
         })
     }
 

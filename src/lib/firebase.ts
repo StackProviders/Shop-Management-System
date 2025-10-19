@@ -1,5 +1,9 @@
 import { initializeApp } from 'firebase/app'
-import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore'
+import {
+    getFirestore,
+    enableIndexedDbPersistence,
+    enableMultiTabIndexedDbPersistence
+} from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
 import { getStorage } from 'firebase/storage'
 
@@ -24,11 +28,14 @@ export const db = getFirestore(app)
 export const auth = getAuth(app)
 export const storage = getStorage(app)
 
-enableIndexedDbPersistence(db).catch((err) => {
+// Enable offline persistence with multi-tab support
+enableMultiTabIndexedDbPersistence(db).catch((err) => {
     if (err.code === 'failed-precondition') {
-        console.warn(
-            'Multiple tabs open, persistence enabled in first tab only'
-        )
+        console.warn('Persistence failed: Multiple tabs open')
+        // Fallback to single-tab persistence
+        enableIndexedDbPersistence(db).catch((e) => {
+            console.warn('Single-tab persistence also failed:', e)
+        })
     } else if (err.code === 'unimplemented') {
         console.warn('Browser does not support offline persistence')
     }

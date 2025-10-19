@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import useSWR from 'swr'
 import {
     getUserShops,
     createShop,
@@ -6,38 +6,19 @@ import {
     deleteShop
 } from '@/services/shop'
 import { Shop, UserShopAccess } from '@/types/shop'
-import { toast } from 'sonner'
+
+const fetcher = (userId: string) => getUserShops(userId)
 
 export const useShops = (userId: string | undefined) => {
-    const [shops, setShops] = useState<UserShopAccess[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-
-    const fetchShops = useCallback(async () => {
-        if (!userId) {
-            setShops([])
-            setLoading(false)
-            return
+    const { data, error, isLoading, mutate } = useSWR<UserShopAccess[]>(
+        userId ? ['user-shops', userId] : null,
+        () => fetcher(userId!),
+        {
+            revalidateOnFocus: true,
+            revalidateOnReconnect: true,
+            dedupingInterval: 2000
         }
-
-        try {
-            setLoading(true)
-            setError(null)
-            const data = await getUserShops(userId)
-            setShops(data)
-        } catch (err) {
-            setError(
-                err instanceof Error ? err.message : 'Failed to fetch shops'
-            )
-            toast.error('Failed to load shops')
-        } finally {
-            setLoading(false)
-        }
-    }, [userId])
-
-    useEffect(() => {
-        fetchShops()
-    }, [fetchShops])
+    )
 
     const create = async (
         shopData: Omit<
@@ -46,27 +27,26 @@ export const useShops = (userId: string | undefined) => {
         >
     ) => {
         if (!userId) throw new Error('User not authenticated')
-
         const newShop = await createShop(userId, shopData)
-        await fetchShops()
+        await mutate()
         return newShop
     }
 
     const update = async (shopId: string, updates: Partial<Shop>) => {
         await updateShop(shopId, updates)
-        await fetchShops()
+        await mutate()
     }
 
     const remove = async (shopId: string) => {
         await deleteShop(shopId)
-        await fetchShops()
+        await mutate()
     }
 
     return {
-        shops,
-        loading,
-        error,
-        refresh: fetchShops,
+        shops: data ?? [],
+        loading: isLoading,
+        error: error?.message ?? null,
+        refresh: mutate,
         create,
         update,
         remove

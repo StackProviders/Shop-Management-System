@@ -11,6 +11,9 @@ importers:
       '@base-ui-components/react':
         specifier: 1.0.0-beta.4
         version: 1.0.0-beta.4(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@firestore-repository/firebase-js-sdk':
+        specifier: ^0.4.2
+        version: 0.4.2(@firebase/app@0.14.4)
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.65.0(react@19.2.0))
@@ -119,6 +122,9 @@ importers:
       firebase:
         specifier: ^12.4.0
         version: 12.4.0
+      firestore-repository:
+        specifier: ^0.4.2
+        version: 0.4.2
       input-otp:
         specifier: ^1.4.2
         version: 1.4.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -155,6 +161,9 @@ importers:
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      swr:
+        specifier: ^2.3.6
+        version: 2.3.6(react@19.2.0)
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.3.1
@@ -818,6 +827,9 @@ packages:
 
   '@firebase/webchannel-wrapper@1.0.5':
     resolution: {integrity: sha512-+uGNN7rkfn41HLO0vekTFhTxk61eKa8mTpRGLO0QSqlQdKvIoGAvLp3ppdVIWbTGYJWM6Kp0iN+PjMIOcnVqTw==}
+
+  '@firestore-repository/firebase-js-sdk@0.4.2':
+    resolution: {integrity: sha512-OybNd2yNHicLrwTjmq7Psj6S1qg9MwwnSHKUo+ooWVWHavjbMqT3x11P/2gTyWkSvMbSqKG5Objpuc8stcXbeA==}
 
   '@floating-ui/core@1.7.3':
     resolution: {integrity: sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w==}
@@ -2747,6 +2759,9 @@ packages:
   firebase@12.4.0:
     resolution: {integrity: sha512-/chNgDQ6ppPPGOQO4jctxOa/5JeQxuhaxA7Y90K0I+n/wPfoO8mRveedhVUdo7ExLcWUivnnow/ouSLYSI5Icw==}
 
+  firestore-repository@0.4.2:
+    resolution: {integrity: sha512-HQ7ikH+5zzsUK8RGVnpXYmFVei7J1KjiLP1e0zz8IVVrYt7N4q/3PTuGW3mG/Cc/q02NfMPVK6jO6XHi6ZHYNg==}
+
   flat-cache@4.0.1:
     resolution: {integrity: sha512-f7ccFPK3SXFHpx15UIGyRJ/FJQctuKZ0zVuN3frBo4HnK3cay9VEW0R6yPYFHC0AgqhukPzKjq22t5DmAyqGyw==}
     engines: {node: '>=16'}
@@ -3782,6 +3797,11 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
+  swr@2.3.6:
+    resolution: {integrity: sha512-wfHRmHWk/isGNMwlLGlZX5Gzz/uTgo0o2IRuTMcf4CPuPFJZlq0rDaKUx+ozB5nBOReNV1kiOyzMfj+MBMikLw==}
+    peerDependencies:
+      react: ^16.11.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   symbol-tree@3.2.4:
     resolution: {integrity: sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==}
 
@@ -4799,6 +4819,13 @@ snapshots:
       tslib: 2.8.1
 
   '@firebase/webchannel-wrapper@1.0.5': {}
+
+  '@firestore-repository/firebase-js-sdk@0.4.2(@firebase/app@0.14.4)':
+    dependencies:
+      '@firebase/firestore': 4.9.2(@firebase/app@0.14.4)
+      firestore-repository: 0.4.2
+    transitivePeerDependencies:
+      - '@firebase/app'
 
   '@floating-ui/core@1.7.3':
     dependencies:
@@ -6929,6 +6956,8 @@ snapshots:
     transitivePeerDependencies:
       - '@react-native-async-storage/async-storage'
 
+  firestore-repository@0.4.2: {}
+
   flat-cache@4.0.1:
     dependencies:
       flatted: 3.3.3
@@ -8055,6 +8084,12 @@ snapshots:
       has-flag: 4.0.0
 
   supports-preserve-symlinks-flag@1.0.0: {}
+
+  swr@2.3.6(react@19.2.0):
+    dependencies:
+      dequal: 2.0.3
+      react: 19.2.0
+      use-sync-external-store: 1.6.0(react@19.2.0)
 
   symbol-tree@3.2.4: {}
 
