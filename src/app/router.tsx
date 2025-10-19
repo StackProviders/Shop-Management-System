@@ -1,5 +1,7 @@
 import { createBrowserRouter, RouterProvider } from 'react-router'
-import { ProtectedRoute, PublicRoute } from '@/components/auth/auth-guard'
+import { PublicRoute } from '@/components/auth/auth-guard'
+import { ProtectedLayout } from '@/components/layouts/protected-layout'
+import { DashboardLayout } from '@/components/layouts/dashboard-layout'
 import ShopsPage from '@/app/routes/shops'
 import { Suspense } from 'react'
 import AuthPage from '@/app/routes/auth'
@@ -7,10 +9,6 @@ import HomePage from '@/app/routes/home'
 
 const createAppRouter = () =>
     createBrowserRouter([
-        {
-            path: '/',
-            element: <HomePage />
-        },
         {
             path: '/auth',
             element: (
@@ -22,20 +20,30 @@ const createAppRouter = () =>
             )
         },
         {
-            path: '/shops',
-            element: (
-                <ProtectedRoute>
-                    <ShopsPage />
-                </ProtectedRoute>
-            )
-        },
-        {
-            path: '/settings',
-            lazy: () => import('@/app/routes/settings')
-        },
-        {
-            path: '/scanner',
-            lazy: () => import('@/app/routes/scanner')
+            element: <ProtectedLayout />,
+            children: [
+                {
+                    path: '/shops',
+                    element: <ShopsPage />
+                },
+                {
+                    element: <DashboardLayout />,
+                    children: [
+                        {
+                            path: '/',
+                            element: <HomePage />
+                        },
+                        {
+                            path: '/settings',
+                            lazy: () => import('@/app/routes/settings')
+                        },
+                        {
+                            path: '/scanner',
+                            lazy: () => import('@/app/routes/scanner')
+                        }
+                    ]
+                }
+            ]
         },
         {
             path: '*',
