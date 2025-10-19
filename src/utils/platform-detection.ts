@@ -25,7 +25,7 @@ export interface PlatformInfo {
 /**
  * Detect the current platform using Tauri OS plugin when available, fallback to user agent
  */
-export function detectPlatform(): PlatformInfo {
+export function getPlatform(): PlatformInfo {
     const isTauri = typeof window !== 'undefined' && '__TAURI__' in window
     let platform: Platform
     let isAndroid = false
@@ -72,8 +72,8 @@ export function detectPlatform(): PlatformInfo {
  * Get the appropriate platform string for the updater API
  * Always returns mobile platform strings since we only use mobile updater
  */
-export async function getUpdaterPlatformString(): Promise<string> {
-    const platformInfo = await detectPlatform()
+export function getUpdaterPlatformString(): string {
+    const platformInfo = getPlatform()
 
     if (platformInfo.isAndroid) {
         return 'android-aarch64'
@@ -82,39 +82,5 @@ export async function getUpdaterPlatformString(): Promise<string> {
     } else {
         // Default to android for mobile web and desktop
         return 'android-aarch64'
-    }
-}
-
-/**
- * Synchronous version for backward compatibility
- * Uses user agent detection as fallback
- */
-export function detectPlatformSync(): PlatformInfo {
-    const userAgent = navigator.userAgent.toLowerCase()
-    const isTauri = typeof window !== 'undefined' && '__TAURI__' in window
-
-    const isAndroid = /android/i.test(userAgent)
-    const isIOS = /iphone|ipad|ipod/i.test(userAgent)
-    const isMobile = isAndroid || isIOS || /mobile/i.test(userAgent)
-
-    let platform: Platform
-    if (isAndroid) {
-        platform = 'android'
-    } else if (isIOS) {
-        platform = 'ios'
-    } else if (isTauri) {
-        platform = 'mobile-web' // Will be overridden by async version
-    } else {
-        platform = 'mobile-web'
-    }
-
-    return {
-        platform,
-        isMobile,
-        isDesktop: !isMobile && isTauri,
-        isAndroid,
-        isIOS,
-        isTauri,
-        userAgent: navigator.userAgent
     }
 }

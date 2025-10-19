@@ -26,6 +26,7 @@ import {
     ItemMedia,
     ItemTitle
 } from '@/components/ui/item'
+import { getPlatform } from '@/utils/platform-detection'
 
 interface ShopItemProps {
     shop: {
@@ -47,6 +48,7 @@ export default function ShopItem({
     onDelete
 }: ShopItemProps) {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+    const { isMobile } = getPlatform()
 
     const getShopIcon = () => {
         // You can customize this based on shop type or category
@@ -96,13 +98,20 @@ export default function ShopItem({
                     )}
                 </ItemContent>
 
-                <ItemActions className="flex flex-col sm:flex-row gap-2">
-                    <Button size="sm" onClick={() => onOpen?.(shop.id)}>
+                <ItemActions className="flex items-center gap-2">
+                    <Button
+                        size={isMobile ? 'xs' : 'sm'}
+                        onClick={() => onOpen?.(shop.id)}
+                    >
                         Open
                     </Button>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" mode="icon">
+                            <Button
+                                variant="outline"
+                                size={isMobile ? 'xs' : 'sm'}
+                                mode="icon"
+                            >
                                 <MoreVertical className="size-4" />
                                 <span className="sr-only">More options</span>
                             </Button>

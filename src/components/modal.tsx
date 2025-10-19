@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { detectPlatformSync } from '@/utils/platform-detection'
+import { getPlatform } from '@/utils/platform-detection'
 import {
     Dialog,
     DialogContent,
@@ -39,7 +39,7 @@ export function ResponsiveDialog({
     showCloseButton = true,
     className
 }: ResponsiveDialogProps) {
-    const [isMobile] = React.useState(() => detectPlatformSync().isMobile)
+    const [isMobile] = React.useState(() => getPlatform().isMobile)
 
     if (isMobile) {
         return (
