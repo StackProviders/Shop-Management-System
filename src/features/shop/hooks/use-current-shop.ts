@@ -21,6 +21,20 @@ export function useCurrentShop(userShops: UserShopAccess[]) {
     }, [userShops, currentShop])
 
     useEffect(() => {
+        if (currentShop && userShops.length > 0) {
+            const updatedShop = userShops.find(
+                (s) => s.shopId === currentShop.shopId
+            )
+            if (
+                updatedShop &&
+                JSON.stringify(updatedShop) !== JSON.stringify(currentShop)
+            ) {
+                setCurrentShopState(updatedShop)
+            }
+        }
+    }, [userShops, currentShop])
+
+    useEffect(() => {
         if (currentShop) {
             storeHelpers.set(
                 shopStore,

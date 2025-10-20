@@ -20,12 +20,7 @@ import { ShopFormData } from '@/lib/validations'
 import { toast } from 'sonner'
 import { Spinner } from '@/components/ui/spinner'
 import { useCurrentUser } from '@/features/auth'
-import {
-    useUserShops,
-    useShopActions,
-    shopApi,
-    useCurrentShop
-} from '@/features/shop'
+import { useShopActions, shopApi, useShopContext } from '@/features/shop'
 import type { UserShopAccess } from '@/features/shop'
 import { useNavigate } from 'react-router'
 
@@ -61,9 +56,9 @@ export default function ShopDashboard() {
     const [editingShop, setEditingShop] = useState<Shop | undefined>()
     const inputRef = useRef<HTMLInputElement>(null)
     const user = useCurrentUser()
-    const { userShops, loading, refreshShops } = useUserShops(user?.uid)
+    const { userShops, loading, refreshShops, setCurrentShop } =
+        useShopContext()
     const { createShop, updateShop, deleteShop } = useShopActions()
-    const { setCurrentShop } = useCurrentShop(userShops)
     const navigate = useNavigate()
 
     const handleClearInput = () => {
