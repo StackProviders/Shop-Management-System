@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, ReactNode } from 'react'
 import { useAuth } from '@/features/auth'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { LogOut } from 'lucide-react'
@@ -23,6 +23,7 @@ interface LogoutButtonProps {
     mode?: VariantProps<typeof buttonVariants>['mode']
     showIcon?: boolean
     showConfirm?: boolean
+    children?: ReactNode
 }
 
 export function LogoutButton({
@@ -30,7 +31,8 @@ export function LogoutButton({
     size = 'md',
     mode,
     showIcon = true,
-    showConfirm = true
+    showConfirm = true,
+    children
 }: LogoutButtonProps) {
     const { logout, authState } = useAuth()
     const navigate = useNavigate()
@@ -64,7 +66,9 @@ export function LogoutButton({
         [isLoggingOut, showIcon, isIconSize]
     )
 
-    const LogoutBtn = (
+    const LogoutBtn = children ? (
+        <div onClick={showConfirm ? undefined : handleLogout}>{children}</div>
+    ) : (
         <Button
             variant={variant}
             size={size}
