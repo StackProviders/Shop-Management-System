@@ -83,7 +83,7 @@ jobs:
                   NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.11902837
 
             - name: Build app bundle
-              run: pnpm tauri android build --target aarch64 --apk
+              run: pnpm tauri android build --target aarch64 --apk true
               env:
                   NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.11902837
                   VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
