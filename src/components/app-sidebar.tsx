@@ -9,7 +9,8 @@ import {
     SidebarMenu,
     SidebarMenuBadge,
     SidebarMenuButton,
-    SidebarMenuItem
+    SidebarMenuItem,
+    useSidebar
 } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
 import {
@@ -54,8 +55,9 @@ import {
     IconWebhook
 } from '@tabler/icons-react'
 import type React from 'react'
-import { useState } from 'react'
+import { useState, useCallback, useMemo, memo } from 'react'
 import { TeamSwitcher } from '@/components/team-switcher'
+import { Button } from './ui/button'
 
 const data = {
     teams: [
@@ -325,195 +327,224 @@ const sidebarItems: SidebarItem[] = [
     }
 ]
 
+const MenuItem = memo(
+    ({
+        item,
+        onClick
+    }: {
+        item: SidebarItem
+        onClick: (item: SidebarItem) => void
+    }) => {
+        const Icon = item.icon
+        const chevronIndicator = (
+            <IconChevronRight className="h-4 w-4 transition-transform shrink-0" />
+        )
+
+        return (
+            <SidebarMenuItem>
+                <SidebarMenuButton
+                    className="w-full h-10 px-3"
+                    onClick={() => onClick(item)}
+                >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <Icon className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                    </div>
+                    {(item.badge || item.hasSubItems) && (
+                        <div className="flex items-center gap-1 shrink-0 ml-auto">
+                            {item.badge ? (
+                                <SidebarMenuBadge
+                                    className={cn(
+                                        'min-w-fit',
+                                        item.hasSubItems && 'gap-x-3'
+                                    )}
+                                >
+                                    {item.badge}
+                                    {item.hasSubItems && chevronIndicator}
+                                </SidebarMenuBadge>
+                            ) : (
+                                chevronIndicator
+                            )}
+                        </div>
+                    )}
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+        )
+    }
+)
+MenuItem.displayName = 'MenuItem'
+
+const SubMenuItem = memo(
+    ({
+        subItem,
+        isSelected,
+        onClick
+    }: {
+        subItem: NonNullable<SidebarItem['subItems']>[number]
+        isSelected: boolean
+        onClick: (subItem: NonNullable<SidebarItem['subItems']>[number]) => void
+    }) => {
+        const SubIcon = subItem.icon
+        return (
+            <SidebarMenuItem>
+                <SidebarMenuButton
+                    isActive={isSelected}
+                    className="w-full h-10 px-3"
+                    onClick={() => onClick(subItem)}
+                >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <SubIcon className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{subItem.label}</span>
+                    </div>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+        )
+    }
+)
+SubMenuItem.displayName = 'SubMenuItem'
+
 export function AppSidebar() {
+    const { open, isMobile, setOpenMobile } = useSidebar()
     const [activeItem, setActiveItem] = useState<string | null>(null)
     const [selectedSubItem, setSelectedSubItem] = useState<string | null>(null)
 
-    const activeItemData = sidebarItems.find((item) => item.id === activeItem)
+    const activeItemData = useMemo(
+        () => sidebarItems.find((item) => item.id === activeItem),
+        [activeItem]
+    )
 
-    const handleItemClick = (item: SidebarItem) => {
-        if (item.hasSubItems) {
-            setActiveItem(item.id)
-            setSelectedSubItem(null)
-        } else {
-            console.log(`[v0] Navigating to: ${item.route}`)
-        }
-    }
+    const handleItemClick = useCallback(
+        (item: SidebarItem) => {
+            if (item.hasSubItems) {
+                setActiveItem(item.id)
+                setSelectedSubItem(null)
+            } else {
+                console.log(`[v0] Navigating to: ${item.route}`)
+                setOpenMobile(false)
+            }
+        },
+        [setOpenMobile]
+    )
 
-    const handleSubItemClick = (subItem: { id: string; route?: string }) => {
-        setSelectedSubItem(selectedSubItem === subItem.id ? null : subItem.id)
-        if (subItem.route) {
-            console.log(`[v0] Navigating to: ${subItem.route}`)
-        }
-    }
+    const handleSubItemClick = useCallback(
+        (subItem: { id: string; route?: string }) => {
+            setSelectedSubItem((prev) =>
+                prev === subItem.id ? null : subItem.id
+            )
+            if (subItem.route) {
+                console.log(`[v0] Navigating to: ${subItem.route}`)
+                setOpenMobile(false)
+            }
+        },
+        [setOpenMobile]
+    )
 
-    const handleBackToMain = () => {
+    const handleBackToMain = useCallback(() => {
         setActiveItem(null)
         setSelectedSubItem(null)
-    }
+    }, [])
 
     return (
-        <div className="flex h-screen bg-background">
-            <Sidebar
-                side="left"
-                variant="sidebar"
-                collapsible="none"
-                className="w-64 border-r"
-            >
-                {!activeItem ? (
+        <Sidebar side="left" variant="sidebar" collapsible="icon">
+            {!activeItem ? (
+                <>
+                    <SidebarHeader>
+                        <TeamSwitcher teams={data.teams} />
+                    </SidebarHeader>
+
+                    <SidebarContent>
+                        <SidebarGroup>
+                            <SidebarGroupContent>
+                                <SidebarMenu>
+                                    {sidebarItems.map((item) => (
+                                        <MenuItem
+                                            key={item.id}
+                                            item={item}
+                                            onClick={handleItemClick}
+                                        />
+                                    ))}
+                                </SidebarMenu>
+                            </SidebarGroupContent>
+                        </SidebarGroup>
+                    </SidebarContent>
+
+                    <SidebarFooter>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton className="w-full h-11 md:h-12 px-3">
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <Avatar className="h-8 w-8 rounded-full">
+                                            <AvatarImage
+                                                src="/avatar-01.png"
+                                                alt="ephraim"
+                                            />
+                                            <AvatarFallback className="rounded-full">
+                                                E
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 text-left min-w-0">
+                                            <div className="text-sm font-medium truncate">
+                                                ephraim
+                                            </div>
+                                            <div className="text-xs text-muted-foreground truncate">
+                                                ephraim@blocks.so
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <IconLogout className="h-4 w-4 shrink-0" />
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarFooter>
+                </>
+            ) : (
+                activeItemData?.subItems && (
                     <>
-                        <SidebarHeader>
-                            <TeamSwitcher teams={data.teams} />
+                        <SidebarHeader className="flex flex-row items-center justify-between border-b h-14 md:h-16 px-2">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={handleBackToMain}
+                                className="h-9 w-9 shrink-0"
+                                aria-label="Back to main menu"
+                            >
+                                <IconArrowLeft className="h-4 w-4" />
+                            </Button>
+                            <h3
+                                className={cn(
+                                    !isMobile && !open && 'hidden',
+                                    'font-medium flex-1 text-center text-sm md:text-base truncate px-2'
+                                )}
+                            >
+                                {activeItemData.label}
+                            </h3>
+                            <div className="w-9 shrink-0" />
                         </SidebarHeader>
 
                         <SidebarContent>
                             <SidebarGroup>
                                 <SidebarGroupContent>
                                     <SidebarMenu>
-                                        {sidebarItems.map((item) => {
-                                            const Icon = item.icon
-                                            const chevronIndicator = (
-                                                <IconChevronRight className="h-4 w-4 transition-transform shrink-0" />
+                                        {activeItemData.subItems.map(
+                                            (subItem) => (
+                                                <SubMenuItem
+                                                    key={subItem.id}
+                                                    subItem={subItem}
+                                                    isSelected={
+                                                        selectedSubItem ===
+                                                        subItem.id
+                                                    }
+                                                    onClick={handleSubItemClick}
+                                                />
                                             )
-
-                                            return (
-                                                <SidebarMenuItem key={item.id}>
-                                                    <SidebarMenuButton
-                                                        className="w-full h-10 px-3"
-                                                        onClick={() =>
-                                                            handleItemClick(
-                                                                item
-                                                            )
-                                                        }
-                                                    >
-                                                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                            <Icon className="h-4 w-4 shrink-0" />
-                                                            <span className="truncate">
-                                                                {item.label}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1 shrink-0 ml-auto min-w-fit">
-                                                            {(item.badge ||
-                                                                item.hasSubItems) &&
-                                                                (item.badge ? (
-                                                                    <SidebarMenuBadge
-                                                                        className={cn(
-                                                                            'min-w-fit',
-                                                                            item.hasSubItems &&
-                                                                                'gap-x-3'
-                                                                        )}
-                                                                    >
-                                                                        {
-                                                                            item.badge
-                                                                        }
-                                                                        {item.hasSubItems &&
-                                                                            chevronIndicator}
-                                                                    </SidebarMenuBadge>
-                                                                ) : (
-                                                                    chevronIndicator
-                                                                ))}
-                                                        </div>
-                                                    </SidebarMenuButton>
-                                                </SidebarMenuItem>
-                                            )
-                                        })}
+                                        )}
                                     </SidebarMenu>
                                 </SidebarGroupContent>
                             </SidebarGroup>
                         </SidebarContent>
-
-                        <SidebarFooter>
-                            <SidebarMenu>
-                                <SidebarMenuItem>
-                                    <SidebarMenuButton className="w-full h-12 px-3">
-                                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                                            <Avatar className="h-8 w-8 rounded-full">
-                                                <AvatarImage
-                                                    src="/avatar-01.png"
-                                                    alt="ephraim"
-                                                />
-                                                <AvatarFallback className="rounded-full">
-                                                    E
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex-1 text-left min-w-0">
-                                                <div className="text-sm font-medium truncate">
-                                                    ephraim
-                                                </div>
-                                                <div className="text-xs text-muted-foreground truncate">
-                                                    ephraim@blocks.so
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <IconLogout className="h-4 w-4 shrink-0" />
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            </SidebarMenu>
-                        </SidebarFooter>
                     </>
-                ) : (
-                    activeItemData?.subItems && (
-                        <>
-                            <SidebarHeader className="flex flex-row items-center justify-between border-b px-4">
-                                <button
-                                    onClick={handleBackToMain}
-                                    className="h-8 w-8 p-0 rounded-md hover:bg-sidebar-accent flex items-center justify-center"
-                                >
-                                    <IconArrowLeft className="h-4 w-4" />
-                                </button>
-                                <h3 className="font-medium flex-1 text-center">
-                                    {activeItemData.label}
-                                </h3>
-                                <div className="w-8" />
-                            </SidebarHeader>
-
-                            <SidebarContent>
-                                <SidebarGroup>
-                                    <SidebarGroupContent>
-                                        <SidebarMenu>
-                                            {activeItemData.subItems.map(
-                                                (subItem) => {
-                                                    const SubIcon = subItem.icon
-                                                    const isSelected =
-                                                        selectedSubItem ===
-                                                        subItem.id
-
-                                                    return (
-                                                        <SidebarMenuItem
-                                                            key={subItem.id}
-                                                        >
-                                                            <SidebarMenuButton
-                                                                isActive={
-                                                                    isSelected
-                                                                }
-                                                                className="w-full h-10 px-3"
-                                                                onClick={() =>
-                                                                    handleSubItemClick(
-                                                                        subItem
-                                                                    )
-                                                                }
-                                                            >
-                                                                <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                                    <SubIcon className="h-4 w-4 shrink-0" />
-                                                                    <span className="truncate">
-                                                                        {
-                                                                            subItem.label
-                                                                        }
-                                                                    </span>
-                                                                </div>
-                                                            </SidebarMenuButton>
-                                                        </SidebarMenuItem>
-                                                    )
-                                                }
-                                            )}
-                                        </SidebarMenu>
-                                    </SidebarGroupContent>
-                                </SidebarGroup>
-                            </SidebarContent>
-                        </>
-                    )
-                )}
-            </Sidebar>
-        </div>
+                )
+            )}
+        </Sidebar>
     )
 }

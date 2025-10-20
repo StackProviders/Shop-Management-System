@@ -124,7 +124,9 @@
         @apply h-full overscroll-none;
     }
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background text-foreground h-full;
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
     }
     button {
         @apply cursor-pointer;
