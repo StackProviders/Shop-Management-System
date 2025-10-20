@@ -21,6 +21,7 @@ import {
     type SidebarItem,
     type SidebarSubItem
 } from './sidebar'
+import { ThemeSwitcher } from './theme-switcher'
 
 export function AppSidebar() {
     const { open, isMobile, setOpenMobile } = useSidebar()
@@ -88,6 +89,7 @@ export function AppSidebar() {
                     </SidebarContent>
 
                     <SidebarFooter>
+                        <ThemeSwitcher />
                         <NavUser />
                     </SidebarFooter>
                 </>

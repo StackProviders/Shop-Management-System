@@ -28,7 +28,9 @@ function ThemeSwitcher({ className }: { className?: string }) {
     return (
         <div
             className={cn(
-                'relative isolate z-[999] inline-flex h-8 items-center rounded-full border bg-background border-dotted px-1',
+                'relative isolate flex items-center rounded-full border bg-background',
+                'group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:h-auto group-data-[collapsible=icon]:py-1 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:w-fit group-data-[collapsible=icon]:mx-auto',
+                'h-8 px-1 w-fit justify-end ml-auto',
                 className
             )}
         >
@@ -38,15 +40,14 @@ function ThemeSwitcher({ className }: { className?: string }) {
                 return (
                     <button
                         aria-label={`Switch to ${label}`}
-                        className="group relative size-6 rounded-full transition duration-200 ease-out"
+                        className="group relative size-6 rounded-full transition-all duration-300 ease-out hover:scale-110 shrink-0"
                         key={type}
                         onClick={() => setTheme(type)}
                         title={`Switch to ${label}`}
                         type="button"
-                        data-umami-event={`Switch Theme to ${type}`}
                     >
                         {isActive && (
-                            <div className="-z-1 absolute inset-0 rounded-full bg-muted transition-opacity duration-200" />
+                            <div className="-z-1 absolute inset-0 rounded-full bg-muted transition-opacity duration-300" />
                         )}
                         <Icon
                             className={cn(
