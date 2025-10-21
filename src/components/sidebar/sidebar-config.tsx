@@ -1,222 +1,207 @@
 import {
-    IconActivityHeartbeat,
-    IconArchive,
-    IconBackground,
     IconBellRinging,
-    IconBrandNpm,
-    IconBug,
+    IconBuildingStore,
     IconChartBar,
-    IconCloud,
-    IconDatabase,
-    IconFileText,
-    IconFolder,
-    IconFolders,
-    IconGitCommit,
-    IconGitMerge,
-    IconGitPullRequest,
+    IconChartLine,
+    IconCoin,
+    IconCreditCard,
+    IconFileInvoice,
     IconHome,
     IconKey,
-    IconLockExclamation,
-    IconLockPassword,
-    IconPackageExport,
-    IconPackages,
-    IconPasswordFingerprint,
-    IconPlayerPlay,
-    IconScanEye,
+    IconPackage,
+    IconPlus,
+    IconReceipt,
+    IconReportMoney,
+    IconRotateClockwise2,
     IconSettings,
-    IconShieldLock,
-    IconStar,
-    IconTarget,
-    IconTerminal2,
+    IconShoppingBag,
+    IconShoppingCart,
+    IconTrendingDown,
+    IconTrendingUp,
     IconUser,
-    IconUserPlus,
+    IconUsers,
+    IconWallet,
     IconWebhook
 } from '@tabler/icons-react'
-import type { SidebarItem } from './types'
 import {
-    getRepositoriesCount,
-    getPullRequestsCount,
-    getIssuesCount,
-    getSecurityCount
-} from './badge-helpers'
+    ArrowDownToLine,
+    ArrowUpFromLine,
+    BadgeDollarSign,
+    FileText,
+    Smartphone,
+    TrendingUp,
+    Undo2,
+    Warehouse
+} from 'lucide-react'
+import type { SidebarItem } from './types'
+import { getSecurityCount } from './badge-helpers'
 
 export const sidebarItems: SidebarItem[] = [
     {
-        id: 'overview',
-        label: 'Overview',
+        id: 'home',
+        label: 'Dashboard',
         icon: IconHome,
+        route: '/'
+    },
+    {
+        id: 'parties',
+        label: 'Parties',
+        icon: IconUsers,
+        route: '/parties'
+    },
+    {
+        id: 'items',
+        label: 'Items',
+        icon: IconPackage,
+        route: '/item'
+    },
+    {
+        id: 'inventory',
+        label: 'Inventory',
+        icon: Warehouse,
+        route: '/inventory'
+    },
+    {
+        id: 'sales',
+        label: 'Sales',
+        icon: IconTrendingUp,
         subItems: [
             {
-                id: 'dashboard',
-                label: 'Dashboard',
-                icon: IconChartBar,
-                route: '/overview/dashboard'
+                id: 'sales-list',
+                label: 'All Sales',
+                icon: IconFileInvoice,
+                route: '/sales'
             },
             {
-                id: 'activity',
-                label: 'Activity',
-                icon: IconActivityHeartbeat,
-                route: '/overview/activity'
+                id: 'add-sale',
+                label: 'New Sale',
+                icon: IconPlus,
+                route: '/sales/add'
             },
             {
-                id: 'insights',
-                label: 'Insights',
-                icon: IconTarget,
-                route: '/overview/insights'
+                id: 'sale-return',
+                label: 'Sale Returns',
+                icon: Undo2,
+                route: '/sales/return'
             }
         ]
     },
     {
-        id: 'repositories',
-        label: 'Repositories',
-        icon: IconFolders,
-        badge: getRepositoriesCount,
+        id: 'purchases',
+        label: 'Purchases',
+        icon: IconShoppingCart,
         subItems: [
             {
-                id: 'all-repos',
-                label: 'All Repositories',
-                icon: IconFolder,
-                route: '/repositories'
+                id: 'purchase-list',
+                label: 'All Purchases',
+                icon: IconReceipt,
+                route: '/purchase'
             },
             {
-                id: 'starred',
-                label: 'Starred',
-                icon: IconStar,
-                route: '/repositories/starred'
+                id: 'add-purchase',
+                label: 'New Purchase',
+                icon: IconPlus,
+                route: '/purchase/add'
             },
             {
-                id: 'archived',
-                label: 'Archived',
-                icon: IconArchive,
-                route: '/repositories/archived'
+                id: 'purchase-return',
+                label: 'Purchase Returns',
+                icon: IconRotateClockwise2,
+                route: '/purchase/return'
             }
         ]
     },
     {
-        id: 'pull-requests',
-        label: 'Pull Requests',
-        icon: IconGitPullRequest,
-        badge: getPullRequestsCount,
+        id: 'payments',
+        label: 'Payments',
+        icon: IconWallet,
         subItems: [
             {
-                id: 'open-prs',
-                label: 'Open',
-                icon: IconGitPullRequest,
-                route: '/pull-requests/open'
+                id: 'payment-in',
+                label: 'Payment In',
+                icon: ArrowDownToLine,
+                route: '/payment/in'
             },
             {
-                id: 'review-requests',
-                label: 'Review Requests',
-                icon: IconScanEye,
-                route: '/pull-requests/review'
-            },
-            {
-                id: 'merged',
-                label: 'Merged',
-                icon: IconGitMerge,
-                route: '/pull-requests/merged'
+                id: 'payment-out',
+                label: 'Payment Out',
+                icon: ArrowUpFromLine,
+                route: '/payment/out'
             }
         ]
     },
     {
-        id: 'issues',
-        label: 'Issues',
-        icon: IconBug,
-        badge: getIssuesCount,
+        id: 'expenses',
+        label: 'Expenses',
+        icon: IconTrendingDown,
+        route: '/expenses'
+    },
+    {
+        id: 'mobile-banking',
+        label: 'Mobile Banking',
+        icon: Smartphone,
         subItems: [
             {
-                id: 'open-issues',
-                label: 'Open Issues',
-                icon: IconBug,
-                route: '/issues/open'
+                id: 'bkash',
+                label: 'bKash',
+                icon: IconCoin,
+                route: '/mobile-banking/bkash'
             },
             {
-                id: 'assigned',
-                label: 'Assigned to Me',
-                icon: IconUserPlus,
-                route: '/issues/assigned'
+                id: 'nagad',
+                label: 'Nagad',
+                icon: IconCoin,
+                route: '/mobile-banking/nagad'
             },
             {
-                id: 'created',
-                label: 'Created by Me',
-                icon: IconGitCommit,
-                route: '/issues/created'
+                id: 'rocket',
+                label: 'Rocket',
+                icon: IconCoin,
+                route: '/mobile-banking/rocket'
             }
         ]
     },
     {
-        id: 'actions',
-        label: 'Actions',
-        icon: IconBackground,
-        subItems: [
-            {
-                id: 'workflows',
-                label: 'Workflows',
-                icon: IconPlayerPlay,
-                route: '/actions/workflows'
-            },
-            {
-                id: 'runners',
-                label: 'Runners',
-                icon: IconTerminal2,
-                route: '/actions/runners'
-            },
-            {
-                id: 'deployments',
-                label: 'Deployments',
-                icon: IconCloud,
-                route: '/actions/deployments'
-            }
-        ]
-    },
-    {
-        id: 'packages',
-        label: 'Packages',
-        icon: IconPackages,
-        subItems: [
-            {
-                id: 'published',
-                label: 'Published',
-                icon: IconPackageExport,
-                route: '/packages/published'
-            },
-            {
-                id: 'container-registry',
-                label: 'Container Registry',
-                icon: IconDatabase,
-                route: '/packages/containers'
-            },
-            {
-                id: 'npm-packages',
-                label: 'npm Packages',
-                icon: IconBrandNpm,
-                route: '/packages/npm'
-            }
-        ]
-    },
-    {
-        id: 'security',
-        label: 'Security',
-        icon: IconLockPassword,
+        id: 'reports',
+        label: 'Reports',
+        icon: IconChartBar,
         badge: getSecurityCount,
         subItems: [
             {
-                id: 'alerts',
-                label: 'Security Alerts',
-                icon: IconLockExclamation,
-                route: '/security/alerts'
+                id: 'sales-report',
+                label: 'Sales Report',
+                icon: TrendingUp,
+                route: '/reports/sales'
             },
             {
-                id: 'advisories',
-                label: 'Advisories',
-                icon: IconShieldLock,
-                route: '/security/advisories'
+                id: 'purchase-report',
+                label: 'Purchase Report',
+                icon: IconShoppingBag,
+                route: '/reports/purchase'
             },
             {
-                id: 'secrets',
-                label: 'Secrets',
-                icon: IconPasswordFingerprint,
-                route: '/security/secrets'
+                id: 'profit-loss',
+                label: 'Profit & Loss',
+                icon: IconReportMoney,
+                route: '/reports/profit-loss'
+            },
+            {
+                id: 'inventory-report',
+                label: 'Inventory Report',
+                icon: FileText,
+                route: '/reports/inventory'
+            },
+            {
+                id: 'party-statement',
+                label: 'Party Statement',
+                icon: BadgeDollarSign,
+                route: '/reports/party-statement'
+            },
+            {
+                id: 'cash-flow',
+                label: 'Cash Flow',
+                icon: IconChartLine,
+                route: '/reports/cash-flow'
             }
         ]
     },
@@ -226,10 +211,22 @@ export const sidebarItems: SidebarItem[] = [
         icon: IconSettings,
         subItems: [
             {
+                id: 'shop-settings',
+                label: 'Shop Settings',
+                icon: IconBuildingStore,
+                route: '/settings/shop'
+            },
+            {
                 id: 'profile',
                 label: 'Profile',
                 icon: IconUser,
                 route: '/settings/profile'
+            },
+            {
+                id: 'billing',
+                label: 'Billing',
+                icon: IconCreditCard,
+                route: '/settings/billing'
             },
             {
                 id: 'notifications',
@@ -250,11 +247,5 @@ export const sidebarItems: SidebarItem[] = [
                 route: '/settings/api-keys'
             }
         ]
-    },
-    {
-        id: 'docs',
-        label: 'Documentation',
-        icon: IconFileText,
-        route: '/docs'
     }
 ]

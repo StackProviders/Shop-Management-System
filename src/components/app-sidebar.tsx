@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router'
 import { IconArrowLeft } from '@tabler/icons-react'
 import {
     Sidebar,
@@ -25,6 +26,8 @@ import { ThemeSwitcher } from './theme-switcher'
 
 export function AppSidebar() {
     const { open, isMobile, setOpenMobile } = useSidebar()
+    const navigate = useNavigate()
+    const location = useLocation()
     const [activeItem, setActiveItem] = useState<string | null>(null)
     const [selectedSubItem, setSelectedSubItem] = useState<string | null>(null)
 
@@ -33,30 +36,49 @@ export function AppSidebar() {
         [activeItem]
     )
 
+    useEffect(() => {
+        const currentPath = location.pathname
+
+        for (const item of sidebarItems) {
+            if (item.route === currentPath) {
+                setSelectedSubItem(null)
+                return
+            }
+
+            if (item.subItems) {
+                const matchedSubItem = item.subItems.find(
+                    (sub) => sub.route === currentPath
+                )
+                if (matchedSubItem) {
+                    setSelectedSubItem(matchedSubItem.id)
+                    return
+                }
+            }
+        }
+    }, [location.pathname])
+
     const handleItemClick = useCallback(
         (item: SidebarItem) => {
             if (item.subItems?.length) {
                 setActiveItem(item.id)
                 setSelectedSubItem(null)
-            } else {
-                console.log(`[v0] Navigating to: ${item.route}`)
+            } else if (item.route) {
+                navigate(item.route)
                 setOpenMobile(false)
             }
         },
-        [setOpenMobile]
+        [navigate, setOpenMobile]
     )
 
     const handleSubItemClick = useCallback(
         (subItem: SidebarSubItem) => {
-            setSelectedSubItem((prev) =>
-                prev === subItem.id ? null : subItem.id
-            )
             if (subItem.route) {
-                console.log(`[v0] Navigating to: ${subItem.route}`)
+                navigate(subItem.route)
+                setSelectedSubItem(subItem.id)
                 setOpenMobile(false)
             }
         },
-        [setOpenMobile]
+        [navigate, setOpenMobile]
     )
 
     const handleBackToMain = useCallback(() => {
@@ -81,6 +103,9 @@ export function AppSidebar() {
                                             key={item.id}
                                             item={item}
                                             onClick={handleItemClick}
+                                            isActive={
+                                                location.pathname === item.route
+                                            }
                                         />
                                     ))}
                                 </SidebarMenu>

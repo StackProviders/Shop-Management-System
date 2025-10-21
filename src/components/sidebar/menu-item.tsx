@@ -11,9 +11,10 @@ import type { SidebarItem } from './types'
 interface MenuItemProps {
     item: SidebarItem
     onClick: (item: SidebarItem) => void
+    isActive?: boolean
 }
 
-export const MenuItem = memo(({ item, onClick }: MenuItemProps) => {
+export const MenuItem = memo(({ item, onClick, isActive }: MenuItemProps) => {
     const Icon = item.icon
     const hasSubItems = !!item.subItems?.length
     const badgeValue =
@@ -24,6 +25,7 @@ export const MenuItem = memo(({ item, onClick }: MenuItemProps) => {
             <SidebarMenuButton
                 className="w-full h-10 px-3"
                 onClick={() => onClick(item)}
+                isActive={isActive}
             >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                     <Icon className="h-4 w-4 shrink-0" />
