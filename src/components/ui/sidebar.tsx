@@ -209,7 +209,12 @@ function Sidebar({
                             Displays the mobile sidebar.
                         </SheetDescription>
                     </SheetHeader>
-                    <div className="flex h-full w-full flex-col">
+                    <div
+                        className="flex w-full flex-col"
+                        style={{
+                            height: 'calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom))'
+                        }}
+                    >
                         {children}
                     </div>
                 </SheetContent>
