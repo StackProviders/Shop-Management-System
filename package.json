@@ -25,7 +25,11 @@
         "test": "vitest",
         "test:ui": "vitest --ui",
         "test:coverage": "vitest --coverage",
-        "release": "git tag v%npm_package_version% && git push origin v%npm_package_version%"
+        "release": "git tag v%npm_package_version% && git push origin v%npm_package_version%",
+        "clean:rust": "cd src-tauri && cargo clean",
+        "clean:deps": "rimraf node_modules",
+        "clean:build": "rimraf dist",
+        "clean:all": "pnpm clean:deps && pnpm clean:build && pnpm clean:rust"
     },
     "lint-staged": {
         "**/*": "prettier --write --ignore-unknown"

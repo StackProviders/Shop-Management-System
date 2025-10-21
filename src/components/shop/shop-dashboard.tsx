@@ -11,16 +11,14 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input, InputWrapper } from '@/components/ui/input'
 import ShopItem from './shop-item'
-import CreateShop from './shop-modal'
+import { CreateShopModal, EditShopModal } from '@/features/shop'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Heading4 } from '@/components/ui/typography'
 import { LogoutButton } from '../auth'
-import { Shop } from '@/types/shop'
-import { ShopFormData } from '@/lib/validations'
 import { toast } from 'sonner'
 import { Spinner } from '@/components/ui/spinner'
 import { useCurrentUser } from '@/features/auth'
-import { useShopActions, shopApi, useShopContext } from '@/features/shop'
+import { useShopActions, useShopContext } from '@/features/shop'
 import type { UserShopAccess } from '@/features/shop'
 import { useNavigate } from 'react-router'
 
@@ -52,13 +50,12 @@ const LoadingState = () => (
 export default function ShopDashboard() {
     const [searchQuery, setSearchQuery] = useState('')
     const [createModalOpen, setCreateModalOpen] = useState(false)
-    const [editModalOpen, setEditModalOpen] = useState(false)
-    const [editingShop, setEditingShop] = useState<Shop | undefined>()
+    const [editingShopId, setEditingShopId] = useState<string | null>(null)
     const inputRef = useRef<HTMLInputElement>(null)
     const user = useCurrentUser()
     const { userShops, loading, refreshShops, setCurrentShop } =
         useShopContext()
-    const { createShop, updateShop, deleteShop } = useShopActions()
+    const { deleteShop } = useShopActions()
     const navigate = useNavigate()
 
     const handleClearInput = () => {
@@ -68,16 +65,8 @@ export default function ShopDashboard() {
         }
     }
 
-    const handleEditShop = async (shopId: string) => {
-        try {
-            const shopData = await shopApi.getShop(shopId)
-            if (shopData) {
-                setEditingShop(shopData)
-                setEditModalOpen(true)
-            }
-        } catch {
-            toast.error('Failed to load shop details')
-        }
+    const handleEditShop = (shopId: string) => {
+        setEditingShopId(shopId)
     }
 
     const handleDeleteShop = async (shopId: string) => {
@@ -96,19 +85,6 @@ export default function ShopDashboard() {
             setCurrentShop(shop)
             navigate('/')
         }
-    }
-
-    const handleCreateShop = async (data: ShopFormData) => {
-        if (!user?.uid) return
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { status, ...shopData } = data
-        await createShop(user.uid, shopData)
-        await refreshShops()
-    }
-
-    const handleUpdateShop = async (shopId: string, data: ShopFormData) => {
-        await updateShop(shopId, data)
-        await refreshShops()
     }
 
     const { myShops, sharedShops } = useMemo(() => {
@@ -257,25 +233,26 @@ export default function ShopDashboard() {
                         </span>
                     </div>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                        <CreateShop
-                            mode="create"
-                            trigger={<Button>Create Shop</Button>}
-                            open={createModalOpen}
-                            onOpenChange={setCreateModalOpen}
-                            onCreate={handleCreateShop}
-                        />
+                        <Button onClick={() => setCreateModalOpen(true)}>
+                            Create Shop
+                        </Button>
                         <LogoutButton variant="destructive" />
                     </div>
                 </div>
             </div>
 
-            {editModalOpen && editingShop && (
-                <CreateShop
-                    mode="edit"
-                    open={editModalOpen}
-                    onOpenChange={setEditModalOpen}
-                    initialData={editingShop}
-                    onUpdate={handleUpdateShop}
+            <CreateShopModal
+                open={createModalOpen}
+                onOpenChange={setCreateModalOpen}
+                onSuccess={refreshShops}
+            />
+
+            {editingShopId && (
+                <EditShopModal
+                    shopId={editingShopId}
+                    open={!!editingShopId}
+                    onOpenChange={(open) => !open && setEditingShopId(null)}
+                    onSuccess={refreshShops}
                 />
             )}
         </>

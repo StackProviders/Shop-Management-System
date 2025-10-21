@@ -1,7 +1,21 @@
-import { ChevronsUpDown, Plus, Store, Crown, Loader2 } from 'lucide-react'
-import { memo, useMemo, useTransition } from 'react'
+import {
+    ChevronsUpDown,
+    Plus,
+    Store,
+    Loader2,
+    Settings,
+    Crown,
+    Shield,
+    UserCog,
+    Users,
+    Eye,
+    LayoutGrid
+} from 'lucide-react'
+import { memo, useMemo, useState, useTransition } from 'react'
+import { useNavigate } from 'react-router'
 import { useShopContext } from '@/features/shop'
-import { Badge } from '@/components/ui/badge'
+import { CreateShopModal } from '@/features/shop'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
     DropdownMenu,
@@ -53,10 +67,30 @@ const ShopLogo = memo(
 )
 ShopLogo.displayName = 'ShopLogo'
 
+const getRoleIcon = (role: string) => {
+    switch (role.toLowerCase()) {
+        case 'owner':
+            return Crown
+        case 'admin':
+            return Shield
+        case 'manager':
+            return UserCog
+        case 'staff':
+            return Users
+        case 'viewer':
+            return Eye
+        default:
+            return Users
+    }
+}
+
 export function ShopSwitcher() {
     const { isMobile } = useSidebar()
-    const { userShops, currentShop, setCurrentShop, loading } = useShopContext()
+    const { userShops, currentShop, setCurrentShop, loading, refreshShops } =
+        useShopContext()
     const [isPending, startTransition] = useTransition()
+    const [createModalOpen, setCreateModalOpen] = useState(false)
+    const navigate = useNavigate()
 
     const sortedShops = useMemo(
         () =>
@@ -89,95 +123,131 @@ export function ShopSwitcher() {
     }
 
     return (
-        <SidebarMenu>
-            <SidebarMenuItem>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <SidebarMenuButton
-                            size="lg"
-                            disabled={isPending}
-                            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                        >
-                            {isPending ? (
-                                <Loader2 className="size-8 animate-spin" />
-                            ) : (
-                                <ShopLogo
-                                    logoUrl={currentShop.logoUrl}
-                                    shopName={currentShop.shopName}
-                                />
-                            )}
-                            <div className="grid flex-1 text-left text-sm leading-tight">
-                                <span className="truncate font-medium">
-                                    {currentShop.shopName}
-                                </span>
-                                <span className="truncate text-xs text-muted-foreground capitalize">
-                                    {currentShop.role}
-                                </span>
-                            </div>
-                            <ChevronsUpDown className="ml-auto" />
-                        </SidebarMenuButton>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                        className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-                        align="start"
-                        side={isMobile ? 'bottom' : 'right'}
-                        sideOffset={4}
-                    >
-                        <DropdownMenuLabel className="text-muted-foreground text-xs">
-                            Shops
-                        </DropdownMenuLabel>
-                        {sortedShops.map((shop) => (
-                            <DropdownMenuItem
-                                key={shop.shopId}
-                                onClick={() => handleShopSwitch(shop)}
-                                disabled={
-                                    isPending ||
-                                    shop.shopId === currentShop.shopId
-                                }
-                                className={cn(
-                                    'gap-2 p-2',
-                                    shop.shopId === currentShop.shopId &&
-                                        'bg-accent'
-                                )}
+        <>
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <SidebarMenuButton
+                                size="lg"
+                                disabled={isPending}
+                                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                             >
-                                <ShopLogo
-                                    logoUrl={shop.logoUrl}
-                                    shopName={shop.shopName}
-                                    size="small"
-                                />
-                                <div className="flex flex-col flex-1 min-w-0">
-                                    <div className="flex items-center gap-1.5 justify-between">
-                                        <span className="truncate">
-                                            {shop.shopName}
-                                        </span>
-                                        {shop.isOwner && (
-                                            <Badge
-                                                variant="secondary"
-                                                className="h-4 px-1 text-[10px] gap-0.5"
-                                            >
-                                                <Crown className="size-2.5" />
-                                                Owner
-                                            </Badge>
-                                        )}
-                                    </div>
-                                    <span className="text-xs text-muted-foreground truncate capitalize">
-                                        {shop.role}
+                                {isPending ? (
+                                    <Loader2 className="size-8 animate-spin" />
+                                ) : (
+                                    <ShopLogo
+                                        logoUrl={currentShop.logoUrl}
+                                        shopName={currentShop.shopName}
+                                    />
+                                )}
+                                <div className="grid flex-1 text-left text-sm leading-tight">
+                                    <span className="truncate font-medium">
+                                        {currentShop.shopName}
+                                    </span>
+                                    <span className="truncate text-xs text-muted-foreground capitalize">
+                                        {currentShop.role}
                                     </span>
                                 </div>
+                                <ChevronsUpDown className="ml-auto" />
+                            </SidebarMenuButton>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                            align="start"
+                            side={isMobile ? 'bottom' : 'right'}
+                            sideOffset={4}
+                        >
+                            <DropdownMenuLabel className="text-muted-foreground text-xs">
+                                Shops
+                            </DropdownMenuLabel>
+                            {sortedShops.map((shop) => (
+                                <DropdownMenuItem
+                                    key={shop.shopId}
+                                    onClick={() => handleShopSwitch(shop)}
+                                    disabled={
+                                        isPending ||
+                                        shop.shopId === currentShop.shopId
+                                    }
+                                    className={cn(
+                                        'gap-2 p-2',
+                                        shop.shopId === currentShop.shopId &&
+                                            'bg-accent'
+                                    )}
+                                >
+                                    <ShopLogo
+                                        logoUrl={shop.logoUrl}
+                                        shopName={shop.shopName}
+                                        size="small"
+                                    />
+                                    <div className="flex items-center flex-1 min-w-0 gap-2">
+                                        <div className="flex flex-col flex-1 min-w-0">
+                                            <span className="truncate font-medium">
+                                                {shop.shopName}
+                                            </span>
+                                            <div className="flex items-center gap-1">
+                                                {(() => {
+                                                    const RoleIcon =
+                                                        getRoleIcon(shop.role)
+                                                    return (
+                                                        <RoleIcon className="size-3 text-muted-foreground" />
+                                                    )
+                                                })()}
+                                                <span className="text-xs text-muted-foreground truncate capitalize">
+                                                    {shop.role}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {shop.isOwner && (
+                                            <Button
+                                                variant="ghost"
+                                                size="xs"
+                                                mode="icon"
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    setCurrentShop(shop)
+                                                    navigate('/settings')
+                                                }}
+                                            >
+                                                <Settings className="size-3.5" />
+                                            </Button>
+                                        )}
+                                    </div>
+                                </DropdownMenuItem>
+                            ))}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                className="gap-2 p-2"
+                                onClick={() => navigate('/shops')}
+                            >
+                                <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
+                                    <LayoutGrid className="size-4" />
+                                </div>
+                                <div className="text-muted-foreground font-medium">
+                                    Manage all shops
+                                </div>
                             </DropdownMenuItem>
-                        ))}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="gap-2 p-2">
-                            <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                                <Plus className="size-4" />
-                            </div>
-                            <div className="text-muted-foreground font-medium">
-                                Create shop
-                            </div>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </SidebarMenuItem>
-        </SidebarMenu>
+                            <DropdownMenuItem
+                                className="gap-2 p-2"
+                                onClick={() => setCreateModalOpen(true)}
+                            >
+                                <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
+                                    <Plus className="size-4" />
+                                </div>
+                                <div className="text-muted-foreground font-medium">
+                                    Create shop
+                                </div>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </SidebarMenuItem>
+            </SidebarMenu>
+
+            <CreateShopModal
+                open={createModalOpen}
+                onOpenChange={setCreateModalOpen}
+                onSuccess={refreshShops}
+            />
+        </>
     )
 }
