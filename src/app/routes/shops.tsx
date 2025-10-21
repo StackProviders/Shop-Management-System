@@ -2,7 +2,7 @@ import ShopDashboard from '@/components/shop/shop-dashboard'
 
 export default function ShopsPage() {
     return (
-        <div className="min-h-screen w-full bg-background relative">
+        <div className="h-full w-full bg-background relative overflow-auto">
             {/*  Diagonal Cross Grid Background */}
             <div
                 className="absolute inset-0 bg-[length:40px_40px] z-0"
@@ -22,7 +22,7 @@ export default function ShopsPage() {
       `
                 }}
             />
-            <div className="relative z-10 flex min-h-screen justify-center items-start sm:items-center p-2 sm:p-4">
+            <div className="relative z-10 flex min-h-full justify-center items-start sm:items-center p-2 sm:p-4">
                 <div className="w-full max-w-full sm:max-w-7xl">
                     <ShopDashboard />
                 </div>
