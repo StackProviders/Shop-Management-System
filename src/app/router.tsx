@@ -6,6 +6,7 @@ import ShopsPage from '@/app/routes/shops'
 import { Suspense } from 'react'
 import AuthPage from '@/app/routes/auth'
 import HomePage from '@/app/routes/home'
+import PartiesPage from '@/app/routes/Parties'
 
 const createAppRouter = () =>
     createBrowserRouter([
@@ -32,6 +33,10 @@ const createAppRouter = () =>
                         {
                             path: '/',
                             element: <HomePage />
+                        },
+                        {
+                            path: '/parties',
+                            element: <PartiesPage />
                         },
                         {
                             path: '/settings',
