@@ -40,6 +40,10 @@ const createAppRouter = () =>
                         {
                             path: '/scanner',
                             lazy: () => import('@/app/routes/scanner')
+                        },
+                        {
+                            path: '*',
+                            lazy: () => import('@/app/routes/not-found')
                         }
                     ]
                 }

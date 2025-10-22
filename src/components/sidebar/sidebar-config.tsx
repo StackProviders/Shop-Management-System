@@ -39,7 +39,7 @@ import { getSecurityCount } from './badge-helpers'
 export const sidebarItems: SidebarItem[] = [
     {
         id: 'home',
-        label: 'Dashboard',
+        label: 'Home',
         icon: IconHome,
         route: '/'
     },

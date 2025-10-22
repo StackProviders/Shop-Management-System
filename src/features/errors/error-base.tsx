@@ -1,7 +1,38 @@
 import { cn } from '@/lib/utils'
 import { ReactNode } from 'react'
+import { Card } from '@/components/ui/card'
 
 export function ErrorView({
+    children,
+    className,
+    variant = 'destructive'
+}: {
+    children: ReactNode
+    className?: string
+    variant?: 'destructive' | 'warning' | 'info'
+}) {
+    const bgColor = {
+        destructive: 'bg-destructive/5',
+        warning: 'bg-warning/5',
+        info: 'bg-muted/50'
+    }[variant]
+
+    return (
+        <main
+            className={cn(
+                'h-full flex items-center justify-center p-4',
+                bgColor,
+                className
+            )}
+        >
+            <Card className="max-w-md w-full p-8 text-center space-y-6">
+                {children}
+            </Card>
+        </main>
+    )
+}
+
+export function ErrorIcon({
     children,
     className
 }: {
@@ -9,17 +40,26 @@ export function ErrorView({
     className?: string
 }) {
     return (
-        <main
+        <div className={cn('flex justify-center', className)}>{children}</div>
+    )
+}
+
+export function ErrorCode({
+    children,
+    className
+}: {
+    children: ReactNode
+    className?: string
+}) {
+    return (
+        <p
             className={cn(
-                'h-full flex flex-col items-center justify-center text-center bg-red-50 p-8',
+                'text-sm font-medium text-muted-foreground',
                 className
             )}
         >
-            <div className="text-center">
-                <p className="text-base font-semibold text-red-600">Error</p>
-                {children}
-            </div>
-        </main>
+            {children}
+        </p>
     )
 }
 
@@ -33,7 +73,7 @@ export function ErrorHeader({
     return (
         <h1
             className={cn(
-                'mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl',
+                'text-2xl font-bold tracking-tight text-foreground',
                 className
             )}
         >
@@ -50,7 +90,7 @@ export function ErrorDescription({
     className?: string
 }) {
     return (
-        <p className={cn('mt-6 text-base leading-7 text-gray-600', className)}>
+        <p className={cn('text-sm text-muted-foreground', className)}>
             {children}
         </p>
     )
@@ -66,7 +106,7 @@ export function ErrorActions({
     return (
         <div
             className={cn(
-                'mt-10 flex items-center justify-center gap-x-6',
+                'flex flex-col sm:flex-row items-center justify-center gap-3',
                 className
             )}
         >
