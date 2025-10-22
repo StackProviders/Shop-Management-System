@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input, InputWrapper } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import ShopItem from './shop-item'
 import { CreateShopModal, EditShopModal } from '@/features/shop'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -104,32 +105,34 @@ export default function ShopDashboard() {
     }, [userShops, searchQuery])
 
     const renderShopList = (shopList: typeof userShops) => (
-        <div className="space-y-3">
-            {shopList.map((shop: UserShopAccess) => (
-                <ShopItem
-                    key={shop.shopId}
-                    shop={{
-                        id: shop.shopId,
-                        name: shop.shopName,
-                        status: 'active',
-                        isCurrent: false,
-                        logo_url: shop.logoUrl,
-                        shop_category: shop.shopCategory,
-                        description: shop.shopAddress
-                    }}
-                    onOpen={handleOpenShop}
-                    onEdit={handleEditShop}
-                    onDelete={handleDeleteShop}
-                />
-            ))}
-        </div>
+        <ScrollArea className="h-[50vh] max-h-[500px]">
+            <div className="space-y-3 pr-4">
+                {shopList.map((shop: UserShopAccess) => (
+                    <ShopItem
+                        key={shop.shopId}
+                        shop={{
+                            id: shop.shopId,
+                            name: shop.shopName,
+                            status: 'active',
+                            isCurrent: false,
+                            logo_url: shop.logoUrl,
+                            shop_category: shop.shopCategory,
+                            description: shop.shopAddress
+                        }}
+                        onOpen={handleOpenShop}
+                        onEdit={handleEditShop}
+                        onDelete={handleDeleteShop}
+                    />
+                ))}
+            </div>
+        </ScrollArea>
     )
 
     return (
         <>
-            <div className="w-full bg-background rounded-lg shadow-lg overflow-hidden">
+            <div className="w-full max-w-4xl mx-auto bg-background rounded-lg shadow-lg overflow-hidden flex flex-col min-h-[90vh] max-h-[90vh]">
                 {/* Header */}
-                <div className="bg-card border-b px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                <div className="bg-card border-b px-4 sm:px-6 sm:py-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
                     <Heading4 className="text-card-foreground">
                         Shop List
                     </Heading4>
@@ -155,7 +158,7 @@ export default function ShopDashboard() {
                 </div>
 
                 {/* Main Content */}
-                <div className="p-4 sm:p-6 pt-2 sm:!pt-4 min-h-[400px]">
+                <div className="p-4 sm:p-6 pt-2 sm:!pt-4 flex-1 overflow-hidden flex flex-col">
                     <Tabs
                         defaultValue="my_shop"
                         className="text-sm text-muted-foreground"
@@ -185,7 +188,7 @@ export default function ShopDashboard() {
                                 />
                             </Button>
                         </div>
-                        <TabsContent value="shared_shop">
+                        <TabsContent value="shared_shop" className="mt-4">
                             {loading ? (
                                 <LoadingState />
                             ) : sharedShops.length === 0 ? (
@@ -197,7 +200,7 @@ export default function ShopDashboard() {
                                 renderShopList(sharedShops)
                             )}
                         </TabsContent>
-                        <TabsContent value="my_shop">
+                        <TabsContent value="my_shop" className="mt-4">
                             {loading ? (
                                 <LoadingState />
                             ) : myShops.length === 0 ? (
@@ -224,19 +227,30 @@ export default function ShopDashboard() {
                 </div>
 
                 {/* Footer */}
-                <div className="bg-muted/30 px-4 sm:px-6 py-4 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="text-xs sm:text-sm text-muted-foreground">
-                        Currently logged in with{' '}
-                        {user?.email ? 'Email' : 'Phone'}:{' '}
-                        <span className="font-semibold text-foreground">
-                            {user?.email || user?.phone || 'N/A'}
-                        </span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                        <Button onClick={() => setCreateModalOpen(true)}>
-                            Create Shop
-                        </Button>
-                        <LogoutButton variant="destructive" />
+                <div className="bg-muted/30 px-4 sm:px-6 py-3 border-t mt-auto">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                        <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
+                            Currently logged in with{' '}
+                            {user?.email ? 'Email' : 'Phone'}:{' '}
+                            <span className="font-semibold text-foreground">
+                                {user?.email || user?.phone || 'N/A'}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            <Button
+                                size="sm"
+                                onClick={() => setCreateModalOpen(true)}
+                                className="flex-1 sm:flex-none"
+                            >
+                                <Plus className="size-4" />
+                                Create Shop
+                            </Button>
+                            <LogoutButton
+                                variant="destructive"
+                                size="sm"
+                                className="flex-1 sm:flex-none"
+                            />
+                        </div>
                     </div>
                 </div>
             </div>

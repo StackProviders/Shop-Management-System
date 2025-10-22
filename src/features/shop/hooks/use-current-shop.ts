@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { shopStore, STORE_KEYS, storeHelpers } from '@/lib/store'
 import type { UserShopAccess } from '../types'
 
+const SHOP_ACCESS_HISTORY_KEY = 'shop_access_history'
+
 export function useCurrentShop(userShops: UserShopAccess[]) {
     const [currentShop, setCurrentShopState] = useState<UserShopAccess | null>(
         null
@@ -41,6 +43,7 @@ export function useCurrentShop(userShops: UserShopAccess[]) {
                 STORE_KEYS.CURRENT_SHOP_ID,
                 currentShop.shopId
             )
+            updateShopAccessHistory(currentShop.shopId)
         }
     }, [currentShop])
 
@@ -52,4 +55,22 @@ export function useCurrentShop(userShops: UserShopAccess[]) {
         currentShop,
         setCurrentShop
     }
+}
+
+function updateShopAccessHistory(shopId: string) {
+    storeHelpers
+        .get<Record<string, number>>(shopStore, SHOP_ACCESS_HISTORY_KEY)
+        .then((history) => {
+            const updated = { ...history, [shopId]: Date.now() }
+            storeHelpers.set(shopStore, SHOP_ACCESS_HISTORY_KEY, updated)
+        })
+}
+
+export async function getShopAccessHistory(): Promise<Record<string, number>> {
+    return (
+        (await storeHelpers.get<Record<string, number>>(
+            shopStore,
+            SHOP_ACCESS_HISTORY_KEY
+        )) || {}
+    )
 }

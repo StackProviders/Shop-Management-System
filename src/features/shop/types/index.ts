@@ -60,6 +60,7 @@ export interface UserShopAccess {
     logoUrl?: string
     shopCategory?: string
     shopAddress?: string
+    lastAccessedAt?: number
 }
 
 export interface CreateShopData {

@@ -12,7 +12,7 @@ import {
     useSidebar
 } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
-import { ShopSwitcher } from '@/components/shop-switcher'
+import { ShopSwitcher } from '@/components/shop/shop-switcher'
 import { Button } from './ui/button'
 import { NavUser } from './nav-user'
 import {

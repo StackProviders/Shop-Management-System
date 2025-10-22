@@ -11,9 +11,9 @@ import {
     Eye,
     LayoutGrid
 } from 'lucide-react'
-import { memo, useMemo, useState, useTransition } from 'react'
+import { memo, useMemo, useState, useTransition, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { useShopContext } from '@/features/shop'
+import { useShopContext, getShopAccessHistory } from '@/features/shop'
 import { CreateShopModal } from '@/features/shop'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -90,15 +90,24 @@ export function ShopSwitcher() {
         useShopContext()
     const [isPending, startTransition] = useTransition()
     const [createModalOpen, setCreateModalOpen] = useState(false)
+    const [accessHistory, setAccessHistory] = useState<Record<string, number>>(
+        {}
+    )
     const navigate = useNavigate()
 
-    const sortedShops = useMemo(
-        () =>
-            [...userShops].sort(
-                (a, b) => (b.isOwner ? 1 : 0) - (a.isOwner ? 1 : 0)
-            ),
-        [userShops]
-    )
+    useEffect(() => {
+        getShopAccessHistory().then(setAccessHistory)
+    }, [currentShop])
+
+    const sortedShops = useMemo(() => {
+        return [...userShops]
+            .map((shop) => ({
+                ...shop,
+                lastAccessedAt: accessHistory[shop.shopId] || 0
+            }))
+            .sort((a, b) => (b.lastAccessedAt || 0) - (a.lastAccessedAt || 0))
+            .slice(0, 5)
+    }, [userShops, accessHistory])
 
     const handleShopSwitch = (shop: typeof currentShop) => {
         startTransition(() => {
@@ -159,7 +168,7 @@ export function ShopSwitcher() {
                             sideOffset={4}
                         >
                             <DropdownMenuLabel className="text-muted-foreground text-xs">
-                                Shops
+                                Recent Shops
                             </DropdownMenuLabel>
                             {sortedShops.map((shop) => (
                                 <DropdownMenuItem

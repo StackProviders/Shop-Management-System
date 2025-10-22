@@ -24,6 +24,7 @@ interface LogoutButtonProps {
     showIcon?: boolean
     showConfirm?: boolean
     children?: ReactNode
+    className?: string
 }
 
 export function LogoutButton({
@@ -32,7 +33,8 @@ export function LogoutButton({
     mode,
     showIcon = true,
     showConfirm = true,
-    children
+    children,
+    className
 }: LogoutButtonProps) {
     const { logout, authState } = useAuth()
     const navigate = useNavigate()
@@ -76,6 +78,7 @@ export function LogoutButton({
             onClick={showConfirm ? undefined : handleLogout}
             disabled={isDisabled}
             aria-label="Logout"
+            className={className}
         >
             {buttonContent}
         </Button>
