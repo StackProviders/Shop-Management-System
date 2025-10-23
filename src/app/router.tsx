@@ -6,7 +6,9 @@ import ShopsPage from '@/app/routes/shops'
 import { Suspense } from 'react'
 import AuthPage from '@/app/routes/auth'
 import HomePage from '@/app/routes/home'
-import PartiesPage from '@/app/routes/Parties'
+import PartiesLayout from '@/app/routes/parties'
+import PartyDetailPage from '@/app/routes/parties/[id]'
+import PartiesEmptyState from '@/app/routes/parties/empty'
 
 const createAppRouter = () =>
     createBrowserRouter([
@@ -36,7 +38,17 @@ const createAppRouter = () =>
                         },
                         {
                             path: '/parties',
-                            element: <PartiesPage />
+                            element: <PartiesLayout />,
+                            children: [
+                                {
+                                    index: true,
+                                    element: <PartiesEmptyState />
+                                },
+                                {
+                                    path: ':id',
+                                    element: <PartyDetailPage />
+                                }
+                            ]
                         },
                         {
                             path: '/settings',

@@ -123,3 +123,28 @@ export type OTPData = Record<string, unknown> & {
     verified: boolean
     createdAt: Date
 }
+
+export type PartyType = 'customer' | 'supplier'
+export type PartyStatus = 'active' | 'inactive'
+
+export type PartyData = Record<string, unknown> & {
+    shopId: string
+    type: PartyType
+    name: string
+    contactInfo: {
+        phone?: string
+        email?: string
+        address?: string
+    }
+    balance: number
+    status: PartyStatus
+    createdAt: Date
+    updatedAt: Date
+}
+
+export const partiesCollection = rootCollection({
+    name: 'parties',
+    id: mapTo('id'),
+    // @ts-expect-error - firestore-repository DocumentData constraint issue
+    data: data<PartyData>()
+})

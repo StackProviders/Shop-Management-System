@@ -1,15 +1,7 @@
-import { useRef, useState, useMemo, ReactNode } from 'react'
-import {
-    Search,
-    RefreshCw,
-    UserRound,
-    Store,
-    X,
-    Inbox,
-    Plus
-} from 'lucide-react'
+import { useState, useMemo, ReactNode } from 'react'
+import { RefreshCw, UserRound, Store, Inbox, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input, InputWrapper } from '@/components/ui/input'
+import { SearchInput } from '@/components/ui/search-input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import ShopItem from './shop-item'
 import { CreateShopModal, EditShopModal } from '@/features/shop'
@@ -52,19 +44,11 @@ export default function ShopDashboard() {
     const [searchQuery, setSearchQuery] = useState('')
     const [createModalOpen, setCreateModalOpen] = useState(false)
     const [editingShopId, setEditingShopId] = useState<string | null>(null)
-    const inputRef = useRef<HTMLInputElement>(null)
     const user = useCurrentUser()
     const { userShops, loading, refreshShops, setCurrentShop } =
         useShopContext()
     const { deleteShop } = useShopActions()
     const navigate = useNavigate()
-
-    const handleClearInput = () => {
-        setSearchQuery('')
-        if (inputRef.current) {
-            inputRef.current.focus()
-        }
-    }
 
     const handleEditShop = (shopId: string) => {
         setEditingShopId(shopId)
@@ -136,25 +120,12 @@ export default function ShopDashboard() {
                     <Heading4 className="text-card-foreground">
                         Shop List
                     </Heading4>
-                    <InputWrapper className="relative w-full sm:w-auto">
-                        <Search className="size-4" />
-                        <Input
-                            ref={inputRef}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            type="text"
-                            placeholder="Search Shop"
-                            variant="lg"
-                        />
-                        <Button
-                            onClick={handleClearInput}
-                            variant="dim"
-                            className="absolute right-0"
-                            disabled={searchQuery === ''}
-                        >
-                            {searchQuery !== '' && <X size={16} />}
-                        </Button>
-                    </InputWrapper>
+                    <SearchInput
+                        value={searchQuery}
+                        onValueChange={setSearchQuery}
+                        placeholder="Search Shop"
+                        wrapperClassName="w-full sm:w-auto"
+                    />
                 </div>
 
                 {/* Main Content */}
