@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/empty'
 import { Plus, Users, Store } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Heading2 } from '@/components/ui/typography'
 
 interface PartyFormData {
     type: 'customer' | 'supplier'
@@ -117,9 +118,9 @@ export default function PartiesLayout() {
 
     if (isLoading) {
         return (
-            <div className="h-full p-4 md:p-6 space-y-4">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-64 w-full" />
+            <div className="h-full p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4">
+                <Skeleton className="h-10 sm:h-12 w-full" />
+                <Skeleton className="h-48 sm:h-64 w-full" />
             </div>
         )
     }
@@ -148,32 +149,37 @@ export default function PartiesLayout() {
     return (
         <div className="h-full flex flex-col">
             {/* Top Header */}
-            <div className="border-b space-y-3">
-                <div className="flex items-center gap-3 justify-between">
-                    <h1 className="text-2xl font-bold">Parties</h1>
+            <div
+                className={cn(
+                    'border-b space-y-3 p-3 sm:p-4',
+                    id && isMobile && 'hidden'
+                )}
+            >
+                <div className="flex items-center gap-2 sm:gap-3 justify-between">
+                    <Heading2>Parties</Heading2>
                     <Button
                         variant="primary"
-                        size="sm"
+                        size={isMobile ? 'xs' : 'sm'}
                         onClick={() => setIsFormOpen(true)}
                     >
                         <Plus className="size-4" />
-                        Add Party
+                        <span className="hidden xs:inline">Add Party</span>
                     </Button>
                 </div>
-                <div className="flex gap-4 mb-2">
-                    <div className="flex items-center gap-2 text-sm">
+                <div className="flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                         <span className="text-muted-foreground">
                             Customers:
                         </span>
                         <span className="font-semibold">{customerCount}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                         <span className="text-muted-foreground">
                             Suppliers:
                         </span>
                         <span className="font-semibold">{supplierCount}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                         <span className="text-muted-foreground">Total:</span>
                         <span className="font-semibold">{parties.length}</span>
                     </div>
@@ -185,12 +191,12 @@ export default function PartiesLayout() {
                 {/* Left Sidebar - Party List */}
                 <div
                     className={cn(
-                        'flex flex-col border-r',
-                        isMobile ? 'w-full' : 'w-80',
+                        'flex flex-col',
+                        isMobile ? 'w-full' : 'w-80 border-r',
                         id && isMobile && 'hidden'
                     )}
                 >
-                    <div className="p-4 border-b space-y-3">
+                    <div className="p-3 sm:p-4 border-b space-y-3">
                         <div className="flex gap-2">
                             <SearchInput
                                 value={searchQuery}
@@ -212,7 +218,7 @@ export default function PartiesLayout() {
 
                     <div className="flex-1 overflow-y-auto">
                         {filteredParties.length === 0 ? (
-                            <div className="p-4">
+                            <div className="p-3 sm:p-4">
                                 <Empty>
                                     <EmptyHeader>
                                         <EmptyMedia variant="icon">
@@ -255,11 +261,11 @@ export default function PartiesLayout() {
 
             {/* Form Modal */}
             <FormModal open={isFormOpen} onOpenChange={setIsFormOpen}>
-                <FormContent className={isMobile ? '' : 'max-w-md'}>
+                <FormContent className={isMobile ? '' : 'max-w-md sm:max-w-lg'}>
                     <FormHeader>
                         <FormTitle>Add New Party</FormTitle>
                     </FormHeader>
-                    <div className={isMobile ? 'px-4 pb-4' : ''}>
+                    <div className={isMobile ? 'px-3 pb-4 sm:px-4' : ''}>
                         <PartyForm
                             onSubmit={handleCreateParty}
                             onCancel={() => setIsFormOpen(false)}

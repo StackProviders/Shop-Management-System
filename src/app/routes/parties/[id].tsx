@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useShopContext } from '@/features/shop'
+import { useAppBar } from '@/hooks/use-app-bar'
 import {
     useParties,
     usePartyActions,
@@ -37,8 +38,17 @@ import {
     EmptyTitle,
     EmptyDescription
 } from '@/components/ui/empty'
-import { ArrowLeft } from 'lucide-react'
-import { useState } from 'react'
+import { Copy, MoreVertical, Pen, Trash2 } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuShortcut,
+    DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
+import NotFoundErrorPage from '../not-found'
 
 interface PartyFormData {
     type: 'customer' | 'supplier'
@@ -66,6 +76,51 @@ export default function PartyDetailPage() {
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
     const party = parties.find((p) => p.id === id)
+
+    if (!party) {
+        return <NotFoundErrorPage />
+    }
+
+    const actions = useMemo(
+        () => (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button size="icon" variant="ghost">
+                        <MoreVertical className="size-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem onClick={() => setIsEditOpen(true)}>
+                        <Pen />
+                        Edit
+                        <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                        <Copy />
+                        Duplicate
+                        <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => setDeleteConfirmOpen(true)}
+                    >
+                        <Trash2 />
+                        Delete
+                        <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        ),
+        []
+    )
+
+    useAppBar({
+        title: party.name,
+        showBackButton: true,
+        onBack: () => navigate('/parties'),
+        actions
+    })
 
     const handleUpdateParty = async (data: PartyFormData) => {
         if (!party) return
@@ -97,21 +152,21 @@ export default function PartyDetailPage() {
 
     if (isLoading) {
         return (
-            <div className="h-full p-4 md:p-6 space-y-4">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-64 w-full" />
+            <div className="h-full p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4">
+                <Skeleton className="h-10 sm:h-12 w-full" />
+                <Skeleton className="h-48 sm:h-64 w-full" />
             </div>
         )
     }
 
     if (!party) {
         return (
-            <div className="h-full flex items-center justify-center p-6">
+            <div className="h-full flex items-center justify-center p-4 sm:p-6">
                 <Empty>
                     <EmptyHeader>
                         <EmptyTitle>Party not found</EmptyTitle>
                         <EmptyDescription>
-                            The party you're looking for doesn't exist
+                            The party you&rsquo;re looking for doesn&#39;t exist
                         </EmptyDescription>
                     </EmptyHeader>
                 </Empty>
@@ -121,32 +176,16 @@ export default function PartyDetailPage() {
 
     return (
         <div className="h-full overflow-y-auto">
-            <div className="p-4 md:p-6 space-y-4">
-                {isMobile && (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate('/parties')}
-                        className="mb-2"
-                    >
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back
-                    </Button>
-                )}
-
-                <PartyDetail
-                    party={party}
-                    onEdit={() => setIsEditOpen(true)}
-                    onDelete={() => setDeleteConfirmOpen(true)}
-                />
+            <div className="sm:p-4 space-y-3 sm:space-y-4">
+                <PartyDetail party={party} onEdit={() => setIsEditOpen(true)} />
             </div>
 
             <FormModal open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <FormContent className={isMobile ? '' : 'max-w-md'}>
+                <FormContent className={isMobile ? '' : 'max-w-md sm:max-w-lg'}>
                     <FormHeader>
                         <FormTitle>Edit Party</FormTitle>
                     </FormHeader>
-                    <div className={isMobile ? 'px-4 pb-4' : ''}>
+                    <div className={isMobile ? 'px-3 pb-4 sm:px-4' : ''}>
                         <PartyForm
                             party={party}
                             onSubmit={handleUpdateParty}

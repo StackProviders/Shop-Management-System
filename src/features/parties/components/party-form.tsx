@@ -26,8 +26,8 @@ const formSchema = z.object({
     phone: z.string().optional(),
     email: z.string().email('Invalid email').optional().or(z.literal('')),
     address: z.string().optional(),
-    balance: z.coerce.number().default(0),
-    status: z.enum(['active', 'inactive']).default('active')
+    balance: z.number(),
+    status: z.enum(['active', 'inactive'])
 })
 
 type FormData = z.infer<typeof formSchema>
