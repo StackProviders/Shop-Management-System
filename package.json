@@ -10,11 +10,11 @@
     },
     "license": "MIT",
     "scripts": {
-        "dev": "vite",
+        "dev": "tauri dev",
+        "vite:dev": "vite",
         "build": "tsc && vite build",
         "preview": "vite preview",
         "tauri": "tauri",
-        "tauri:dev": "tauri dev",
         "tauri:android": "tauri android dev",
         "tauri:ios": "tauri ios dev",
         "tauri:desktop-android": "concurrently \"tauri dev\" \"tauri android dev\"",

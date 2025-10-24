@@ -54,7 +54,6 @@ export function PartyForm({ party, onSubmit, onCancel }: PartyFormProps) {
 
     const handleSubmit = async (data: FormData) => {
         await onSubmit(data)
-        form.reset()
     }
 
     return (
@@ -163,10 +162,15 @@ export function PartyForm({ party, onSubmit, onCancel }: PartyFormProps) {
                             <FormLabel>Opening Balance</FormLabel>
                             <FormControl>
                                 <Input
-                                    {...field}
                                     type="number"
                                     step="0.01"
                                     placeholder="0.00"
+                                    value={field.value}
+                                    onChange={(e) =>
+                                        field.onChange(
+                                            parseFloat(e.target.value) || 0
+                                        )
+                                    }
                                 />
                             </FormControl>
                             <FormMessage />

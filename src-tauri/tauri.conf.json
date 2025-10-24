@@ -1,6 +1,6 @@
 {
   "build": {
-    "beforeDevCommand": "pnpm dev",
+    "beforeDevCommand": "vite",
     "beforeBuildCommand": "pnpm build",
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420"

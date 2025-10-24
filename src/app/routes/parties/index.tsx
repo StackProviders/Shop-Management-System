@@ -106,8 +106,8 @@ export default function PartiesLayout() {
             balance: data.balance,
             status: data.status
         })
+        await refresh()
         setIsFormOpen(false)
-        refresh()
         navigate(`/parties/${party.id}`)
     }
 
