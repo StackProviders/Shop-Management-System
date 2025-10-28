@@ -7,7 +7,8 @@ import {
     deleteDoc,
     Query,
     DocumentData,
-    writeBatch
+    writeBatch,
+    onSnapshot
 } from 'firebase/firestore'
 import { db } from '../firebase'
 
@@ -31,9 +32,25 @@ export class Repository<T extends { id: string }> {
         )
     }
 
+    subscribe(
+        callback: (data: T[]) => void,
+        q?: Query<DocumentData>
+    ): () => void {
+        return onSnapshot(
+            q || collection(db, this.collectionName),
+            { includeMetadataChanges: true },
+            (snapshot) => {
+                const data = snapshot.docs.map(
+                    (doc) => ({ id: doc.id, ...doc.data() }) as T
+                )
+                callback(data)
+            }
+        )
+    }
+
     async set(data: T): Promise<void> {
         const docRef = doc(db, this.collectionName, data.id)
-        await setDoc(docRef, data)
+        await setDoc(docRef, data, { merge: true })
     }
 
     async delete(filter: { id: string }): Promise<void> {

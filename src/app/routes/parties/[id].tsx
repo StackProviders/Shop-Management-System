@@ -1,5 +1,4 @@
 import { useParams, useNavigate } from 'react-router'
-import { useIsMobile } from '@/hooks/use-mobile'
 import { useShopContext } from '@/features/shop'
 import { useAppBar } from '@/hooks/use-app-bar'
 import {
@@ -9,37 +8,11 @@ import {
     PartyForm
 } from '@/features/parties'
 import { Button } from '@/components/ui/button'
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle
-} from '@/components/ui/dialog'
-import {
-    Drawer,
-    DrawerContent,
-    DrawerHeader,
-    DrawerTitle
-} from '@/components/ui/drawer'
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle
-} from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-    Empty,
-    EmptyHeader,
-    EmptyTitle,
-    EmptyDescription
-} from '@/components/ui/empty'
+import { ResponsiveModal } from '@/components/responsive-modal'
+import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
 import { Copy, MoreVertical, Pen, Trash2 } from 'lucide-react'
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -63,92 +36,56 @@ interface PartyFormData {
 export default function PartyDetailPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
-    const isMobile = useIsMobile()
     const { currentShop } = useShopContext()
-    const { parties, isLoading, refresh } = useParties(
-        currentShop?.shopId || ''
-    )
-    const { updateParty, deleteParty } = usePartyActions(
-        currentShop?.shopId || ''
-    )
+    const { parties, isLoading } = useParties(currentShop?.shopId || '')
+    const {
+        updateParty,
+        deleteParty,
+        loading: actionLoading
+    } = usePartyActions(currentShop?.shopId || '')
 
     const [isEditOpen, setIsEditOpen] = useState(false)
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
     const party = parties.find((p) => p.id === id)
 
-    if (!party) {
-        return <NotFoundErrorPage />
-    }
-
-    const actions = useMemo(
-        () => (
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button size="icon" variant="ghost">
-                        <MoreVertical className="size-4" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40">
-                    <DropdownMenuItem onClick={() => setIsEditOpen(true)}>
-                        <Pen />
-                        Edit
-                        <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                        <Copy />
-                        Duplicate
-                        <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                        variant="destructive"
-                        onClick={() => setDeleteConfirmOpen(true)}
-                    >
-                        <Trash2 />
-                        Delete
-                        <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-        ),
-        []
+    const actions = (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button size="icon" variant="ghost">
+                    <MoreVertical className="size-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem onClick={() => setIsEditOpen(true)}>
+                    <Pen />
+                    Edit
+                    <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                    <Copy />
+                    Duplicate
+                    <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => setDeleteConfirmOpen(true)}
+                >
+                    <Trash2 />
+                    Delete
+                    <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
     )
 
     useAppBar({
-        title: party.name,
+        title: party?.name || 'Party',
         showBackButton: true,
         onBack: () => navigate('/parties'),
         actions
     })
-
-    const handleUpdateParty = async (data: PartyFormData) => {
-        if (!party) return
-        await updateParty(party.id, {
-            name: data.name,
-            contactInfo: {
-                phone: data.phone,
-                email: data.email,
-                address: data.address
-            },
-            balance: data.balance,
-            status: data.status
-        })
-        setIsEditOpen(false)
-        refresh()
-    }
-
-    const handleDeleteParty = async () => {
-        if (!party) return
-        await deleteParty(party.id)
-        setDeleteConfirmOpen(false)
-        navigate('/parties')
-    }
-
-    const FormModal = isMobile ? Drawer : Dialog
-    const FormContent = isMobile ? DrawerContent : DialogContent
-    const FormHeader = isMobile ? DrawerHeader : DialogHeader
-    const FormTitle = isMobile ? DrawerTitle : DialogTitle
 
     if (isLoading) {
         return (
@@ -160,18 +97,35 @@ export default function PartyDetailPage() {
     }
 
     if (!party) {
-        return (
-            <div className="h-full flex items-center justify-center p-4 sm:p-6">
-                <Empty>
-                    <EmptyHeader>
-                        <EmptyTitle>Party not found</EmptyTitle>
-                        <EmptyDescription>
-                            The party you&rsquo;re looking for doesn&#39;t exist
-                        </EmptyDescription>
-                    </EmptyHeader>
-                </Empty>
-            </div>
-        )
+        return <NotFoundErrorPage />
+    }
+
+    const handleUpdateParty = async (data: PartyFormData) => {
+        try {
+            await updateParty(party.id, {
+                name: data.name,
+                contactInfo: {
+                    phone: data.phone,
+                    email: data.email,
+                    address: data.address
+                },
+                balance: data.balance,
+                status: data.status
+            })
+            setIsEditOpen(false)
+        } catch {
+            // Error handled in hook
+        }
+    }
+
+    const handleDeleteParty = async () => {
+        try {
+            await deleteParty(party.id)
+            setDeleteConfirmOpen(false)
+            navigate('/parties')
+        } catch {
+            // Error handled in hook
+        }
     }
 
     return (
@@ -180,41 +134,25 @@ export default function PartyDetailPage() {
                 <PartyDetail party={party} onEdit={() => setIsEditOpen(true)} />
             </div>
 
-            <FormModal open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <FormContent className={isMobile ? '' : 'max-w-md sm:max-w-lg'}>
-                    <FormHeader>
-                        <FormTitle>Edit Party</FormTitle>
-                    </FormHeader>
-                    <div className={isMobile ? 'px-3 pb-4 sm:px-4' : ''}>
-                        <PartyForm
-                            party={party}
-                            onSubmit={handleUpdateParty}
-                            onCancel={() => setIsEditOpen(false)}
-                        />
-                    </div>
-                </FormContent>
-            </FormModal>
+            <ResponsiveModal
+                open={isEditOpen}
+                onOpenChange={setIsEditOpen}
+                title="Edit Party"
+            >
+                <PartyForm
+                    party={party}
+                    onSubmit={handleUpdateParty}
+                    onCancel={() => setIsEditOpen(false)}
+                    loading={actionLoading}
+                />
+            </ResponsiveModal>
 
-            <AlertDialog
+            <DeleteConfirmationDialog
                 open={deleteConfirmOpen}
                 onOpenChange={setDeleteConfirmOpen}
-            >
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This will permanently delete {party.name}. This
-                            action cannot be undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteParty}>
-                            Delete
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+                onConfirm={handleDeleteParty}
+                description={`This will permanently delete ${party.name}. This action cannot be undone.`}
+            />
         </div>
     )
 }

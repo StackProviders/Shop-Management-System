@@ -27,9 +27,8 @@ export function usePartyActions(shopId: string) {
     const updateParty = async (id: string, data: UpdatePartyData) => {
         setLoading(true)
         try {
-            const party = await partiesApi.update(id, data)
+            await partiesApi.update(id, data)
             toast.success('Party updated successfully')
-            return party
         } catch (error) {
             const message =
                 error instanceof Error

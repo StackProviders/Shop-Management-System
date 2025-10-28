@@ -36,9 +36,15 @@ interface PartyFormProps {
     party?: Party
     onSubmit: (data: FormData) => Promise<void>
     onCancel: () => void
+    loading?: boolean
 }
 
-export function PartyForm({ party, onSubmit, onCancel }: PartyFormProps) {
+export function PartyForm({
+    party,
+    onSubmit,
+    onCancel,
+    loading
+}: PartyFormProps) {
     const form = useForm<FormData>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -208,18 +214,16 @@ export function PartyForm({ party, onSubmit, onCancel }: PartyFormProps) {
                 />
 
                 <div className="flex gap-2 justify-end">
-                    <Button type="button" variant="outline" onClick={onCancel}>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onCancel}
+                        disabled={loading}
+                    >
                         Cancel
                     </Button>
-                    <Button
-                        type="submit"
-                        disabled={form.formState.isSubmitting}
-                    >
-                        {form.formState.isSubmitting
-                            ? 'Saving...'
-                            : party
-                              ? 'Update'
-                              : 'Create'}
+                    <Button type="submit" disabled={loading}>
+                        {loading ? 'Saving...' : party ? 'Update' : 'Create'}
                     </Button>
                 </div>
             </form>

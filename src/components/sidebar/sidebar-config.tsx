@@ -50,6 +50,12 @@ export const sidebarItems: SidebarItem[] = [
         route: '/parties'
     },
     {
+        id: 'todos',
+        label: 'Todos',
+        icon: IconUsers,
+        route: '/todos'
+    },
+    {
         id: 'items',
         label: 'Items',
         icon: IconPackage,

@@ -9,6 +9,7 @@ import HomePage from '@/app/routes/home'
 import PartiesLayout from '@/app/routes/parties'
 import PartyDetailPage from '@/app/routes/parties/[id]'
 import PartiesEmptyState from '@/app/routes/parties/empty'
+import TodosPage from '@/app/routes/todos'
 
 const createAppRouter = () =>
     createBrowserRouter([
@@ -57,6 +58,10 @@ const createAppRouter = () =>
                         {
                             path: '/scanner',
                             lazy: () => import('@/app/routes/scanner')
+                        },
+                        {
+                            path: '/todos',
+                            element: <TodosPage />
                         },
                         {
                             path: '*',

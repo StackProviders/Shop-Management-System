@@ -23,8 +23,7 @@ import {
     AlertCircle,
     Loader2,
     Smartphone,
-    ExternalLink,
-    WifiOff
+    ExternalLink
 } from 'lucide-react'
 import { APP_VERSION } from '@/lib/config'
 
@@ -346,23 +345,6 @@ export function MobileUpdaterProvider({
                                         )}
                                     </>
                                 )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
-
-            {/* Offline indicator - only show when offline and no updates are available */}
-            {!isOnline && !shouldShowUI && (
-                <div className="fixed top-4 left-4 right-4 z-40 max-w-xs mx-auto">
-                    <Card className="w-full shadow-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
-                        <CardContent className="p-2">
-                            <div className="flex items-center space-x-2">
-                                <WifiOff className="h-3 w-3 text-gray-500" />
-                                <p className="text-xs text-gray-600 dark:text-gray-400">
-                                    Offline mode - Updates will be checked when
-                                    online
-                                </p>
                             </div>
                         </CardContent>
                     </Card>
