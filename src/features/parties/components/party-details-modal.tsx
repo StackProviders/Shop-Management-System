@@ -45,7 +45,7 @@ export function PartyDetailsModal({
                         <Badge
                             variant={
                                 party.type === 'customer'
-                                    ? 'default'
+                                    ? 'primary'
                                     : 'secondary'
                             }
                         >
@@ -54,7 +54,7 @@ export function PartyDetailsModal({
                         <Badge
                             variant={
                                 party.status === 'active'
-                                    ? 'default'
+                                    ? 'success'
                                     : 'outline'
                             }
                         >

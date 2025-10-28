@@ -85,7 +85,7 @@ export default function PartyDetailPage() {
     useAppBar({
         title: party?.name || 'Party',
         showBackButton: true,
-        onBack: () => navigate('/parties'),
+        onBack: () => navigate('/'),
         actions
     })
 

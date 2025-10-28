@@ -11,7 +11,6 @@ import {
 import { Input } from '@/components/ui/input'
 import { SubmitButton } from '@/components/ui/button'
 import { useTodoActions } from '../hooks/use-todo-actions'
-import { useTodos } from '../hooks/use-todos'
 
 const schema = z.object({
     title: z.string().min(1, 'Title is required')
@@ -25,7 +24,6 @@ interface TodoFormProps {
 
 export function TodoForm({ onSuccess }: TodoFormProps) {
     const { createTodo } = useTodoActions()
-    const { refresh } = useTodos()
 
     const form = useForm<FormData>({
         resolver: zodResolver(schema),
@@ -35,7 +33,6 @@ export function TodoForm({ onSuccess }: TodoFormProps) {
     const onSubmit = async (data: FormData) => {
         await createTodo(data)
         form.reset()
-        refresh()
         onSuccess?.()
     }
 
