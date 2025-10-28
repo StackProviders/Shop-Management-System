@@ -9,6 +9,14 @@
     "main"
   ],
   "permissions": [
+    "core:app:allow-default-window-icon",
+    "core:window:allow-show",
+    "core:window:allow-hide",
+    "core:window:allow-unminimize",
+    "core:window:allow-set-focus",
+    "core:window:allow-is-visible",
+    "core:menu:default",
+    "core:tray:default",
     "dialog:default",
     "dialog:allow-ask",
     "dialog:allow-message",

@@ -3,11 +3,13 @@ import { toast } from 'sonner'
 import { todoApi } from '../api/todo.api'
 import { useTodoStore } from './use-todo-store'
 import { CreateTodoData, UpdateTodoData, Todo } from '../types'
+import { useOnline } from '@/hooks/use-online'
 
 export function useTodoActions() {
     const [loading, setLoading] = useState(false)
     const { addItemOptimistic, updateItemOptimistic, deleteItemOptimistic } =
         useTodoStore()
+    const isOnline = useOnline()
 
     const createTodo = async (data: CreateTodoData) => {
         const tempId = `temp-${Date.now()}`
@@ -19,50 +21,74 @@ export function useTodoActions() {
             updatedAt: new Date()
         }
 
-        setLoading(true)
+        if (isOnline) setLoading(true)
         addItemOptimistic(optimisticTodo)
-        const toastId = toast.loading('Creating todo...')
+        const toastId = isOnline ? toast.loading('Creating todo...') : null
 
         try {
             await todoApi.create(data)
-            toast.success('Todo created', { id: toastId })
+            if (isOnline) {
+                toast.success('Todo created', { id: toastId! })
+            } else {
+                toast.success('Todo saved (will sync when online)')
+            }
         } catch (error) {
             deleteItemOptimistic(tempId)
             const message =
                 error instanceof Error ? error.message : 'Failed to create'
-            toast.error(message, { id: toastId })
+            if (isOnline) {
+                toast.error(message, { id: toastId! })
+            } else {
+                toast.error(message)
+            }
             throw error
         } finally {
-            setLoading(false)
+            if (isOnline) setLoading(false)
         }
     }
 
     const updateTodo = async (id: string, data: UpdateTodoData) => {
-        const toastId = toast.loading('Updating...')
+        const toastId = isOnline ? toast.loading('Updating...') : null
         updateItemOptimistic(id, data)
 
         try {
             await todoApi.update(id, data)
-            toast.success('Todo updated', { id: toastId })
+            if (isOnline) {
+                toast.success('Todo updated', { id: toastId! })
+            } else {
+                toast.success('Todo updated (will sync when online)')
+            }
         } catch (error) {
             const message =
                 error instanceof Error ? error.message : 'Failed to update'
-            toast.error(message, { id: toastId })
+            if (isOnline) {
+                toast.error(message, { id: toastId! })
+            } else {
+                toast.error(message)
+            }
             throw error
         }
     }
 
     const deleteTodo = async (id: string) => {
-        const toastId = toast.loading('Deleting...')
+        const toastId = isOnline ? toast.loading('Deleting...') : null
         deleteItemOptimistic(id)
 
         try {
             await todoApi.delete(id)
-            toast.success('Todo deleted', { id: toastId })
+            if (isOnline) {
+                toast.success('Todo deleted', { id: toastId! })
+            } else {
+                toast.success('Todo deleted (will sync when online)')
+            }
         } catch (error) {
             const message =
                 error instanceof Error ? error.message : 'Failed to delete'
-            toast.error(message, { id: toastId })
+            if (isOnline) {
+                toast.error(message, { id: toastId! })
+            } else {
+                toast.error(message)
+            }
             throw error
         }
     }

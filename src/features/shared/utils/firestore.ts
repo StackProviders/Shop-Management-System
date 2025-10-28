@@ -6,7 +6,6 @@ import {
     deleteDoc,
     serverTimestamp,
     onSnapshot,
-    query,
     Query,
     DocumentData
 } from 'firebase/firestore'
@@ -58,7 +57,7 @@ export function createFirestoreApi<T extends FirestoreDocument>(
             id: string,
             data: Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>
         ) => {
-            await updateDoc(doc(db, collectionName, id), {
+            return await updateDoc(doc(db, collectionName, id), {
                 ...data,
                 updatedAt: serverTimestamp()
             })
