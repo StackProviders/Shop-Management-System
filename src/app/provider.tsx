@@ -16,7 +16,7 @@ export default function AppProvider({ children }: { children: ReactNode }) {
                         <AuthProvider>
                             <ShopProvider>
                                 {children}
-                                <Toaster />
+                                <Toaster richColors />
                             </ShopProvider>
                         </AuthProvider>
                     </ThemeProvider>

@@ -37,17 +37,19 @@ export default function PartyDetailPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const { currentShop } = useShopContext()
-    const { parties, isLoading } = useParties(currentShop?.shopId || '')
+    const shopId = currentShop?.shopId || ''
+    const { parties, isLoading } = useParties(shopId)
     const {
         updateParty,
         deleteParty,
         loading: actionLoading
-    } = usePartyActions(currentShop?.shopId || '')
+    } = usePartyActions(shopId)
 
     const [isEditOpen, setIsEditOpen] = useState(false)
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
     const party = parties.find((p) => p.id === id)
+    const showLoading = isLoading && !party
 
     const actions = (
         <DropdownMenu>
@@ -87,17 +89,25 @@ export default function PartyDetailPage() {
         actions
     })
 
-    if (isLoading) {
+    if (showLoading) {
         return (
-            <div className="h-full p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4">
-                <Skeleton className="h-10 sm:h-12 w-full" />
-                <Skeleton className="h-48 sm:h-64 w-full" />
+            <div className="h-full p-3 sm:p-4 md:p-6 space-y-4">
+                <Skeleton className="h-8 w-48" />
+                <div className="space-y-3">
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                </div>
             </div>
         )
     }
 
-    if (!party) {
+    if (!party && !isLoading) {
         return <NotFoundErrorPage />
+    }
+
+    if (!party) {
+        return null
     }
 
     const handleUpdateParty = async (data: PartyFormData) => {

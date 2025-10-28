@@ -1,43 +1,31 @@
-import { useEffect, useState } from 'react'
-import { collection, query, where, onSnapshot } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
-import { Party } from '../types'
+import { useEffect } from 'react'
+import { partiesApi, partyQueries } from '../api/parties.api'
+import { usePartyStore } from './use-party-store'
 
 export function useParties(shopId: string) {
-    const [parties, setParties] = useState<Party[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState<Error | null>(null)
+    const items = usePartyStore((state) => state.items)
+    const isLoading = usePartyStore((state) => state.isLoading)
+    const error = usePartyStore((state) => state.error)
 
     useEffect(() => {
         if (!shopId) {
-            setParties([])
-            setIsLoading(false)
+            usePartyStore.getState().setItems([])
+            usePartyStore.getState().setLoading(false)
             return
         }
 
-        const q = query(
-            collection(db, 'parties'),
-            where('shopId', '==', shopId)
-        )
+        usePartyStore.getState().setLoading(true)
 
-        const unsubscribe = onSnapshot(
-            q,
-            { includeMetadataChanges: true },
-            (snapshot) => {
-                const data = snapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    createdAt: doc.data().createdAt?.toDate(),
-                    updatedAt: doc.data().updatedAt?.toDate()
-                })) as Party[]
-
-                setParties(data.sort((a, b) => a.name.localeCompare(b.name)))
-                setIsLoading(false)
-                setError(null)
+        const unsubscribe = partiesApi.subscribe(
+            partyQueries.byShop(shopId),
+            (data) => {
+                usePartyStore.getState().setItems(data)
+                usePartyStore.getState().setLoading(false)
+                usePartyStore.getState().setError(null)
             },
             (err) => {
-                setError(err)
-                setIsLoading(false)
+                usePartyStore.getState().setError(err.message)
+                usePartyStore.getState().setLoading(false)
             }
         )
 
@@ -45,9 +33,8 @@ export function useParties(shopId: string) {
     }, [shopId])
 
     return {
-        parties,
+        parties: items,
         isLoading,
-        error,
-        refresh: () => {}
+        error
     }
 }

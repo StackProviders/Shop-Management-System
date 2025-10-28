@@ -1,37 +1,25 @@
-import { useEffect, useState } from 'react'
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
-import { Todo } from '../types'
+import { useEffect } from 'react'
+import { todoApi, todoQueries } from '../api/todo.api'
+import { useTodoStore } from './use-todo-store'
 
 export function useTodos() {
-    const [todos, setTodos] = useState<Todo[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState<Error | null>(null)
+    const items = useTodoStore((state) => state.items)
+    const isLoading = useTodoStore((state) => state.isLoading)
+    const error = useTodoStore((state) => state.error)
 
     useEffect(() => {
-        const q = query(collection(db, 'todos'), orderBy('createdAt', 'desc'))
+        useTodoStore.getState().setLoading(true)
 
-        const unsubscribe = onSnapshot(
-            q,
-            { includeMetadataChanges: true },
-            (snapshot) => {
-                const data = snapshot.docs.map((doc) => {
-                    const docData = doc.data()
-                    return {
-                        id: doc.id,
-                        title: docData.title,
-                        completed: docData.completed,
-                        createdAt: docData.createdAt?.toDate?.() || new Date(),
-                        updatedAt: docData.updatedAt?.toDate?.() || new Date()
-                    }
-                })
-                setTodos(data)
-                setIsLoading(false)
-                setError(null)
+        const unsubscribe = todoApi.subscribe(
+            todoQueries.all(),
+            (data) => {
+                useTodoStore.getState().setItems(data)
+                useTodoStore.getState().setLoading(false)
+                useTodoStore.getState().setError(null)
             },
             (err) => {
-                setError(err)
-                setIsLoading(false)
+                useTodoStore.getState().setError(err.message)
+                useTodoStore.getState().setLoading(false)
             }
         )
 
@@ -39,9 +27,8 @@ export function useTodos() {
     }, [])
 
     return {
-        todos,
+        todos: items,
         isLoading,
-        error,
-        refresh: () => {}
+        error
     }
 }

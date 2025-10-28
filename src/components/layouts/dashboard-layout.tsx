@@ -296,7 +296,7 @@ function DashboardLayoutContent() {
                 <main
                     className={cn(
                         'flex-1 overflow-auto p-3',
-                        isMobile && showBottomActions && 'pb-16'
+                        isMobile && showBottomActions && ''
                     )}
                 >
                     <Outlet />

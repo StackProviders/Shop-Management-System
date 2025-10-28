@@ -9,13 +9,26 @@ A modern, scalable shop management application built with Tauri, React, TypeScri
 
 ## ✨ Recent Updates
 
-### Feature-Based Architecture Refactor
+### Query-Based State Management System (NEW!)
 
-The application has been refactored to follow the **bulletproof-react** architecture pattern for better scalability and maintainability.
+Implemented an optimized **query-based architecture** with **optimistic updates** for superior performance and developer experience.
+
+**Key Features**:
+
+- ⚡ **Optimistic Updates**: Instant UI feedback before Firestore confirms
+- 🔄 **Real-time Sync**: Automatic updates across all clients
+- 🎯 **Query-Based API**: Flexible, composable data fetching
+- 📦 **Reusable Utilities**: `createFirestoreApi`, `createEntityStore`
+- 🏪 **Zustand Integration**: Centralized state with minimal re-renders
+- 📚 **Complete Documentation**: See `state-management.md`
+
+### Feature-Based Architecture
+
+The application follows the **bulletproof-react** architecture pattern for better scalability and maintainability.
 
 **Key Improvements**:
 
-- 🏗️ Feature-based organization (auth, shop, shared)
+- 🏗️ Feature-based organization (auth, shop, parties, todo, shared)
 - 🔄 Reusable hooks and utilities
 - 📦 Clean barrel exports for easy imports
 - 🎯 Separation of concerns (API, hooks, components, types)
@@ -24,11 +37,13 @@ The application has been refactored to follow the **bulletproof-react** architec
 
 ## 📖 Documentation
 
+- **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** - State management implementation summary (NEW!)
 - **[FEATURES.md](./FEATURES.md)** - Complete features documentation
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Detailed architecture guide
 - **[AI_ASSISTANT_GUIDE.md](./AI_ASSISTANT_GUIDE.md)** - AI assistant quick reference
 - **[src/features/README.md](./src/features/README.md)** - Features directory guide
 - **[.amazonq/rules/](/.amazonq/rules/)** - AI assistant rules and patterns
+    - `state-management.md` - State management & Firestore guide (NEW!)
     - `project-rules.md` - Project-wide coding standards
     - `component-patterns.md` - Reusable component patterns
     - `feature-guide.md` - Feature development guide
@@ -358,9 +373,12 @@ These rules help AI assistants understand the project structure and generate con
 ### State Management
 
 - **Local state**: `useState`, `useReducer`
-- **Global state**: Zustand stores
-- **Server state**: SWR for data fetching
+- **Global state**: Zustand stores with `createEntityStore`
+- **Server state**: Query-based Firestore with real-time subscriptions
 - **Form state**: React Hook Form
+- **Optimistic updates**: Built-in for all CRUD operations
+
+See **[state-management.md](./.amazonq/rules/state-management.md)** for complete guide
 
 ### Error Handling
 

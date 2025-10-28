@@ -2,6 +2,7 @@
 export * from './api/todo.api'
 
 // Hooks
+export * from './hooks/use-todo-store'
 export * from './hooks/use-todos'
 export * from './hooks/use-todo-actions'
 

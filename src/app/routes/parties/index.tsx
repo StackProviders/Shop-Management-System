@@ -24,6 +24,7 @@ import {
     DrawerTitle
 } from '@/components/ui/drawer'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
     Empty,
     EmptyHeader,
@@ -50,16 +51,28 @@ export default function PartiesLayout() {
     const { id } = useParams()
     const isMobile = useIsMobile()
     const { currentShop } = useShopContext()
-    const { parties, isLoading, refresh } = useParties(
-        currentShop?.shopId || ''
+    const shopId = useMemo(
+        () => currentShop?.shopId || '',
+        [currentShop?.shopId]
     )
-    const { createParty } = usePartyActions(currentShop?.shopId || '')
+    const { parties, isLoading } = useParties(shopId)
+    const { createParty } = usePartyActions(shopId)
 
     const [searchQuery, setSearchQuery] = useState('')
     const [isFormOpen, setIsFormOpen] = useState(false)
     const [filterType, setFilterType] = useState<string[]>([])
     const [filterStatus, setFilterStatus] = useState<string[]>([])
     const [filterBalance, setFilterBalance] = useState<string[]>([])
+    const [hasInitialLoad, setHasInitialLoad] = useState(false)
+
+    const customerCount = useMemo(
+        () => parties.filter((p) => p.type === 'customer').length,
+        [parties]
+    )
+    const supplierCount = useMemo(
+        () => parties.filter((p) => p.type === 'supplier').length,
+        [parties]
+    )
 
     const filteredParties = useMemo(() => {
         return parties.filter((party) => {
@@ -89,10 +102,16 @@ export default function PartiesLayout() {
     }
 
     useEffect(() => {
-        if (!id && filteredParties.length > 0 && !isMobile) {
+        if (!isLoading && parties.length > 0) {
+            setHasInitialLoad(true)
+        }
+    }, [isLoading, parties.length])
+
+    useEffect(() => {
+        if (hasInitialLoad && !id && !isMobile && filteredParties.length > 0) {
             navigate(`/parties/${filteredParties[0].id}`, { replace: true })
         }
-    }, [id, filteredParties, navigate, isMobile])
+    }, [hasInitialLoad, id, isMobile, filteredParties.length, navigate])
 
     const handleCreateParty = async (data: PartyFormData) => {
         const party = await createParty({
@@ -106,21 +125,46 @@ export default function PartiesLayout() {
             balance: data.balance,
             status: data.status
         })
-        await refresh()
         setIsFormOpen(false)
         navigate(`/parties/${party.id}`)
     }
 
-    const FormModal = isMobile ? Drawer : Dialog
-    const FormContent = isMobile ? DrawerContent : DialogContent
-    const FormHeader = isMobile ? DrawerHeader : DialogHeader
-    const FormTitle = isMobile ? DrawerTitle : DialogTitle
+    const FormModal = useMemo(() => (isMobile ? Drawer : Dialog), [isMobile])
+    const FormContent = useMemo(
+        () => (isMobile ? DrawerContent : DialogContent),
+        [isMobile]
+    )
+    const FormHeader = useMemo(
+        () => (isMobile ? DrawerHeader : DialogHeader),
+        [isMobile]
+    )
+    const FormTitle = useMemo(
+        () => (isMobile ? DrawerTitle : DialogTitle),
+        [isMobile]
+    )
 
-    if (isLoading) {
+    if (!hasInitialLoad && isLoading) {
         return (
-            <div className="h-full p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4">
-                <Skeleton className="h-10 sm:h-12 w-full" />
-                <Skeleton className="h-48 sm:h-64 w-full" />
+            <div className="h-full p-3 sm:p-4 md:p-6 space-y-4">
+                <div className="space-y-3">
+                    <Skeleton className="h-8 w-32" />
+                    <div className="flex gap-4">
+                        <Skeleton className="h-6 w-24" />
+                        <Skeleton className="h-6 w-24" />
+                        <Skeleton className="h-6 w-24" />
+                    </div>
+                </div>
+                <div className="flex gap-4 h-[calc(100%-8rem)]">
+                    <div className="w-80 space-y-2">
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-20 w-full" />
+                        <Skeleton className="h-20 w-full" />
+                        <Skeleton className="h-20 w-full" />
+                    </div>
+                    <div className="flex-1">
+                        <Skeleton className="h-full w-full" />
+                    </div>
+                </div>
             </div>
         )
     }
@@ -142,9 +186,6 @@ export default function PartiesLayout() {
             </div>
         )
     }
-
-    const customerCount = parties.filter((p) => p.type === 'customer').length
-    const supplierCount = parties.filter((p) => p.type === 'supplier').length
 
     return (
         <div className="h-full flex flex-col">
@@ -187,16 +228,16 @@ export default function PartiesLayout() {
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+            <div className="flex-1 flex flex-col md:flex-row min-h-0">
                 {/* Left Sidebar - Party List */}
                 <div
                     className={cn(
-                        'flex flex-col',
-                        isMobile ? 'w-full' : 'w-80 border-r',
+                        'flex flex-col min-h-0',
+                        isMobile ? 'flex-1' : 'w-80 border-r',
                         id && isMobile && 'hidden'
                     )}
                 >
-                    <div className="p-3 sm:p-4 border-b space-y-3">
+                    <div className="p-3 sm:p-4 border-b space-y-3 shrink-0">
                         <div className="flex gap-2">
                             <SearchInput
                                 value={searchQuery}
@@ -216,8 +257,14 @@ export default function PartiesLayout() {
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto">
-                        {filteredParties.length === 0 ? (
+                    <ScrollArea className="flex-1">
+                        {isLoading && !hasInitialLoad ? (
+                            <div className="p-3 sm:p-4 space-y-2">
+                                <Skeleton className="h-16 w-full" />
+                                <Skeleton className="h-16 w-full" />
+                                <Skeleton className="h-16 w-full" />
+                            </div>
+                        ) : filteredParties.length === 0 ? (
                             <div className="p-3 sm:p-4">
                                 <Empty>
                                     <EmptyHeader>
@@ -225,11 +272,14 @@ export default function PartiesLayout() {
                                             <Users />
                                         </EmptyMedia>
                                         <EmptyTitle>
-                                            No parties found
+                                            {parties.length === 0
+                                                ? 'No parties yet'
+                                                : 'No parties found'}
                                         </EmptyTitle>
                                         <EmptyDescription>
-                                            Create your first party to get
-                                            started
+                                            {parties.length === 0
+                                                ? 'Create your first party to get started'
+                                                : 'Try adjusting your search or filters'}
                                         </EmptyDescription>
                                     </EmptyHeader>
                                 </Empty>
@@ -245,18 +295,28 @@ export default function PartiesLayout() {
                                 }
                             />
                         )}
-                    </div>
+                    </ScrollArea>
                 </div>
 
                 {/* Right Content - Outlet for nested routes */}
-                <div
-                    className={cn(
-                        'flex-1 overflow-y-auto',
-                        !id && isMobile && 'hidden'
-                    )}
+                <ScrollArea
+                    className={cn('flex-1', !id && isMobile && 'hidden')}
                 >
-                    <Outlet />
-                </div>
+                    {!id &&
+                    !isMobile &&
+                    filteredParties.length > 0 &&
+                    hasInitialLoad ? (
+                        <div className="h-full flex items-center justify-center p-6">
+                            <div className="space-y-2">
+                                <Skeleton className="h-8 w-48 mx-auto" />
+                                <Skeleton className="h-24 w-full" />
+                                <Skeleton className="h-24 w-full" />
+                            </div>
+                        </div>
+                    ) : (
+                        <Outlet />
+                    )}
+                </ScrollArea>
             </div>
 
             {/* Form Modal */}

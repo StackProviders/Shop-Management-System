@@ -8,17 +8,15 @@ import { useTodoActions } from '../hooks/use-todo-actions'
 import { cn } from '@/lib/utils'
 
 export function TodoList() {
-    const { todos, isLoading, error, refresh } = useTodos()
+    const { todos, isLoading, error } = useTodos()
     const { updateTodo, deleteTodo } = useTodoActions()
 
     const handleToggle = async (id: string, completed: boolean) => {
         await updateTodo(id, { completed: !completed })
-        refresh()
     }
 
     const handleDelete = async (id: string) => {
         await deleteTodo(id)
-        refresh()
     }
 
     if (isLoading) {

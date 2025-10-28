@@ -169,25 +169,49 @@ import { cn } from '@/lib/utils'
 - Use `useState` for component-level state
 - Use `useReducer` for complex state logic
 
-### Global State
+### Global State (Zustand)
 
-- Auth: `stores/auth-store.ts` (Zustand)
-- Shop context: `features/shop/components/shop-provider.tsx`
+- Use `createEntityStore` from `@/features/shared` for entity management
+- Automatic optimistic updates support
+- Centralized state with minimal re-renders
 
-### Server State
+### Server State (Firestore Real-time)
 
-- Use SWR for data fetching
-- Automatic caching and revalidation
-- Error handling built-in
+- Use query-based API with `createFirestoreApi`
+- Real-time subscriptions with automatic updates
+- Optimistic updates for instant UI feedback
 
 ```typescript
-import useSWR from 'swr'
+// Create store
+import { createEntityStore } from '@/features/shared'
+export const useMyStore = createEntityStore<MyEntity>()
 
-function useShops() {
-    const { data, error, isLoading } = useSWR('/shops', fetcher)
-    return { shops: data, error, isLoading }
+// Use in hook
+import { useEffect } from 'react'
+import { myApi, myQueries } from '../api/my.api'
+import { useMyStore } from './use-my-store'
+
+export function useMyEntities() {
+    const { items, setItems, setLoading, setError } = useMyStore()
+
+    useEffect(() => {
+        setLoading(true)
+        const unsubscribe = myApi.subscribe(
+            myQueries.all(),
+            (data) => {
+                setItems(data)
+                setLoading(false)
+            },
+            (err) => setError(err.message)
+        )
+        return () => unsubscribe()
+    }, [])
+
+    return { entities: items }
 }
 ```
+
+**See `state-management.md` for complete guide**
 
 ## Error Handling
 

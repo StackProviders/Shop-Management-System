@@ -284,6 +284,7 @@ if (items.length === 0) {
 - **Full Rules**: `project-rules.md`
 - **Patterns**: `component-patterns.md`
 - **Feature Guide**: `feature-guide.md`
+- **State Management**: `state-management.md` (NEW!)
 - **Features List**: `../FEATURES.md`
 - **Architecture**: `../ARCHITECTURE.md`
 - **AI Guide**: `../AI_ASSISTANT_GUIDE.md`
