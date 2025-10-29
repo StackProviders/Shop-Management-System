@@ -1,7 +1,12 @@
 export * from './schema'
 export * from './queries'
 export { Repository } from './repositories'
-export { db as getDatabase, storage as getStorageInstance } from '../firebase'
+import { getFirestore } from 'firebase/firestore'
+import { getStorage } from 'firebase/storage'
+import { getApp } from 'firebase/app'
+
+export const getDatabase = () => getFirestore(getApp())
+export const getStorageInstance = () => getStorage(getApp())
 
 import { Repository } from './repositories'
 import type {

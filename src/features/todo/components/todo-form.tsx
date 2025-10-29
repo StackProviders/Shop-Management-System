@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { SubmitButton } from '@/components/ui/button'
-import { useTodoActions } from '../hooks/use-todo-actions'
+import { useTodoMutations } from '../hooks/use-todo-mutations'
 
 const schema = z.object({
     title: z.string().min(1, 'Title is required')
@@ -23,7 +23,7 @@ interface TodoFormProps {
 }
 
 export function TodoForm({ onSuccess }: TodoFormProps) {
-    const { createTodo, loading } = useTodoActions()
+    const { createTodo } = useTodoMutations()
 
     const form = useForm<FormData>({
         resolver: zodResolver(schema),
@@ -54,7 +54,9 @@ export function TodoForm({ onSuccess }: TodoFormProps) {
                         </FormItem>
                     )}
                 />
-                <SubmitButton loading={loading}>Add</SubmitButton>
+                <SubmitButton loading={form.formState.isSubmitting}>
+                    Add
+                </SubmitButton>
             </form>
         </Form>
     )

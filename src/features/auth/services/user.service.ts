@@ -61,7 +61,7 @@ export const uploadUserPhoto = async (
     uid: string,
     file: File
 ): Promise<string> => {
-    const storage = getStorageInstance
+    const storage = getStorageInstance()
     const storageRef = ref(storage, `users/${uid}/photo.jpg`)
     await uploadBytes(storageRef, file)
     return getDownloadURL(storageRef)

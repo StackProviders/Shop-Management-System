@@ -6,8 +6,18 @@ import { useEffect, useMemo } from 'react'
 import { checkForAppUpdates } from '@/lib/updater'
 import { getPlatform } from '@/utils/platform-detection'
 import { MobileUpdaterProvider } from '@/components/providers/mobile-updater-provider'
+import {
+    enableIndexedDbPersistence,
+    initializeFirestore
+} from 'firebase/firestore'
+import {
+    FirestoreProvider,
+    useInitFirestore,
+    SuspenseWithPerf
+} from 'reactfire'
+import { Spinner } from '@/components/ui/spinner'
 
-export default function App() {
+function AppContent() {
     const { isDesktop, isMobile } = useMemo(() => getPlatform(), [])
 
     useEffect(() => {
@@ -26,5 +36,32 @@ export default function App() {
                 content
             )}
         </AppProvider>
+    )
+}
+
+function FirestoreWrapper() {
+    const { data: firestoreInstance } = useInitFirestore(
+        async (firebaseApp) => {
+            const db = initializeFirestore(firebaseApp, {})
+            await enableIndexedDbPersistence(db)
+            return db
+        }
+    )
+
+    return (
+        <FirestoreProvider sdk={firestoreInstance}>
+            <AppContent />
+        </FirestoreProvider>
+    )
+}
+
+export default function App() {
+    return (
+        <SuspenseWithPerf
+            fallback={<Spinner fullScreen={true} className="size-6" />}
+            traceId="app-init"
+        >
+            <FirestoreWrapper />
+        </SuspenseWithPerf>
     )
 }

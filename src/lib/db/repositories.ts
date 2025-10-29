@@ -8,14 +8,21 @@ import {
     Query,
     DocumentData,
     writeBatch,
-    onSnapshot
+    onSnapshot,
+    Firestore,
+    getFirestore
 } from 'firebase/firestore'
-import { db } from '../firebase'
+import { getApp } from 'firebase/app'
 
 export class Repository<T extends { id: string }> {
     constructor(private collectionName: string) {}
 
+    private getDb(): Firestore {
+        return getFirestore(getApp())
+    }
+
     async get(filter: { id: string }): Promise<T | null> {
+        const db = this.getDb()
         const docRef = doc(db, this.collectionName, filter.id)
         const docSnap = await getDoc(docRef)
         return docSnap.exists()
@@ -24,6 +31,7 @@ export class Repository<T extends { id: string }> {
     }
 
     async list(q?: Query<DocumentData>): Promise<T[]> {
+        const db = this.getDb()
         const querySnapshot = await getDocs(
             q || collection(db, this.collectionName)
         )
@@ -36,6 +44,7 @@ export class Repository<T extends { id: string }> {
         callback: (data: T[]) => void,
         q?: Query<DocumentData>
     ): () => void {
+        const db = this.getDb()
         return onSnapshot(
             q || collection(db, this.collectionName),
             { includeMetadataChanges: true },
@@ -49,16 +58,19 @@ export class Repository<T extends { id: string }> {
     }
 
     async set(data: T): Promise<void> {
+        const db = this.getDb()
         const docRef = doc(db, this.collectionName, data.id)
         await setDoc(docRef, data, { merge: true })
     }
 
     async delete(filter: { id: string }): Promise<void> {
+        const db = this.getDb()
         const docRef = doc(db, this.collectionName, filter.id)
         await deleteDoc(docRef)
     }
 
     async batchDelete(items: { id: string }[]): Promise<void> {
+        const db = this.getDb()
         const batch = writeBatch(db)
         items.forEach((item) => {
             const docRef = doc(db, this.collectionName, item.id)

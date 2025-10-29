@@ -1,10 +1,6 @@
-// API
-export * from './api/parties.api'
-
 // Hooks
-export * from './hooks/use-party-store'
-export * from './hooks/use-parties'
-export * from './hooks/use-party-actions'
+export * from './hooks/use-party-queries'
+export * from './hooks/use-party-mutations'
 
 // Components
 export * from './components/party-form'

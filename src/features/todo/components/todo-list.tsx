@@ -3,13 +3,13 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Trash2 } from 'lucide-react'
-import { useTodos } from '../hooks/use-todos'
-import { useTodoActions } from '../hooks/use-todo-actions'
+import { useTodos } from '../hooks/use-todo-queries'
+import { useTodoMutations } from '../hooks/use-todo-mutations'
 import { cn } from '@/lib/utils'
 
 export function TodoList() {
     const { todos, isLoading, error } = useTodos()
-    const { updateTodo, deleteTodo } = useTodoActions()
+    const { updateTodo, deleteTodo } = useTodoMutations()
 
     const handleToggle = async (id: string, completed: boolean) => {
         await updateTodo(id, { completed: !completed })

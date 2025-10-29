@@ -1,16 +1,15 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, Outlet, useParams } from 'react-router'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useShopContext } from '@/features/shop'
 import {
-    useParties,
-    usePartyActions,
+    usePartiesByShop,
+    usePartyMutations,
     PartyForm,
     PartyList,
-    PartyFilter,
-    Party,
-    usePartyFormStore
+    PartyFilter
 } from '@/features/parties'
+import { SuspenseWithPerf } from 'reactfire'
 import { Button } from '@/components/ui/button'
 import { SearchInput } from '@/components/ui/search-input'
 import {
@@ -48,7 +47,7 @@ interface PartyFormData {
     status: 'active' | 'inactive'
 }
 
-export default function PartiesLayout() {
+function PartiesLayout() {
     const navigate = useNavigate()
     const { id } = useParams()
     const isMobile = useIsMobile()
@@ -62,25 +61,12 @@ export default function PartiesLayout() {
     const [filterType, setFilterType] = useState<string[]>([])
     const [filterStatus, setFilterStatus] = useState<string[]>([])
     const [filterBalance, setFilterBalance] = useState<string[]>([])
-    const [hasInitialLoad, setHasInitialLoad] = useState(false)
+    const [isFormOpen, setFormOpen] = useState(false)
 
-    const { isFormOpen, editingPartyId, setFormOpen, closeForm } =
-        usePartyFormStore()
-    const isCreateFormOpen = isFormOpen && !editingPartyId
+    const { parties, isLoading } = usePartiesByShop(shopId)
+    const { createParty } = usePartyMutations(shopId)
 
-    const handleSyncComplete = useCallback(
-        (changeData: Party[]) => {
-            if (changeData.length > 0 && isFormOpen) {
-                const newParty = changeData[0]
-                closeForm()
-                navigate(`/parties/${newParty.id}`)
-            }
-        },
-        [isFormOpen, closeForm, navigate]
-    )
-
-    const { parties, isLoading } = useParties(shopId, handleSyncComplete)
-    const { createParty, loading: actionLoading } = usePartyActions(shopId)
+    const closeForm = () => setFormOpen(false)
 
     const customerCount = useMemo(
         () => parties.filter((p) => p.type === 'customer').length,
@@ -119,19 +105,13 @@ export default function PartiesLayout() {
     }
 
     useEffect(() => {
-        if (!isLoading && parties.length > 0) {
-            setHasInitialLoad(true)
-        }
-    }, [isLoading, parties.length])
-
-    useEffect(() => {
-        if (hasInitialLoad && !id && !isMobile && filteredParties.length > 0) {
+        if (!isLoading && !id && !isMobile && filteredParties.length > 0) {
             navigate(`/parties/${filteredParties[0].id}`, { replace: true })
         }
-    }, [hasInitialLoad, id, isMobile, filteredParties.length, navigate])
+    }, [isLoading, id, isMobile, filteredParties, navigate])
 
     const handleCreateParty = async (data: PartyFormData) => {
-        await createParty({
+        const id = await createParty({
             type: data.type,
             name: data.name,
             contactInfo: {
@@ -142,6 +122,8 @@ export default function PartiesLayout() {
             balance: data.balance,
             status: data.status
         })
+        closeForm()
+        navigate(`/parties/${id}`)
     }
 
     const FormModal = useMemo(() => (isMobile ? Drawer : Dialog), [isMobile])
@@ -157,32 +139,6 @@ export default function PartiesLayout() {
         () => (isMobile ? DrawerTitle : DialogTitle),
         [isMobile]
     )
-
-    if (!hasInitialLoad && isLoading) {
-        return (
-            <div className="h-full p-3 sm:p-4 md:p-6 space-y-4">
-                <div className="space-y-3">
-                    <Skeleton className="h-8 w-32" />
-                    <div className="flex gap-4">
-                        <Skeleton className="h-6 w-24" />
-                        <Skeleton className="h-6 w-24" />
-                        <Skeleton className="h-6 w-24" />
-                    </div>
-                </div>
-                <div className="flex gap-4 h-[calc(100%-8rem)]">
-                    <div className="w-80 space-y-2">
-                        <Skeleton className="h-10 w-full" />
-                        <Skeleton className="h-20 w-full" />
-                        <Skeleton className="h-20 w-full" />
-                        <Skeleton className="h-20 w-full" />
-                    </div>
-                    <div className="flex-1">
-                        <Skeleton className="h-full w-full" />
-                    </div>
-                </div>
-            </div>
-        )
-    }
 
     if (!currentShop) {
         return (
@@ -273,13 +229,7 @@ export default function PartiesLayout() {
                     </div>
 
                     <ScrollArea className="flex-1">
-                        {isLoading && !hasInitialLoad ? (
-                            <div className="p-3 sm:p-4 space-y-2">
-                                <Skeleton className="h-16 w-full" />
-                                <Skeleton className="h-16 w-full" />
-                                <Skeleton className="h-16 w-full" />
-                            </div>
-                        ) : filteredParties.length === 0 ? (
+                        {filteredParties.length === 0 ? (
                             <div className="p-3 sm:p-4">
                                 <Empty>
                                     <EmptyHeader>
@@ -317,25 +267,12 @@ export default function PartiesLayout() {
                 <ScrollArea
                     className={cn('flex-1', !id && isMobile && 'hidden')}
                 >
-                    {!id &&
-                    !isMobile &&
-                    filteredParties.length > 0 &&
-                    hasInitialLoad ? (
-                        <div className="h-full flex items-center justify-center p-6">
-                            <div className="space-y-2">
-                                <Skeleton className="h-8 w-48 mx-auto" />
-                                <Skeleton className="h-24 w-full" />
-                                <Skeleton className="h-24 w-full" />
-                            </div>
-                        </div>
-                    ) : (
-                        <Outlet />
-                    )}
+                    <Outlet />
                 </ScrollArea>
             </div>
 
             {/* Form Modal */}
-            <FormModal open={isCreateFormOpen} onOpenChange={setFormOpen}>
+            <FormModal open={isFormOpen} onOpenChange={setFormOpen}>
                 <FormContent className={isMobile ? '' : 'max-w-md sm:max-w-lg'}>
                     <FormHeader>
                         <FormTitle>Add New Party</FormTitle>
@@ -344,11 +281,43 @@ export default function PartiesLayout() {
                         <PartyForm
                             onSubmit={handleCreateParty}
                             onCancel={closeForm}
-                            loading={actionLoading}
                         />
                     </div>
                 </FormContent>
             </FormModal>
         </div>
+    )
+}
+
+export default function PartiesPage() {
+    return (
+        <SuspenseWithPerf
+            fallback={
+                <div className="h-full p-3 sm:p-4 md:p-6 space-y-4">
+                    <div className="space-y-3">
+                        <Skeleton className="h-8 w-32" />
+                        <div className="flex gap-4">
+                            <Skeleton className="h-6 w-24" />
+                            <Skeleton className="h-6 w-24" />
+                            <Skeleton className="h-6 w-24" />
+                        </div>
+                    </div>
+                    <div className="flex gap-4 h-[calc(100%-8rem)]">
+                        <div className="w-80 space-y-2">
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-20 w-full" />
+                            <Skeleton className="h-20 w-full" />
+                            <Skeleton className="h-20 w-full" />
+                        </div>
+                        <div className="flex-1">
+                            <Skeleton className="h-full w-full" />
+                        </div>
+                    </div>
+                </div>
+            }
+            traceId="parties-page"
+        >
+            <PartiesLayout />
+        </SuspenseWithPerf>
     )
 }
