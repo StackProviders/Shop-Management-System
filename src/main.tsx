@@ -5,11 +5,20 @@ import { initializeDesktop } from '@/lib/desktop'
 import { firebaseConfig } from '@/lib/firebase'
 import { FirebaseAppProvider } from 'reactfire'
 
-// Initialize desktop features after DOM is ready
+// Initialize desktop features once
 if (typeof window !== 'undefined' && '__TAURI__' in window) {
-    document.addEventListener('DOMContentLoaded', () => {
-        initializeDesktop()
-    })
+    let initialized = false
+    const init = () => {
+        if (!initialized) {
+            initialized = true
+            initializeDesktop()
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init, { once: true })
+    } else {
+        init()
+    }
 }
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(

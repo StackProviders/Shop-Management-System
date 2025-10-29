@@ -4,7 +4,29 @@ import { defaultWindowIcon } from '@tauri-apps/api/app'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { exit } from '@tauri-apps/plugin-process'
 
+const TRAY_ID = 'shop-management-tray'
+let trayInstance: TrayIcon | null = null
+
 export async function setupSystemTray() {
+    // Remove all existing tray icons
+    try {
+        const existingTray = await TrayIcon.getById(TRAY_ID)
+        if (existingTray) {
+            await existingTray.close()
+        }
+    } catch {
+        // Tray doesn't exist, continue
+    }
+
+    if (trayInstance) {
+        try {
+            await trayInstance.close()
+        } catch {
+            // Already closed
+        }
+        trayInstance = null
+    }
+
     const window = getCurrentWindow()
     const icon = await defaultWindowIcon()
 
@@ -42,7 +64,8 @@ export async function setupSystemTray() {
         ]
     })
 
-    await TrayIcon.new({
+    trayInstance = await TrayIcon.new({
+        id: TRAY_ID,
         icon,
         menu: trayMenu,
         tooltip: 'Shop Management System',
