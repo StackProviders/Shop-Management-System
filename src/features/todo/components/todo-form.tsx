@@ -23,7 +23,7 @@ interface TodoFormProps {
 }
 
 export function TodoForm({ onSuccess }: TodoFormProps) {
-    const { createTodo } = useTodoActions()
+    const { createTodo, loading } = useTodoActions()
 
     const form = useForm<FormData>({
         resolver: zodResolver(schema),
@@ -54,9 +54,7 @@ export function TodoForm({ onSuccess }: TodoFormProps) {
                         </FormItem>
                     )}
                 />
-                <SubmitButton loading={form.formState.isSubmitting}>
-                    Add
-                </SubmitButton>
+                <SubmitButton loading={loading}>Add</SubmitButton>
             </form>
         </Form>
     )

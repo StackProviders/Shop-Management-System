@@ -35,14 +35,6 @@ import {
 import { Plus, Users, Store } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Heading2 } from '@/components/ui/typography'
-import {
-    allSysInfo,
-    memoryInfo,
-    staticInfo,
-    cpuInfo,
-    networks,
-    batteries
-} from 'tauri-plugin-system-info-api'
 
 interface PartyFormData {
     type: 'customer' | 'supplier'
@@ -72,39 +64,6 @@ export default function PartiesLayout() {
     const [filterStatus, setFilterStatus] = useState<string[]>([])
     const [filterBalance, setFilterBalance] = useState<string[]>([])
     const [hasInitialLoad, setHasInitialLoad] = useState(false)
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [
-                    allSysInfoData,
-                    memoryInfoData,
-                    staticInfoData,
-                    cpuInfoData,
-                    batteriesData,
-                    networksData
-                ] = await Promise.all([
-                    allSysInfo(),
-                    memoryInfo(),
-                    staticInfo(),
-                    cpuInfo(),
-                    batteries(),
-                    networks()
-                ])
-
-                console.log('All System Info:', allSysInfoData)
-                console.log('Memory Info:', memoryInfoData)
-                console.log('Static Info:', staticInfoData)
-                console.log('CPU Info:', cpuInfoData)
-                console.log('Batteries:', batteriesData)
-                console.log('NetworksData:', networksData)
-            } catch (error) {
-                console.error('Error fetching system info:', error)
-            }
-        }
-
-        fetchData()
-    }, [])
 
     const customerCount = useMemo(
         () => parties.filter((p) => p.type === 'customer').length,
@@ -233,7 +192,7 @@ export default function PartiesLayout() {
             {/* Top Header */}
             <div
                 className={cn(
-                    'border-b space-y-3 p-3 sm:p-4',
+                    'border-b space-y-3 p-2',
                     id && isMobile && 'hidden'
                 )}
             >

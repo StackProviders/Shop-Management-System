@@ -27,7 +27,7 @@ export const partiesApi = {
     subscribe: baseApi.subscribe,
 
     create: async (shopId: string, data: CreatePartyData) => {
-        return baseApi.create({
+        return await baseApi.create({
             shopId,
             type: data.type,
             name: data.name,

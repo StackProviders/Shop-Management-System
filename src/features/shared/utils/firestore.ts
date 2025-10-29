@@ -1,13 +1,13 @@
 import {
     collection,
     doc,
-    addDoc,
+    setDoc,
     updateDoc,
     deleteDoc,
-    serverTimestamp,
     onSnapshot,
     Query,
-    DocumentData
+    DocumentData,
+    Timestamp
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 
@@ -28,15 +28,14 @@ export function createFirestoreApi<T extends FirestoreDocument>(
         ) => {
             return onSnapshot(
                 q,
-                { includeMetadataChanges: true },
                 (snapshot) => {
-                    const data = snapshot.docs.map((doc) => ({
-                        id: doc.id,
-                        ...doc.data(),
+                    const data = snapshot.docs.map((docSnap) => ({
+                        id: docSnap.id,
+                        ...docSnap.data(),
                         createdAt:
-                            doc.data().createdAt?.toDate?.() || new Date(),
+                            docSnap.data().createdAt?.toDate?.() ?? new Date(),
                         updatedAt:
-                            doc.data().updatedAt?.toDate?.() || new Date()
+                            docSnap.data().updatedAt?.toDate?.() ?? new Date()
                     })) as T[]
                     onData(data)
                 },
@@ -45,21 +44,23 @@ export function createFirestoreApi<T extends FirestoreDocument>(
         },
 
         create: async (data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>) => {
-            const docRef = await addDoc(collection(db, collectionName), {
+            const now = Timestamp.now()
+            const id = doc(collection(db, collectionName)).id
+            await setDoc(doc(db, collectionName, id), {
                 ...data,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                createdAt: now,
+                updatedAt: now
             })
-            return docRef.id
+            return id
         },
 
         update: async (
             id: string,
             data: Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>
         ) => {
-            return await updateDoc(doc(db, collectionName, id), {
+            await updateDoc(doc(db, collectionName, id), {
                 ...data,
-                updatedAt: serverTimestamp()
+                updatedAt: Timestamp.now()
             })
         },
 

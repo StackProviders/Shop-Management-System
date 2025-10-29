@@ -9,7 +9,6 @@ export function usePartyActions(shopId: string) {
     const [loading, setLoading] = useState(false)
     const { addItemOptimistic, updateItemOptimistic, deleteItemOptimistic } =
         usePartyStore()
-
     const isOnline = useOnline()
 
     const createParty = async (data: CreatePartyData) => {
@@ -31,7 +30,9 @@ export function usePartyActions(shopId: string) {
         const toastId = isOnline ? toast.loading('Creating party...') : null
 
         try {
-            await partiesApi.create(shopId, data)
+            const result = await partiesApi.create(shopId, data)
+            console.log({ result })
+
             if (isOnline) {
                 toast.success('Party created', { id: toastId! })
             } else {
@@ -49,6 +50,8 @@ export function usePartyActions(shopId: string) {
             }
             throw error
         } finally {
+            console.log('Finally Exgiqute')
+
             if (isOnline) setLoading(false)
         }
     }

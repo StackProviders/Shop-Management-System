@@ -1,24 +1,21 @@
 import { useState, useEffect } from 'react'
+import { checkOnlineStatus } from '@/utils'
+
+const CHECK_INTERVAL = 30000 // 30 seconds
 
 export function useOnline() {
-    const [isOnline, setIsOnline] = useState(navigator.onLine)
-
-    console.log(navigator.onLine)
+    const [isOnline, setIsOnline] = useState(false)
 
     useEffect(() => {
-        const handleOnline = () => setIsOnline(true)
-        const handleOffline = () => setIsOnline(false)
-
-        window.addEventListener('online', handleOnline)
-        window.addEventListener('offline', handleOffline)
-
-        return () => {
-            window.removeEventListener('online', handleOnline)
-            window.removeEventListener('offline', handleOffline)
+        const updateStatus = async () => {
+            const status = await checkOnlineStatus()
+            setIsOnline(status)
         }
-    }, [])
 
-    console.log({ isOnline })
+        updateStatus()
+        const intervalId = setInterval(updateStatus, CHECK_INTERVAL)
+        return () => clearInterval(intervalId)
+    }, [])
 
     return isOnline
 }
