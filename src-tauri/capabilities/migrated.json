@@ -15,13 +15,6 @@
     "fs:default",
     "cache:default",
     "shell:allow-execute",
-    "system-info:allow-all",
-    "system-info:allow-all-sys-info",
-    "system-info:allow-memory-info",
-    "system-info:allow-static-info",
-    "system-info:allow-cpu-info",
-    "system-info:allow-networks",
-    "system-info:allow-batteries",
     {
       "identifier": "http:default",
       "allow": [

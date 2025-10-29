@@ -21,7 +21,6 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_upload::init())
         .plugin(tauri_plugin_http::init())
-        .plugin(tauri_plugin_system_info::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build());
@@ -30,7 +29,7 @@ pub fn run() {
     let builder = builder.plugin(tauri_plugin_barcode_scanner::init());
 
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
-    let builder = builder;
+    let builder = builder.plugin(tauri_plugin_system_info::init());
 
     builder
         .plugin(tauri_plugin_shell::init())
