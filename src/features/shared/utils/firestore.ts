@@ -23,11 +23,13 @@ export function createFirestoreApi<T extends FirestoreDocument>(
     return {
         subscribe: (
             q: Query<DocumentData>,
-            onData: (data: T[]) => void,
-            onError?: (error: Error) => void
+            onData: (data: T[], hasPendingWrites: boolean) => void,
+            onError?: (error: Error) => void,
+            onHasPendingWrites?: (data: T[]) => void
         ) => {
             return onSnapshot(
                 q,
+                { includeMetadataChanges: true },
                 (snapshot) => {
                     const data = snapshot.docs.map((docSnap) => ({
                         id: docSnap.id,
@@ -37,7 +39,31 @@ export function createFirestoreApi<T extends FirestoreDocument>(
                         updatedAt:
                             docSnap.data().updatedAt?.toDate?.() ?? new Date()
                     })) as T[]
-                    onData(data)
+
+                    const hasPending = snapshot.metadata.hasPendingWrites
+
+                    if (hasPending && onHasPendingWrites) {
+                        const changedDocs = snapshot
+                            .docChanges()
+                            .filter(
+                                (change) => change.doc.metadata.hasPendingWrites
+                            )
+                            .map((change) => ({
+                                id: change.doc.id,
+                                ...change.doc.data(),
+                                createdAt:
+                                    change.doc.data().createdAt?.toDate?.() ??
+                                    new Date(),
+                                updatedAt:
+                                    change.doc.data().updatedAt?.toDate?.() ??
+                                    new Date()
+                            })) as T[]
+                        console.log({ changedDocs })
+
+                        onHasPendingWrites(changedDocs)
+                    }
+
+                    onData(data, hasPending)
                 },
                 onError
             )

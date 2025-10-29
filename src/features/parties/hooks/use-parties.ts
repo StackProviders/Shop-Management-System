@@ -1,8 +1,12 @@
 import { useEffect } from 'react'
 import { partiesApi, partyQueries } from '../api/parties.api'
 import { usePartyStore } from './use-party-store'
+import { Party } from '../types'
 
-export function useParties(shopId: string) {
+export function useParties(
+    shopId: string,
+    onSyncComplete?: (data: Party[]) => void
+) {
     const items = usePartyStore((state) => state.items)
     const isLoading = usePartyStore((state) => state.isLoading)
     const error = usePartyStore((state) => state.error)
@@ -24,14 +28,14 @@ export function useParties(shopId: string) {
                 usePartyStore.getState().setError(null)
             },
             (err) => {
-                console.error('Party subscription error:', err)
                 usePartyStore.getState().setError(err.message)
                 usePartyStore.getState().setLoading(false)
-            }
+            },
+            onSyncComplete
         )
 
         return () => unsubscribe()
-    }, [shopId])
+    }, [shopId, onSyncComplete])
 
     return {
         parties: items,

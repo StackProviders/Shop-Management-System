@@ -1,15 +1,13 @@
-import { useState } from 'react'
 import { toast } from 'sonner'
 import { partiesApi } from '../api/parties.api'
 import { usePartyStore } from './use-party-store'
 import { CreatePartyData, UpdatePartyData, Party } from '../types'
-import { useOnline } from '@/hooks/use-online'
+import { useState } from 'react'
 
 export function usePartyActions(shopId: string) {
-    const [loading, setLoading] = useState(false)
     const { addItemOptimistic, updateItemOptimistic, deleteItemOptimistic } =
         usePartyStore()
-    const isOnline = useOnline()
+    const [loading, setLoading] = useState(false)
 
     const createParty = async (data: CreatePartyData) => {
         const tempId = `temp-${Date.now()}`
@@ -25,82 +23,55 @@ export function usePartyActions(shopId: string) {
             updatedAt: new Date()
         }
 
-        if (isOnline) setLoading(true)
+        setLoading(true)
         addItemOptimistic(optimisticParty)
-        const toastId = isOnline ? toast.loading('Creating party...') : null
 
         try {
-            const result = await partiesApi.create(shopId, data)
-            console.log({ result })
-
-            if (isOnline) {
-                toast.success('Party created', { id: toastId! })
-            } else {
-                toast.success('Party saved (will sync when online)')
-            }
+            await partiesApi.create(shopId, data)
+            toast.success('Party created')
             return optimisticParty
         } catch (error) {
             deleteItemOptimistic(tempId)
             const message =
                 error instanceof Error ? error.message : 'Failed to create'
-            if (isOnline) {
-                toast.error(message, { id: toastId! })
-            } else {
-                toast.error(message)
-            }
+            toast.error(message)
             throw error
         } finally {
-            console.log('Finally Exgiqute')
-
-            if (isOnline) setLoading(false)
+            setLoading(false)
         }
     }
 
     const updateParty = async (id: string, data: UpdatePartyData) => {
-        const toastId = isOnline ? toast.loading('Updating...') : null
+        setLoading(true)
         updateItemOptimistic(id, data)
 
         try {
-            const result = await partiesApi.update(id, data)
-            console.log({ result })
-
-            if (isOnline) {
-                toast.success('Party updated', { id: toastId! })
-            } else {
-                toast.success('Party updated (will sync when online)')
-            }
+            await partiesApi.update(id, data)
+            toast.success('Party updated')
         } catch (error) {
             const message =
                 error instanceof Error ? error.message : 'Failed to update'
-            if (isOnline) {
-                toast.error(message, { id: toastId! })
-            } else {
-                toast.error(message)
-            }
+            toast.error(message)
             throw error
+        } finally {
+            setLoading(false)
         }
     }
 
     const deleteParty = async (id: string) => {
-        const toastId = isOnline ? toast.loading('Deleting...') : null
+        setLoading(true)
         deleteItemOptimistic(id)
 
         try {
             await partiesApi.delete(id)
-            if (isOnline) {
-                toast.success('Party deleted', { id: toastId! })
-            } else {
-                toast.success('Party deleted (will sync when online)')
-            }
+            toast.success('Party deleted')
         } catch (error) {
             const message =
                 error instanceof Error ? error.message : 'Failed to delete'
-            if (isOnline) {
-                toast.error(message, { id: toastId! })
-            } else {
-                toast.error(message)
-            }
+            toast.error(message)
             throw error
+        } finally {
+            setLoading(false)
         }
     }
 

@@ -5,7 +5,8 @@ import {
     useParties,
     usePartyActions,
     PartyDetail,
-    PartyForm
+    PartyForm,
+    usePartyFormStore
 } from '@/features/parties'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -45,11 +46,13 @@ export default function PartyDetailPage() {
         loading: actionLoading
     } = usePartyActions(shopId)
 
-    const [isEditOpen, setIsEditOpen] = useState(false)
+    const { isFormOpen, editingPartyId, setEditingParty, closeForm } =
+        usePartyFormStore()
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
     const party = parties.find((p) => p.id === id)
     const showLoading = isLoading && !party
+    const isEditOpen = isFormOpen && editingPartyId === id && !!party
 
     const actions = (
         <DropdownMenu>
@@ -59,7 +62,7 @@ export default function PartyDetailPage() {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem onClick={() => setIsEditOpen(true)}>
+                <DropdownMenuItem onClick={() => id && setEditingParty(id)}>
                     <Pen />
                     Edit
                     <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
@@ -111,21 +114,17 @@ export default function PartyDetailPage() {
     }
 
     const handleUpdateParty = async (data: PartyFormData) => {
-        try {
-            await updateParty(party.id, {
-                name: data.name,
-                contactInfo: {
-                    phone: data.phone,
-                    email: data.email,
-                    address: data.address
-                },
-                balance: data.balance,
-                status: data.status
-            })
-            setIsEditOpen(false)
-        } catch {
-            // Error handled in hook
-        }
+        await updateParty(party.id, {
+            name: data.name,
+            contactInfo: {
+                phone: data.phone,
+                email: data.email,
+                address: data.address
+            },
+            balance: data.balance,
+            status: data.status
+        })
+        closeForm()
     }
 
     const handleDeleteParty = async () => {
@@ -141,18 +140,21 @@ export default function PartyDetailPage() {
     return (
         <div className="h-full overflow-y-auto">
             <div className="sm:p-4 space-y-3 sm:space-y-4">
-                <PartyDetail party={party} onEdit={() => setIsEditOpen(true)} />
+                <PartyDetail
+                    party={party}
+                    onEdit={() => setEditingParty(party.id)}
+                />
             </div>
 
             <ResponsiveModal
                 open={isEditOpen}
-                onOpenChange={setIsEditOpen}
+                onOpenChange={(open) => !open && closeForm()}
                 title="Edit Party"
             >
                 <PartyForm
                     party={party}
                     onSubmit={handleUpdateParty}
-                    onCancel={() => setIsEditOpen(false)}
+                    onCancel={closeForm}
                     loading={actionLoading}
                 />
             </ResponsiveModal>

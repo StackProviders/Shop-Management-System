@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate, Outlet, useParams } from 'react-router'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useShopContext } from '@/features/shop'
@@ -7,7 +7,9 @@ import {
     usePartyActions,
     PartyForm,
     PartyList,
-    PartyFilter
+    PartyFilter,
+    Party,
+    usePartyFormStore
 } from '@/features/parties'
 import { Button } from '@/components/ui/button'
 import { SearchInput } from '@/components/ui/search-input'
@@ -55,15 +57,30 @@ export default function PartiesLayout() {
         () => currentShop?.shopId || '',
         [currentShop?.shopId]
     )
-    const { parties, isLoading } = useParties(shopId)
-    const { createParty } = usePartyActions(shopId)
 
     const [searchQuery, setSearchQuery] = useState('')
-    const [isFormOpen, setIsFormOpen] = useState(false)
     const [filterType, setFilterType] = useState<string[]>([])
     const [filterStatus, setFilterStatus] = useState<string[]>([])
     const [filterBalance, setFilterBalance] = useState<string[]>([])
     const [hasInitialLoad, setHasInitialLoad] = useState(false)
+
+    const { isFormOpen, editingPartyId, setFormOpen, closeForm } =
+        usePartyFormStore()
+    const isCreateFormOpen = isFormOpen && !editingPartyId
+
+    const handleSyncComplete = useCallback(
+        (changeData: Party[]) => {
+            if (changeData.length > 0 && isFormOpen) {
+                const newParty = changeData[0]
+                closeForm()
+                navigate(`/parties/${newParty.id}`)
+            }
+        },
+        [isFormOpen, closeForm, navigate]
+    )
+
+    const { parties, isLoading } = useParties(shopId, handleSyncComplete)
+    const { createParty, loading: actionLoading } = usePartyActions(shopId)
 
     const customerCount = useMemo(
         () => parties.filter((p) => p.type === 'customer').length,
@@ -114,7 +131,7 @@ export default function PartiesLayout() {
     }, [hasInitialLoad, id, isMobile, filteredParties.length, navigate])
 
     const handleCreateParty = async (data: PartyFormData) => {
-        const party = await createParty({
+        await createParty({
             type: data.type,
             name: data.name,
             contactInfo: {
@@ -125,8 +142,6 @@ export default function PartiesLayout() {
             balance: data.balance,
             status: data.status
         })
-        setIsFormOpen(false)
-        navigate(`/parties/${party.id}`)
     }
 
     const FormModal = useMemo(() => (isMobile ? Drawer : Dialog), [isMobile])
@@ -201,7 +216,7 @@ export default function PartiesLayout() {
                     <Button
                         variant="primary"
                         size={isMobile ? 'xs' : 'sm'}
-                        onClick={() => setIsFormOpen(true)}
+                        onClick={() => setFormOpen(true)}
                     >
                         <Plus className="size-4" />
                         <span className="hidden xs:inline">Add Party</span>
@@ -320,7 +335,7 @@ export default function PartiesLayout() {
             </div>
 
             {/* Form Modal */}
-            <FormModal open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <FormModal open={isCreateFormOpen} onOpenChange={setFormOpen}>
                 <FormContent className={isMobile ? '' : 'max-w-md sm:max-w-lg'}>
                     <FormHeader>
                         <FormTitle>Add New Party</FormTitle>
@@ -328,7 +343,8 @@ export default function PartiesLayout() {
                     <div className={isMobile ? 'px-3 pb-4 sm:px-4' : ''}>
                         <PartyForm
                             onSubmit={handleCreateParty}
-                            onCancel={() => setIsFormOpen(false)}
+                            onCancel={closeForm}
+                            loading={actionLoading}
                         />
                     </div>
                 </FormContent>

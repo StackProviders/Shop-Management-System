@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useEffect } from 'react'
 import {
     Form,
     FormField,
@@ -48,15 +49,39 @@ export function PartyForm({
     const form = useForm<FormData>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            type: party?.type || 'customer',
-            name: party?.name || '',
-            phone: party?.contactInfo?.phone || '',
-            email: party?.contactInfo?.email || '',
-            address: party?.contactInfo?.address || '',
-            balance: party?.balance || 0,
-            status: party?.status || 'active'
+            type: 'customer',
+            name: '',
+            phone: '',
+            email: '',
+            address: '',
+            balance: 0,
+            status: 'active'
         }
     })
+
+    useEffect(() => {
+        if (party) {
+            form.reset({
+                type: party.type,
+                name: party.name,
+                phone: party.contactInfo?.phone || '',
+                email: party.contactInfo?.email || '',
+                address: party.contactInfo?.address || '',
+                balance: party.balance,
+                status: party.status
+            })
+        } else {
+            form.reset({
+                type: 'customer',
+                name: '',
+                phone: '',
+                email: '',
+                address: '',
+                balance: 0,
+                status: 'active'
+            })
+        }
+    }, [party, form])
 
     const handleSubmit = async (data: FormData) => {
         await onSubmit(data)
