@@ -24,6 +24,7 @@ export function useParties(shopId: string) {
                 usePartyStore.getState().setError(null)
             },
             (err) => {
+                console.error('Party subscription error:', err)
                 usePartyStore.getState().setError(err.message)
                 usePartyStore.getState().setLoading(false)
             }

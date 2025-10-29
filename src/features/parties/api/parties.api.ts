@@ -1,4 +1,4 @@
-import { collection, query, where, orderBy } from 'firebase/firestore'
+import { collection, query, where } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { createFirestoreApi } from '@/features/shared'
 import { Party, CreatePartyData, UpdatePartyData } from '../types'
@@ -8,18 +8,13 @@ const baseApi = createFirestoreApi<Party>(COLLECTION)
 
 export const partyQueries = {
     byShop: (shopId: string) =>
-        query(
-            collection(db, COLLECTION),
-            where('shopId', '==', shopId),
-            orderBy('name', 'asc')
-        ),
+        query(collection(db, COLLECTION), where('shopId', '==', shopId)),
 
     byShopAndType: (shopId: string, type: 'customer' | 'supplier') =>
         query(
             collection(db, COLLECTION),
             where('shopId', '==', shopId),
-            where('type', '==', type),
-            orderBy('name', 'asc')
+            where('type', '==', type)
         )
 }
 
