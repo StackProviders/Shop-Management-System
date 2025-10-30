@@ -4,6 +4,7 @@ import App from '@/app'
 import { initializeDesktop } from '@/lib/desktop'
 import { firebaseConfig } from '@/lib/firebase'
 import { FirebaseAppProvider } from 'reactfire'
+// import '@saurl/tauri-plugin-safe-area-insets-css-api';
 
 // Initialize desktop features once
 if (typeof window !== 'undefined' && '__TAURI__' in window) {

@@ -173,6 +173,9 @@ importers:
       tauri-plugin-cache-api:
         specifier: ^0.1.5
         version: 0.1.5
+      tauri-plugin-safe-area-insets:
+        specifier: ^0.1.0
+        version: 0.1.0
       tauri-plugin-system-info-api:
         specifier: ^2.0.10
         version: 2.0.10(typescript@5.9.3)
@@ -3817,6 +3820,9 @@ packages:
 
   tauri-plugin-cache-api@0.1.5:
     resolution: {integrity: sha512-wNhvhanmB47d18hy7Xom3uY/LRzSM/E7z8SFELPffpVHvNcBLJyWqAqqNkj1WjT+4dr8J45YQmqJMCcKUi0Jyg==}
+
+  tauri-plugin-safe-area-insets@0.1.0:
+    resolution: {integrity: sha512-NhtxSQdU7+laTJiO4WZFlTB1CBzRlNE5EuHflGAGXS55fiwOkkaWztfNishFQO+eZtb9i5jLHX3Yho48lnqcRQ==}
 
   tauri-plugin-system-info-api@2.0.10:
     resolution: {integrity: sha512-QalL92OgjARjyBoK4RFMV1+JRdWKyWBqv+kMi2Y7rnLkIGQUvsMQwvyCcbjdV3qoDbeAdU97G7qu7uPoO+c+OQ==}
@@ -8091,6 +8097,10 @@ snapshots:
       yallist: 5.0.0
 
   tauri-plugin-cache-api@0.1.5:
+    dependencies:
+      '@tauri-apps/api': 2.8.0
+
+  tauri-plugin-safe-area-insets@0.1.0:
     dependencies:
       '@tauri-apps/api': 2.8.0
 

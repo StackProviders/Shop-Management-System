@@ -58,7 +58,10 @@ export const MobileBottomActions = memo(() => {
 
     return (
         <>
-            <div className="fixed bottom-0 left-0 right-0 z-50 pb-safe">
+            <div
+                className="fixed bottom-0 left-0 right-0 z-50"
+                style={{ paddingBottom: 'var(--sab)' }}
+            >
                 <div className="bg-background/95 backdrop-blur border-t px-3 py-2.5 shadow-lg">
                     <div className="flex items-center justify-center gap-2 max-w-md mx-auto">
                         {actions[0] && (

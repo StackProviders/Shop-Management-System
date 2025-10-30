@@ -6,7 +6,6 @@ import { AppBarProvider, useAppBar } from '@/components/providers/app-bar'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { DashboardHeader } from './dashboard-header'
 import { MobileBottomActions } from './mobile-bottom-actions'
-import { cn } from '@/lib/utils'
 
 const DashboardLayoutContent = memo(() => {
     const isMobile = useIsMobile()
@@ -18,10 +17,13 @@ const DashboardLayoutContent = memo(() => {
             <SidebarInset>
                 <DashboardHeader />
                 <main
-                    className={cn(
-                        'flex-1 overflow-auto p-3 md:p-4',
-                        isMobile && showBottomActions && 'pb-16'
-                    )}
+                    className="flex-1 overflow-auto p-3 md:p-4"
+                    style={{
+                        paddingBottom:
+                            isMobile && showBottomActions
+                                ? 'calc(4rem + var(--sab))'
+                                : undefined
+                    }}
                 >
                     <Outlet />
                 </main>

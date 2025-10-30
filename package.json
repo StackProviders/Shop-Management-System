@@ -1,7 +1,7 @@
 {
     "projectName": "Shop Management System",
     "name": "shop-management-system",
-    "version": "2.1.5",
+    "version": "2.1.6",
     "description": "",
     "type": "module",
     "author": {
@@ -90,6 +90,7 @@
         "tailwind-merge": "^3.3.1",
         "tailwindcss-animate": "^1.0.7",
         "tauri-plugin-cache-api": "^0.1.5",
+        "tauri-plugin-safe-area-insets": "^0.1.0",
         "tauri-plugin-system-info-api": "^2.0.10",
         "uuid": "^13.0.0",
         "vaul": "^1.1.2",

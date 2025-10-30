@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react'
-import { getPlatform } from '@/utils/platform-detection'
+import { createContext, useContext } from 'react'
+import { useSafeAreaInsets } from '@/hooks/use-safe-area-insets'
 
 interface SafeAreaInsets {
     top: number
@@ -19,65 +19,7 @@ const SafeAreaContext = createContext<SafeAreaContextValue>({
 })
 
 export function SafeAreaProvider({ children }: { children: React.ReactNode }) {
-    const { isMobile } = getPlatform()
-    const [insets, setInsets] = useState<SafeAreaInsets>({
-        top: 0,
-        right: 0,
-        bottom: 0,
-        left: 0
-    })
-
-    useEffect(() => {
-        if (!isMobile) return
-
-        const updateInsets = () => {
-            const style = getComputedStyle(document.documentElement)
-            setInsets({
-                top: parseInt(style.getPropertyValue('--sat') || '0'),
-                right: parseInt(style.getPropertyValue('--sar') || '0'),
-                bottom: parseInt(style.getPropertyValue('--sab') || '0'),
-                left: parseInt(style.getPropertyValue('--sal') || '0')
-            })
-        }
-
-        // Set CSS variables for safe area insets
-        const setInsetVars = () => {
-            const safeAreaTop = parseInt(
-                getComputedStyle(document.documentElement).getPropertyValue(
-                    'env(safe-area-inset-top, 0px)'
-                )
-            )
-            const safeAreaBottom = parseInt(
-                getComputedStyle(document.documentElement).getPropertyValue(
-                    'env(safe-area-inset-bottom, 0px)'
-                )
-            )
-
-            document.documentElement.style.setProperty(
-                '--sat',
-                `${safeAreaTop || 0}`
-            )
-            document.documentElement.style.setProperty(
-                '--sar',
-                `${parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-right, 0px)')) || 0}`
-            )
-            document.documentElement.style.setProperty(
-                '--sab',
-                `${safeAreaBottom || 0}`
-            )
-            document.documentElement.style.setProperty(
-                '--sal',
-                `${parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-left, 0px)')) || 0}`
-            )
-
-            updateInsets()
-        }
-
-        setInsetVars()
-        window.addEventListener('resize', setInsetVars)
-
-        return () => window.removeEventListener('resize', setInsetVars)
-    }, [isMobile])
+    const { insets, isMobile } = useSafeAreaInsets()
 
     return (
         <SafeAreaContext.Provider value={{ insets, isMobile }}>
@@ -85,10 +27,10 @@ export function SafeAreaProvider({ children }: { children: React.ReactNode }) {
                 <div
                     className="h-screen w-screen overflow-hidden"
                     style={{
-                        paddingTop: `${insets.top}px`,
-                        paddingBottom: `${insets.bottom}px`,
-                        paddingLeft: `${insets.left}px`,
-                        paddingRight: `${insets.right}px`
+                        paddingTop: 'var(--sat)',
+                        paddingBottom: 'var(--sab)',
+                        paddingLeft: 'var(--sal)',
+                        paddingRight: 'var(--sar)'
                     }}
                 >
                     <div className="h-full w-full overflow-auto">

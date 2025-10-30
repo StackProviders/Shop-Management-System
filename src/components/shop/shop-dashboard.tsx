@@ -116,7 +116,7 @@ export default function ShopDashboard() {
         <>
             <div className="w-full max-w-4xl mx-auto bg-background rounded-lg shadow-lg overflow-hidden flex flex-col min-h-[90vh] max-h-[90vh]">
                 {/* Header */}
-                <div className="bg-card border-b px-4 sm:px-6 sm:py-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                <div className="bg-card border-b px-4 sm:px-6 py-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
                     <Heading4 className="text-card-foreground">
                         Shop List
                     </Heading4>
