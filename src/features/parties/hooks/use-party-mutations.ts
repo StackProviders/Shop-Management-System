@@ -1,13 +1,11 @@
-import {
-    collection,
-    doc,
-    setDoc,
-    updateDoc,
-    deleteDoc,
-    Timestamp
-} from 'firebase/firestore'
+import { collection, doc, Timestamp } from 'firebase/firestore'
 import { useFirestore } from 'reactfire'
 import { toast } from 'sonner'
+import {
+    setDocWithTimeout,
+    updateDocWithTimeout,
+    deleteDocWithTimeout
+} from '@/lib/firestore-utils'
 import { CreatePartyData, UpdatePartyData } from '../types'
 
 export function usePartyMutations(shopId: string) {
@@ -17,7 +15,7 @@ export function usePartyMutations(shopId: string) {
         const toastId = toast.loading('Creating party...')
         try {
             const newDocRef = doc(collection(firestore, 'parties'))
-            await setDoc(newDocRef, {
+            await setDocWithTimeout(newDocRef, {
                 shopId,
                 type: data.type,
                 name: data.name,
@@ -41,7 +39,7 @@ export function usePartyMutations(shopId: string) {
     const updateParty = async (partyId: string, data: UpdatePartyData) => {
         const toastId = toast.loading('Updating party...')
         try {
-            await updateDoc(doc(firestore, 'parties', partyId), {
+            await updateDocWithTimeout(doc(firestore, 'parties', partyId), {
                 ...data,
                 updatedAt: Timestamp.now()
             })
@@ -58,7 +56,7 @@ export function usePartyMutations(shopId: string) {
     const deleteParty = async (partyId: string) => {
         const toastId = toast.loading('Deleting party...')
         try {
-            await deleteDoc(doc(firestore, 'parties', partyId))
+            await deleteDocWithTimeout(doc(firestore, 'parties', partyId))
             toast.success('Party deleted', { id: toastId })
         } catch (error) {
             toast.error(

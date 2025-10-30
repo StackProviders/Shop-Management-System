@@ -7,8 +7,10 @@ import { checkForAppUpdates } from '@/lib/updater'
 import { getPlatform } from '@/utils/platform-detection'
 import { MobileUpdaterProvider } from '@/components/providers/mobile-updater-provider'
 import {
-    enableIndexedDbPersistence,
-    initializeFirestore
+    getFirestore,
+    initializeFirestore,
+    persistentLocalCache,
+    persistentMultipleTabManager
 } from 'firebase/firestore'
 import {
     FirestoreProvider,
@@ -42,9 +44,15 @@ function AppContent() {
 function FirestoreWrapper() {
     const { data: firestoreInstance } = useInitFirestore(
         async (firebaseApp) => {
-            const db = initializeFirestore(firebaseApp, {})
-            await enableIndexedDbPersistence(db)
-            return db
+            try {
+                return initializeFirestore(firebaseApp, {
+                    localCache: persistentLocalCache({
+                        tabManager: persistentMultipleTabManager()
+                    })
+                })
+            } catch {
+                return getFirestore(firebaseApp)
+            }
         }
     )
 
