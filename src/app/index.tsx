@@ -6,6 +6,7 @@ import { useEffect, useMemo } from 'react'
 import { checkForAppUpdates } from '@/lib/updater'
 import { getPlatform } from '@/utils/platform-detection'
 import { MobileUpdaterProvider } from '@/components/providers/mobile-updater-provider'
+import { SafeAreaProvider } from '@/components/providers/safe-area-provider'
 import {
     getFirestore,
     initializeFirestore,
@@ -31,13 +32,15 @@ function AppContent() {
     const content = <AppRouter />
 
     return (
-        <AppProvider>
-            {isMobile ? (
-                <MobileUpdaterProvider>{content}</MobileUpdaterProvider>
-            ) : (
-                content
-            )}
-        </AppProvider>
+        <SafeAreaProvider>
+            <AppProvider>
+                {isMobile ? (
+                    <MobileUpdaterProvider>{content}</MobileUpdaterProvider>
+                ) : (
+                    content
+                )}
+            </AppProvider>
+        </SafeAreaProvider>
     )
 }
 
