@@ -1,43 +1,38 @@
-import { useEffect, useMemo } from 'react'
-import { useAppBar as useAppBarContext, QuickAction } from '@/contexts/app-bar'
+import { useEffect, useRef } from 'react'
+import {
+    useAppBar as useAppBarContext,
+    AppBarConfig
+} from '@/components/providers/app-bar'
 import { useIsMobile } from './use-mobile'
-import { ReactNode } from 'react'
+import { useLocation } from 'react-router'
 
-interface UseAppBarConfig {
-    title?: string | ReactNode
-    showBackButton?: boolean
-    onBack?: () => void
-    actions?: ReactNode
-    showBottomActions?: boolean
+interface UseAppBarConfig extends AppBarConfig {
     mobileOnly?: boolean
-    bottomActions?: QuickAction[]
-    showQuickActionCenter?: boolean
+    deps?: unknown[]
 }
 
 export function useAppBar(config?: UseAppBarConfig) {
     const { configure, reset } = useAppBarContext()
     const isMobile = useIsMobile()
+    const location = useLocation()
+    const configRef = useRef(config)
 
-    const shouldApply = useMemo(() => {
-        if (!config) return false
-        const mobileOnly = config.mobileOnly ?? true
-        if (mobileOnly) return isMobile
-        return true
-    }, [config, isMobile])
+    configRef.current = config
 
     useEffect(() => {
-        if (shouldApply && config) {
-            configure(config)
+        const currentConfig = configRef.current
+        if (!currentConfig) return
+
+        const mobileOnly = currentConfig.mobileOnly ?? true
+        const shouldApply = mobileOnly ? isMobile : true
+
+        if (shouldApply) {
+            const { mobileOnly: _, deps: __, ...appBarConfig } = currentConfig
+            configure(appBarConfig)
         }
+
         return () => reset()
-    }, [
-        shouldApply,
-        config?.title,
-        config?.showBackButton,
-        config?.showBottomActions,
-        configure,
-        reset
-    ])
+    }, [location.pathname, isMobile, configure, reset, ...(config?.deps ?? [])])
 
     return { configure, reset }
 }
