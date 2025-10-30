@@ -27,8 +27,8 @@
         "test:coverage": "vitest --coverage",
         "release": "git tag v%npm_package_version% && git push origin v%npm_package_version%",
         "clean:rust": "cd src-tauri && cargo clean",
-        "clean:deps": "rmdir /s /q node_modules",
-        "clean:build": "rmdir /s /q dist",
+        "clean:deps": "if exist node_modules rmdir /s /q node_modules",
+        "clean:build": "if exist dist rmdir /s /q dist",
         "clean:all": "pnpm clean:deps && pnpm clean:build && pnpm clean:rust"
     },
     "lint-staged": {
