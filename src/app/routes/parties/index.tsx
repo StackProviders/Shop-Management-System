@@ -1,29 +1,16 @@
-import { useState, useEffect, useMemo } from 'react'
-import { useNavigate, Outlet, useParams } from 'react-router'
+import { useEffect, useMemo, useRef } from 'react'
+import { useNavigate, Outlet, useParams, useLocation } from 'react-router'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useShopContext } from '@/features/shop'
 import {
     usePartiesByShop,
-    usePartyMutations,
-    PartyForm,
+    usePartyFilters,
     PartyList,
     PartyFilter
 } from '@/features/parties'
 import { SuspenseWithPerf } from 'reactfire'
 import { Button } from '@/components/ui/button'
 import { SearchInput } from '@/components/ui/search-input'
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle
-} from '@/components/ui/dialog'
-import {
-    Drawer,
-    DrawerContent,
-    DrawerHeader,
-    DrawerTitle
-} from '@/components/ui/drawer'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
@@ -37,16 +24,6 @@ import { Plus, Users, Store } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Heading2 } from '@/components/ui/typography'
 
-interface PartyFormData {
-    type: 'customer' | 'supplier'
-    name: string
-    phone?: string
-    email?: string
-    address?: string
-    balance: number
-    status: 'active' | 'inactive'
-}
-
 function PartiesLayout() {
     const navigate = useNavigate()
     const { id } = useParams()
@@ -57,88 +34,59 @@ function PartiesLayout() {
         [currentShop?.shopId]
     )
 
-    const [searchQuery, setSearchQuery] = useState('')
-    const [filterType, setFilterType] = useState<string[]>([])
-    const [filterStatus, setFilterStatus] = useState<string[]>([])
-    const [filterBalance, setFilterBalance] = useState<string[]>([])
-    const [isFormOpen, setFormOpen] = useState(false)
-
+    const location = useLocation()
     const { parties, isLoading } = usePartiesByShop(shopId)
-    const { createParty } = usePartyMutations(shopId)
 
-    const closeForm = () => setFormOpen(false)
+    const {
+        searchQuery,
+        setSearchQuery,
+        filterType,
+        setFilterType,
+        filterStatus,
+        setFilterStatus,
+        filterBalance,
+        setFilterBalance,
+        filteredParties,
+        clearFilters
+    } = usePartyFilters(parties)
 
-    const customerCount = useMemo(
-        () => parties.filter((p) => p.type === 'customer').length,
+    const isNewOpen = useMemo(
+        () => location.pathname === '/parties/new',
+        [location.pathname]
+    )
+    const isEditOpen = useMemo(
+        () => location.pathname.includes('/edit'),
+        [location.pathname]
+    )
+    const isRouteActive = id || isNewOpen || isEditOpen
+
+    const { customerCount, supplierCount } = useMemo(
+        () => ({
+            customerCount: parties.filter((p) => p.type === 'customer').length,
+            supplierCount: parties.filter((p) => p.type === 'supplier').length
+        }),
         [parties]
     )
-    const supplierCount = useMemo(
-        () => parties.filter((p) => p.type === 'supplier').length,
-        [parties]
-    )
 
-    const filteredParties = useMemo(() => {
-        return parties.filter((party) => {
-            const matchesSearch = party.name
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase())
-            const matchesType =
-                filterType.length === 0 || filterType.includes(party.type)
-            const matchesStatus =
-                filterStatus.length === 0 || filterStatus.includes(party.status)
-            const matchesBalance =
-                filterBalance.length === 0 ||
-                (filterBalance.includes('due') && party.balance < 0) ||
-                (filterBalance.includes('advance') && party.balance > 0) ||
-                (filterBalance.includes('settled') && party.balance === 0)
-
-            return (
-                matchesSearch && matchesType && matchesStatus && matchesBalance
-            )
-        })
-    }, [parties, searchQuery, filterType, filterStatus, filterBalance])
-
-    const clearFilters = () => {
-        setFilterType([])
-        setFilterStatus([])
-        setFilterBalance([])
-    }
+    const hasNavigated = useRef(false)
 
     useEffect(() => {
-        if (!isLoading && !id && !isMobile && filteredParties.length > 0) {
-            navigate(`/parties/${filteredParties[0].id}`, { replace: true })
+        if (isRouteActive) {
+            hasNavigated.current = false
+            return
         }
-    }, [isLoading, id, isMobile, filteredParties, navigate])
 
-    const handleCreateParty = async (data: PartyFormData) => {
-        const id = await createParty({
-            type: data.type,
-            name: data.name,
-            contactInfo: {
-                phone: data.phone,
-                email: data.email,
-                address: data.address
-            },
-            balance: data.balance,
-            status: data.status
-        })
-        closeForm()
-        navigate(`/parties/${id}`)
-    }
+        if (
+            isLoading ||
+            filteredParties.length === 0 ||
+            hasNavigated.current ||
+            window.innerWidth < 768
+        )
+            return
 
-    const FormModal = useMemo(() => (isMobile ? Drawer : Dialog), [isMobile])
-    const FormContent = useMemo(
-        () => (isMobile ? DrawerContent : DialogContent),
-        [isMobile]
-    )
-    const FormHeader = useMemo(
-        () => (isMobile ? DrawerHeader : DialogHeader),
-        [isMobile]
-    )
-    const FormTitle = useMemo(
-        () => (isMobile ? DrawerTitle : DialogTitle),
-        [isMobile]
-    )
+        hasNavigated.current = true
+        navigate(`/parties/${filteredParties[0].id}`, { replace: true })
+    }, [isLoading, isRouteActive, filteredParties, navigate])
 
     if (!currentShop) {
         return (
@@ -164,7 +112,7 @@ function PartiesLayout() {
             <div
                 className={cn(
                     'border-b space-y-3 p-2',
-                    id && isMobile && 'hidden'
+                    isMobile && isRouteActive && 'hidden'
                 )}
             >
                 <div className="flex items-center gap-2 sm:gap-3 justify-between">
@@ -172,7 +120,7 @@ function PartiesLayout() {
                     <Button
                         variant="primary"
                         size={isMobile ? 'xs' : 'sm'}
-                        onClick={() => setFormOpen(true)}
+                        onClick={() => navigate('/parties/new')}
                     >
                         <Plus className="size-4" />
                         <span className="hidden xs:inline">Add Party</span>
@@ -205,7 +153,7 @@ function PartiesLayout() {
                     className={cn(
                         'flex flex-col min-h-0',
                         isMobile ? 'flex-1' : 'w-80 border-r',
-                        id && isMobile && 'hidden'
+                        isMobile && isRouteActive && 'hidden'
                     )}
                 >
                     <div className="p-3 sm:p-4 border-b space-y-3 shrink-0">
@@ -253,7 +201,10 @@ function PartiesLayout() {
                             <PartyList
                                 parties={filteredParties}
                                 selectedParty={
-                                    parties.find((p) => p.id === id) || null
+                                    id
+                                        ? parties.find((p) => p.id === id) ||
+                                          null
+                                        : null
                                 }
                                 onSelectParty={(party) =>
                                     navigate(`/parties/${party.id}`)
@@ -265,26 +216,14 @@ function PartiesLayout() {
 
                 {/* Right Content - Outlet for nested routes */}
                 <ScrollArea
-                    className={cn('flex-1', !id && isMobile && 'hidden')}
+                    className={cn(
+                        'flex-1',
+                        isMobile && !isRouteActive && 'hidden'
+                    )}
                 >
                     <Outlet />
                 </ScrollArea>
             </div>
-
-            {/* Form Modal */}
-            <FormModal open={isFormOpen} onOpenChange={setFormOpen}>
-                <FormContent className={isMobile ? '' : 'max-w-md sm:max-w-lg'}>
-                    <FormHeader>
-                        <FormTitle>Add New Party</FormTitle>
-                    </FormHeader>
-                    <div className={isMobile ? 'px-3 pb-4 sm:px-4' : ''}>
-                        <PartyForm
-                            onSubmit={handleCreateParty}
-                            onCancel={closeForm}
-                        />
-                    </div>
-                </FormContent>
-            </FormModal>
         </div>
     )
 }

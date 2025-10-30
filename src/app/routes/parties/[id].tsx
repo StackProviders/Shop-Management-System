@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router'
+import { useParams, useNavigate, useLocation } from 'react-router'
 import { useShopContext } from '@/features/shop'
 import { useAppBar } from '@/hooks/use-app-bar'
 import {
@@ -9,7 +9,6 @@ import {
 } from '@/features/parties'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ResponsiveModal } from '@/components/responsive-modal'
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
 import { Copy, MoreVertical, Pen, Trash2 } from 'lucide-react'
 import { useState } from 'react'
@@ -22,6 +21,7 @@ import {
     DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import NotFoundErrorPage from '../not-found'
+import { ResponsiveRouteView } from '@/components'
 
 interface PartyFormData {
     type: 'customer' | 'supplier'
@@ -36,13 +36,13 @@ interface PartyFormData {
 export default function PartyDetailPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
+    const location = useLocation()
     const { currentShop } = useShopContext()
     const shopId = currentShop?.shopId || ''
     const { party, isLoading } = usePartyById(id!)
     const { updateParty, deleteParty } = usePartyMutations(shopId)
-
-    const [isEditOpen, setEditOpen] = useState(false)
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+    const isEditOpen = location.pathname === `/parties/${id}/edit`
 
     const actions = (
         <DropdownMenu>
@@ -52,7 +52,9 @@ export default function PartyDetailPage() {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                <DropdownMenuItem
+                    onClick={() => navigate(`/parties/${id}/edit`)}
+                >
                     <Pen />
                     Edit
                     <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
@@ -78,7 +80,7 @@ export default function PartyDetailPage() {
     useAppBar({
         title: party?.name || 'Party',
         showBackButton: true,
-        onBack: () => navigate('/'),
+        onBack: () => navigate('/parties'),
         actions
     })
 
@@ -114,7 +116,7 @@ export default function PartyDetailPage() {
             balance: data.balance,
             status: data.status
         })
-        setEditOpen(false)
+        navigate(`/parties/${party.id}`)
     }
 
     const handleDeleteParty = async () => {
@@ -127,23 +129,33 @@ export default function PartyDetailPage() {
         }
     }
 
-    return (
-        <div className="h-full overflow-y-auto">
-            <div className="sm:p-4 space-y-3 sm:space-y-4">
-                <PartyDetail party={party} onEdit={() => setEditOpen(true)} />
-            </div>
-
-            <ResponsiveModal
-                open={isEditOpen}
-                onOpenChange={setEditOpen}
+    if (isEditOpen) {
+        return (
+            <ResponsiveRouteView
+                isOpen={true}
+                baseRoute={`/parties/${party.id}`}
                 title="Edit Party"
+                className="max-w-2xl"
             >
                 <PartyForm
                     party={party}
                     onSubmit={handleUpdateParty}
-                    onCancel={() => setEditOpen(false)}
+                    onCancel={() => navigate(`/parties/${party.id}`)}
                 />
-            </ResponsiveModal>
+            </ResponsiveRouteView>
+        )
+    }
+
+    return (
+        <>
+            <div className="h-full overflow-y-auto">
+                <div className="sm:p-4 space-y-3 sm:space-y-4">
+                    <PartyDetail
+                        party={party}
+                        onEdit={() => navigate(`/parties/${id}/edit`)}
+                    />
+                </div>
+            </div>
 
             <DeleteConfirmationDialog
                 open={deleteConfirmOpen}
@@ -151,6 +163,6 @@ export default function PartyDetailPage() {
                 onConfirm={handleDeleteParty}
                 description={`This will permanently delete ${party.name}. This action cannot be undone.`}
             />
-        </div>
+        </>
     )
 }

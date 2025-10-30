@@ -9,6 +9,7 @@ import HomePage from '@/app/routes/home'
 import PartiesLayout from '@/app/routes/parties'
 import PartyDetailPage from '@/app/routes/parties/[id]'
 import PartiesEmptyState from '@/app/routes/parties/empty'
+import NewPartyPage from '@/app/routes/parties/new'
 import TodosPage from '@/app/routes/todos'
 
 const createAppRouter = () =>
@@ -46,7 +47,15 @@ const createAppRouter = () =>
                                     element: <PartiesEmptyState />
                                 },
                                 {
+                                    path: 'new',
+                                    element: <NewPartyPage />
+                                },
+                                {
                                     path: ':id',
+                                    element: <PartyDetailPage />
+                                },
+                                {
+                                    path: ':id/edit',
                                     element: <PartyDetailPage />
                                 }
                             ]

@@ -1,6 +1,7 @@
 // Hooks
 export * from './hooks/use-party-queries'
 export * from './hooks/use-party-mutations'
+export * from './hooks/use-party-filters'
 
 // Components
 export * from './components/party-form'
