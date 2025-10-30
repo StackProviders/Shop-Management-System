@@ -17,6 +17,7 @@ pub fn run() {
     };
 
     let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_window_state::Builder::new().build())
         .plugin(tauri_plugin_cache::init_with_config(cache_config))
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_upload::init())

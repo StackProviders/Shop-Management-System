@@ -30,6 +30,7 @@
     "system-info:allow-static-info",
     "system-info:allow-cpu-info",
     "system-info:allow-networks",
-    "system-info:allow-batteries"
+    "system-info:allow-batteries",
+    "window-state:default"
   ]
 }
