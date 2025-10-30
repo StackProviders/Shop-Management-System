@@ -8,7 +8,6 @@ export * from './components/party-form'
 export * from './components/party-list'
 export * from './components/party-detail'
 export * from './components/party-filter'
-export * from './components/party-details-modal'
 
 // Types
 export * from './types'

@@ -27,7 +27,8 @@ export function useAppBar(config?: UseAppBarConfig) {
         const shouldApply = mobileOnly ? isMobile : true
 
         if (shouldApply) {
-            const { mobileOnly: _, deps: __, ...appBarConfig } = currentConfig
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { mobileOnly, deps, ...appBarConfig } = currentConfig
             configure(appBarConfig)
         }
 

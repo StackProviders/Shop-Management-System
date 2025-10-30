@@ -7,19 +7,9 @@ import {
     PartyDetail,
     PartyForm
 } from '@/features/parties'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
-import { Copy, MoreVertical, Pen, Trash2 } from 'lucide-react'
-import { useState } from 'react'
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuShortcut,
-    DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
+import { DetailActionsMenu } from '@/components/detail-actions-menu'
+import { X, Check } from 'lucide-react'
 import NotFoundErrorPage from '../not-found'
 import { ResponsiveRouteView } from '@/components'
 
@@ -41,47 +31,55 @@ export default function PartyDetailPage() {
     const shopId = currentShop?.shopId || ''
     const { party, isLoading } = usePartyById(id!)
     const { updateParty, deleteParty } = usePartyMutations(shopId)
-    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
     const isEditOpen = location.pathname === `/parties/${id}/edit`
 
-    const actions = (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="ghost">
-                    <MoreVertical className="size-4" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem
-                    onClick={() => navigate(`/parties/${id}/edit`)}
-                >
-                    <Pen />
-                    Edit
-                    <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                    <Copy />
-                    Duplicate
-                    <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => setDeleteConfirmOpen(true)}
-                >
-                    <Trash2 />
-                    Delete
-                    <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    )
+    const actions = party ? (
+        <DetailActionsMenu
+            item={party}
+            itemName={party.name}
+            editPath={`/parties/${id}/edit`}
+            duplicatePath="/parties/new"
+            listPath="/parties"
+            onDelete={deleteParty}
+            getDuplicateData={(p) => ({
+                type: p.type,
+                name: `${p.name} (Copy)`,
+                phone: p.contactInfo.phone,
+                email: p.contactInfo.email,
+                address: p.contactInfo.address,
+                balance: 0,
+                status: p.status
+            })}
+        />
+    ) : null
 
     useAppBar({
-        title: party?.name || 'Party',
+        title: isEditOpen ? 'Edit Party' : party?.name || 'Party',
         showBackButton: true,
-        onBack: () => navigate('/parties'),
-        actions
+        onBack: () => navigate(isEditOpen ? `/parties/${id}` : '/parties'),
+        actions: isEditOpen ? undefined : actions,
+        showBottomActions: true,
+        bottomActions: isEditOpen
+            ? [
+                  {
+                      icon: X,
+                      label: 'Cancel',
+                      onClick: () => navigate(`/parties/${id}`),
+                      variant: 'outline'
+                  },
+                  {
+                      icon: Check,
+                      label: 'Update',
+                      onClick: () => {
+                          const form = document.querySelector('form')
+                          form?.requestSubmit()
+                      },
+                      variant: 'primary'
+                  }
+              ]
+            : [],
+        showQuickActionCenter: !isEditOpen,
+        deps: [isEditOpen, party?.name]
     })
 
     if (isLoading) {
@@ -119,16 +117,6 @@ export default function PartyDetailPage() {
         navigate(`/parties/${party.id}`)
     }
 
-    const handleDeleteParty = async () => {
-        try {
-            await deleteParty(party.id)
-            setDeleteConfirmOpen(false)
-            navigate('/parties')
-        } catch {
-            // Error handled in hook
-        }
-    }
-
     if (isEditOpen) {
         return (
             <ResponsiveRouteView
@@ -153,16 +141,10 @@ export default function PartyDetailPage() {
                     <PartyDetail
                         party={party}
                         onEdit={() => navigate(`/parties/${id}/edit`)}
+                        shopId={currentShop?.shopId ?? ''}
                     />
                 </div>
             </div>
-
-            <DeleteConfirmationDialog
-                open={deleteConfirmOpen}
-                onOpenChange={setDeleteConfirmOpen}
-                onConfirm={handleDeleteParty}
-                description={`This will permanently delete ${party.name}. This action cannot be undone.`}
-            />
         </>
     )
 }

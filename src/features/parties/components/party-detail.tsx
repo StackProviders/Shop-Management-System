@@ -26,13 +26,17 @@ import {
 import { Party } from '../types'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Heading4 } from '@/components/ui/typography'
+import { DetailActionsMenu } from '@/components/detail-actions-menu'
+import { usePartyMutations } from '@/features/parties'
 
 interface PartyDetailProps {
     party: Party
     onEdit: () => void
+    shopId: string
 }
 
-export function PartyDetail({ party, onEdit }: PartyDetailProps) {
+export function PartyDetail({ party, onEdit, shopId }: PartyDetailProps) {
+    const { deleteParty } = usePartyMutations(shopId)
     const isMobile = useIsMobile()
     const hasContactInfo = !!(
         party.contactInfo.phone ||
@@ -47,19 +51,37 @@ export function PartyDetail({ party, onEdit }: PartyDetailProps) {
             {showHeaderCard && (
                 <Card className="rounded-sm">
                     <CardContent className="space-y-2 sm:space-y-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between">
                             <Heading4 className="text-lg md:text-xl font-semibold">
                                 {isMobile ? 'Contact Info' : party.name}
                             </Heading4>
                             {!isMobile && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7"
-                                    onClick={onEdit}
-                                >
-                                    <SquarePen className="h-4 w-4 text-primary" />
-                                </Button>
+                                <div>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={onEdit}
+                                    >
+                                        <SquarePen className="h-4 w-4 text-primary" />
+                                    </Button>
+                                    <DetailActionsMenu
+                                        item={party}
+                                        itemName={party.name}
+                                        editPath={`/parties/${party.id}/edit`}
+                                        duplicatePath="/parties/new"
+                                        listPath="/parties"
+                                        onDelete={deleteParty}
+                                        getDuplicateData={(p) => ({
+                                            type: p.type,
+                                            name: `${p.name} (Copy)`,
+                                            phone: p.contactInfo.phone,
+                                            email: p.contactInfo.email,
+                                            address: p.contactInfo.address,
+                                            balance: 0,
+                                            status: p.status
+                                        })}
+                                    />
+                                </div>
                             )}
                         </div>
 

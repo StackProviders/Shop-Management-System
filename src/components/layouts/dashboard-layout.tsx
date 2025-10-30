@@ -20,7 +20,7 @@ const DashboardLayoutContent = memo(() => {
                 <main
                     className={cn(
                         'flex-1 overflow-auto p-3 md:p-4',
-                        isMobile && showBottomActions && 'pb-20'
+                        isMobile && showBottomActions && 'pb-16'
                     )}
                 >
                     <Outlet />
