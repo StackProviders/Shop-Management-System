@@ -5,16 +5,25 @@ import {
     StateFlags
 } from '@tauri-apps/plugin-window-state'
 
+const isProduction = import.meta.env.PROD
+
 export async function setupWindowBehavior() {
     const window = getCurrentWindow()
 
-    // Restore window state
-    await restoreStateCurrent(StateFlags.ALL)
+    // Restore window state (production only)
+    if (isProduction) {
+        await restoreStateCurrent(StateFlags.ALL)
+    }
 
     // Prevent window close, hide instead
     await window.onCloseRequested(async (event) => {
         event.preventDefault()
-        await saveWindowState(StateFlags.ALL)
+
+        // Save window state (production only)
+        if (isProduction) {
+            await saveWindowState(StateFlags.ALL)
+        }
+
         await window.hide()
     })
 }
