@@ -1,6 +1,6 @@
 import { ReactNode, memo } from 'react'
 import { ResponsiveModal } from './responsive-modal'
-import { Button } from '@/components/ui/button'
+import { Button, SubmitButton } from '@/components/ui/button'
 
 interface FormModalProps {
     open: boolean
@@ -56,14 +56,13 @@ export const FormModal = memo(function FormModal({
                     >
                         {cancelLabel}
                     </Button>
-                    <Button
-                        type="submit"
+                    <SubmitButton
                         form={formId}
-                        disabled={isSubmitting}
+                        loading={isSubmitting}
                         className="flex-1"
                     >
-                        {isSubmitting ? 'Saving...' : submitLabel}
-                    </Button>
+                        {submitLabel}
+                    </SubmitButton>
                 </div>
             }
         >

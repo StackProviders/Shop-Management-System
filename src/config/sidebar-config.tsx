@@ -33,8 +33,8 @@ import {
     Undo2,
     Warehouse
 } from 'lucide-react'
-import type { SidebarItem } from './types'
-import { getSecurityCount } from './badge-helpers'
+import type { SidebarItem } from '@/components/sidebar/types'
+import { getSecurityCount } from '@/components/sidebar/badge-helpers'
 
 export const sidebarItems: SidebarItem[] = [
     {
