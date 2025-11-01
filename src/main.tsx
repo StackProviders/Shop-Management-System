@@ -1,10 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { NuqsAdapter } from 'nuqs/adapters/react-router/v7'
 import App from '@/app'
 import { initializeDesktop } from '@/lib/desktop'
 import { firebaseConfig } from '@/lib/firebase'
 import { FirebaseAppProvider } from 'reactfire'
-// import '@saurl/tauri-plugin-safe-area-insets-css-api';
 
 // Initialize desktop features once
 if (typeof window !== 'undefined' && '__TAURI__' in window) {
@@ -25,7 +25,9 @@ if (typeof window !== 'undefined' && '__TAURI__' in window) {
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <React.StrictMode>
         <FirebaseAppProvider firebaseConfig={firebaseConfig} suspense={true}>
-            <App />
+            <NuqsAdapter>
+                <App />
+            </NuqsAdapter>
         </FirebaseAppProvider>
     </React.StrictMode>
 )
