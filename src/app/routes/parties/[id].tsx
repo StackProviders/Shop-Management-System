@@ -143,16 +143,12 @@ export default function PartyDetailPage() {
     }
 
     return (
-        <>
-            <div className="h-full overflow-y-auto">
-                <div className="sm:p-4 space-y-3 sm:space-y-4">
-                    <PartyDetail
-                        party={party}
-                        onEdit={() => navigate(`/parties/${id}/edit`)}
-                        shopId={currentShop?.shopId ?? ''}
-                    />
-                </div>
-            </div>
-        </>
+        <div className="h-full overflow-y-auto">
+            <PartyDetail
+                party={party}
+                onEdit={() => navigate(`/parties/${id}/edit`)}
+                shopId={currentShop?.shopId ?? ''}
+            />
+        </div>
     )
 }

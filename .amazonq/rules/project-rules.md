@@ -44,12 +44,126 @@ import { useAuthActions } from '@/features/auth/hooks/use-auth-actions'
 
 ### Available shadcn/ui Components
 
-- Layout: `Card`, `Sheet`, `Dialog`, `Drawer`, `Tabs`, `Accordion`, `Separator`
+- Layout: `Card`, `Sheet`, `Dialog`, `Drawer`, `Tabs`, `Accordion`, `Separator`, `ListDetailLayout` (see below)
 - Forms: `Input`, `Button`, `Select`, `Checkbox`, `Label`, `Form`, `PhoneInput`
 - Navigation: `Sidebar`, `DropdownMenu`, `Command`
 - Feedback: `Alert`, `AlertDialog`, `Spinner`, `Skeleton`, `Sonner` (toast)
 - Data: `Table`, `Pagination`, `Avatar`, `Badge`
 - Utility: `Tooltip`, `Popover`, `ScrollArea`, `AspectRatio`
+
+### List Detail Layout System
+
+**CRITICAL: Use for all master-detail interfaces**
+
+Import from `@/components/ui/list-detail-layout`:
+
+```typescript
+import {
+    ListDetailRoot,
+    ListDetailHeader,
+    ListDetailHeaderContent,
+    ListDetailHeaderTitle,
+    ListDetailHeaderActions,
+    ListDetailStats,
+    ListDetailStat,
+    ListDetailBody,
+    ListDetailList,
+    ListDetailListHeader,
+    ListDetailListContent,
+    ListDetailContent,
+    ListDetailContentHeader,
+    ListDetailContentHeaderTitle,
+    ListDetailContentHeaderInfo,
+    ListDetailContentHeaderInfoItem,
+    ListDetailContentBody
+} from '@/components/ui/list-detail-layout'
+```
+
+**When to Use:**
+
+- Building list + detail views (e.g., Parties, Products, Orders)
+- Creating master-detail interfaces
+- Any page with sidebar list and detail panel
+
+**Basic Structure:**
+
+```typescript
+<ListDetailRoot>
+    <ListDetailHeader isRouteActive={isRouteActive}>
+        <ListDetailHeaderContent>
+            <ListDetailHeaderTitle>Title</ListDetailHeaderTitle>
+            <ListDetailHeaderActions>
+                <Button>Add New</Button>
+            </ListDetailHeaderActions>
+        </ListDetailHeaderContent>
+        <ListDetailStats>
+            <ListDetailStat label="Total" value={100} />
+        </ListDetailStats>
+    </ListDetailHeader>
+
+    <ListDetailBody>
+        <ListDetailList isRouteActive={isRouteActive}>
+            <ListDetailListHeader>
+                <SearchInput />
+            </ListDetailListHeader>
+            <ListDetailListContent>
+                {/* List items */}
+            </ListDetailListContent>
+        </ListDetailList>
+
+        <ListDetailContent isRouteActive={isRouteActive}>
+            <Outlet />
+        </ListDetailContent>
+    </ListDetailBody>
+</ListDetailRoot>
+```
+
+**Detail Page Structure:**
+
+```typescript
+<>
+    <ListDetailContentHeader>
+        <ListDetailContentHeaderTitle>
+            <h2>Item Name</h2>
+            <Button>Edit</Button>
+        </ListDetailContentHeaderTitle>
+        <ListDetailContentHeaderInfo>
+            <ListDetailContentHeaderInfoItem label="Email" value="email@example.com" />
+            <ListDetailContentHeaderInfoItem label="Phone" value="+1234567890" />
+        </ListDetailContentHeaderInfo>
+    </ListDetailContentHeader>
+
+    <ListDetailContentBody>
+        {/* Main content */}
+    </ListDetailContentBody>
+</>
+```
+
+**Required Props:**
+
+- `isRouteActive`: Boolean indicating if detail route is active
+    ```typescript
+    const isRouteActive = useMemo(
+        () => !!id || pathname.includes('/new') || pathname.includes('/edit'),
+        [id, pathname]
+    )
+    ```
+
+**Key Features:**
+
+- ✅ Fully responsive (mobile/desktop)
+- ✅ Automatic show/hide on mobile
+- ✅ Composable components
+- ✅ Type-safe with TypeScript
+- ✅ Accepts `className` for customization
+- ✅ Built-in `ScrollArea` support
+
+**Documentation:** See `src/components/ui/list-detail-layout.md` for complete guide
+
+**Examples:**
+
+- Parties: `src/app/routes/parties/index.tsx`
+- Party Detail: `src/features/parties/components/party-detail.tsx`
 
 ### Mobile-First Components
 
@@ -281,6 +395,12 @@ function ShopForm() {
 - Use JSDoc for public APIs
 - Explain "why", not "what"
 
+## Component Documentation
+
+- List Detail Layout: `src/components/ui/list-detail-layout.md`
+- Component Patterns: `.amazonq/rules/component-patterns.md`
+- Feature Guide: `.amazonq/rules/feature-guide.md`
+
 ## Security
 
 - Never expose API keys or secrets
@@ -314,3 +434,91 @@ if (!hasPermission(userRole, 'manage_members')) {
 - Update README.md when adding features
 - Document complex logic
 - Keep architecture docs in sync
+
+## List Detail Layout Rules
+
+**ALWAYS use List Detail Layout components for master-detail interfaces**
+
+### Component Selection Rules
+
+1. **List Page (with sidebar):**
+    - Start with `ListDetailRoot`
+    - Add `ListDetailHeader` for page header
+    - Use `ListDetailBody` for main content
+    - Use `ListDetailList` for left sidebar
+    - Use `ListDetailContent` with `<Outlet />` for detail
+
+2. **Detail Page (right side):**
+    - Use `ListDetailContentHeader` for header card
+    - Use `ListDetailContentHeaderInfo` for info grid
+    - Use `ListDetailContentBody` for main content
+
+3. **Always pass `isRouteActive`:**
+    ```typescript
+    const isRouteActive = useMemo(
+        () => !!id || pathname.includes('/new') || pathname.includes('/edit'),
+        [id, pathname]
+    )
+    ```
+
+### Code Generation Rules
+
+**DO:**
+
+- ✅ Import only needed components
+- ✅ Pass `isRouteActive` to Header, List, and Content
+- ✅ Use `Outlet` in `ListDetailContent`
+- ✅ Compose components for flexibility
+- ✅ Add `className` for custom styling
+- ✅ Use `ListDetailContentHeaderInfoItem` for info display
+
+**DON'T:**
+
+- ❌ Create custom divs for layout structure
+- ❌ Use `Card` component for detail headers
+- ❌ Hardcode responsive behavior
+- ❌ Skip `isRouteActive` prop
+- ❌ Mix old and new patterns
+
+### Migration Pattern
+
+```typescript
+// ❌ OLD - Don't use
+<Card>
+    <CardContent>
+        <div className="flex justify-between">
+            <h2>{title}</h2>
+            <Button>Edit</Button>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+            <div>
+                <span>Label:</span>
+                <span>{value}</span>
+            </div>
+        </div>
+    </CardContent>
+</Card>
+
+// ✅ NEW - Use this
+<ListDetailContentHeader>
+    <ListDetailContentHeaderTitle>
+        <h2>{title}</h2>
+        <Button>Edit</Button>
+    </ListDetailContentHeaderTitle>
+    <ListDetailContentHeaderInfo>
+        <ListDetailContentHeaderInfoItem label="Label" value={value} />
+    </ListDetailContentHeaderInfo>
+</ListDetailContentHeader>
+```
+
+### Quick Reference
+
+**Page Header:** `ListDetailHeader` → `ListDetailHeaderContent` → `ListDetailHeaderTitle` + `ListDetailHeaderActions`
+
+**List Sidebar:** `ListDetailList` → `ListDetailListHeader` + `ListDetailListContent`
+
+**Detail Content:** `ListDetailContent` → `ListDetailContentHeader` + `ListDetailContentBody`
+
+**Info Display:** `ListDetailContentHeaderInfo` → `ListDetailContentHeaderInfoItem` (multiple)
+
+**Full docs:** `src/components/ui/list-detail-layout.md`

@@ -165,6 +165,70 @@ const ListDetailContent = forwardRef<
 })
 ListDetailContent.displayName = 'ListDetailContent'
 
+const ListDetailContentHeader = forwardRef<
+    HTMLDivElement,
+    HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+    <div
+        ref={ref}
+        className={cn('border-b p-3 sm:p-4', className)}
+        {...props}
+    />
+))
+ListDetailContentHeader.displayName = 'ListDetailContentHeader'
+
+const ListDetailContentHeaderTitle = forwardRef<
+    HTMLDivElement,
+    HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+    <div
+        ref={ref}
+        className={cn('flex items-center justify-between', className)}
+        {...props}
+    />
+))
+ListDetailContentHeaderTitle.displayName = 'ListDetailContentHeaderTitle'
+
+const ListDetailContentHeaderInfo = forwardRef<
+    HTMLDivElement,
+    HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+    <div
+        ref={ref}
+        className={cn(
+            'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 text-sm mt-3',
+            className
+        )}
+        {...props}
+    />
+))
+ListDetailContentHeaderInfo.displayName = 'ListDetailContentHeaderInfo'
+
+interface ListDetailContentHeaderInfoItemProps
+    extends HTMLAttributes<HTMLDivElement> {
+    label: string
+    value: string
+}
+
+const ListDetailContentHeaderInfoItem = forwardRef<
+    HTMLDivElement,
+    ListDetailContentHeaderInfoItemProps
+>(({ label, value, className, ...props }, ref) => (
+    <div ref={ref} className={cn('', className)} {...props}>
+        <div className="text-muted-foreground text-xs mb-1">{label}</div>
+        <div className="text-primary font-medium break-words">{value}</div>
+    </div>
+))
+ListDetailContentHeaderInfoItem.displayName = 'ListDetailContentHeaderInfoItem'
+
+const ListDetailContentBody = forwardRef<
+    HTMLDivElement,
+    HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+    <div ref={ref} className={cn('p-3 sm:p-4', className)} {...props} />
+))
+ListDetailContentBody.displayName = 'ListDetailContentBody'
+
 const ListDetailRoot = forwardRef<
     HTMLDivElement,
     HTMLAttributes<HTMLDivElement>
@@ -201,5 +265,10 @@ export {
     ListDetailList,
     ListDetailListHeader,
     ListDetailListContent,
-    ListDetailContent
+    ListDetailContent,
+    ListDetailContentHeader,
+    ListDetailContentHeaderTitle,
+    ListDetailContentHeaderInfo,
+    ListDetailContentHeaderInfoItem,
+    ListDetailContentBody
 }
