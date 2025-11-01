@@ -1,5 +1,11 @@
 import type React from 'react'
 
+export interface SidebarItemAction {
+    icon?: React.ComponentType<{ className?: string }>
+    onClick: () => void
+    label?: string
+}
+
 export interface SidebarSubItem {
     id: string
     label: string
@@ -14,4 +20,5 @@ export interface SidebarItem {
     badge?: string | (() => string | number | undefined)
     route?: string
     subItems?: SidebarSubItem[]
+    action?: SidebarItemAction
 }

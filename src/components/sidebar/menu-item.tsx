@@ -3,7 +3,8 @@ import { IconChevronRight } from '@tabler/icons-react'
 import {
     SidebarMenuItem,
     SidebarMenuButton,
-    SidebarMenuBadge
+    SidebarMenuBadge,
+    SidebarMenuAction
 } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
 import type { SidebarItem } from './types'
@@ -19,18 +20,17 @@ export const MenuItem = memo(({ item, onClick, isActive }: MenuItemProps) => {
     const hasSubItems = !!item.subItems?.length
     const badgeValue =
         typeof item.badge === 'function' ? item.badge() : item.badge
+    const ActionIcon = item.action?.icon
 
     return (
         <SidebarMenuItem>
             <SidebarMenuButton
-                className="w-full h-10 px-3"
+                className="w-full h-10 px-3 flex items-center"
                 onClick={() => onClick(item)}
                 isActive={isActive}
             >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <Icon className="h-4 w-4 shrink-0" />
-                    <span className="truncate">{item.label}</span>
-                </div>
+                <Icon className="size-6 shrink-0" />
+                <span className="truncate flex-1">{item.label}</span>
                 {(badgeValue || hasSubItems) && (
                     <div className="flex items-center gap-1 shrink-0 ml-auto">
                         {badgeValue ? (
@@ -51,6 +51,18 @@ export const MenuItem = memo(({ item, onClick, isActive }: MenuItemProps) => {
                     </div>
                 )}
             </SidebarMenuButton>
+            {item.action && ActionIcon && (
+                <SidebarMenuAction
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        item.action?.onClick()
+                    }}
+                    aria-label={item.action.label}
+                    className="flex items-center justify-center !top-2 right-1"
+                >
+                    <ActionIcon className="size-4" />
+                </SidebarMenuAction>
+            )}
         </SidebarMenuItem>
     )
 })

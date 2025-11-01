@@ -16,13 +16,11 @@ export const SubMenuItem = memo(
             <SidebarMenuItem>
                 <SidebarMenuButton
                     isActive={isSelected}
-                    className="w-full h-10 px-3"
+                    className="w-full h-10 px-3 items-center"
                     onClick={() => onClick(subItem)}
                 >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <Icon className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{subItem.label}</span>
-                    </div>
+                    <Icon className="size-6 shrink-0" />
+                    <span className="truncate flex-1">{subItem.label}</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
         )

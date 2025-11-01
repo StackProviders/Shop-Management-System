@@ -47,19 +47,23 @@ export const sidebarItems: SidebarItem[] = [
         id: 'parties',
         label: 'Parties',
         icon: IconUsers,
-        route: '/parties'
-    },
-    {
-        id: 'todos',
-        label: 'Todos',
-        icon: IconUsers,
-        route: '/todos'
+        route: '/parties',
+        action: {
+            icon: IconPlus,
+            onClick: () => console.log('Add party'),
+            label: 'Add Party'
+        }
     },
     {
         id: 'items',
         label: 'Items',
         icon: IconPackage,
-        route: '/item'
+        route: '/item',
+        action: {
+            icon: IconPlus,
+            onClick: () => console.log('Add item'),
+            label: 'Add Item'
+        }
     },
     {
         id: 'inventory',
@@ -140,7 +144,12 @@ export const sidebarItems: SidebarItem[] = [
         id: 'expenses',
         label: 'Expenses',
         icon: IconTrendingDown,
-        route: '/expenses'
+        route: '/expenses',
+        action: {
+            icon: IconPlus,
+            onClick: () => console.log('Add expense'),
+            label: 'Add Expense'
+        }
     },
     {
         id: 'mobile-banking',
