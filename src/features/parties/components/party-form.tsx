@@ -38,13 +38,17 @@ interface PartyFormProps {
     onSubmit: (data: FormData) => Promise<void>
     onCancel: () => void
     loading?: boolean
+    showActions?: boolean
+    formId?: string
 }
 
 export function PartyForm({
     party,
     onSubmit,
     onCancel,
-    loading
+    loading,
+    showActions = true,
+    formId = 'party-form'
 }: PartyFormProps) {
     const form = useForm<FormData>({
         resolver: zodResolver(formSchema),
@@ -90,6 +94,7 @@ export function PartyForm({
     return (
         <Form {...form}>
             <form
+                id={formId}
                 onSubmit={form.handleSubmit(handleSubmit)}
                 className="space-y-4"
             >
@@ -238,19 +243,25 @@ export function PartyForm({
                     )}
                 />
 
-                <div className="flex gap-2 justify-end">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={onCancel}
-                        disabled={loading}
-                    >
-                        Cancel
-                    </Button>
-                    <Button type="submit" disabled={loading}>
-                        {loading ? 'Saving...' : party ? 'Update' : 'Create'}
-                    </Button>
-                </div>
+                {showActions && (
+                    <div className="flex gap-2 justify-end">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onCancel}
+                            disabled={loading}
+                        >
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={loading}>
+                            {loading
+                                ? 'Saving...'
+                                : party
+                                  ? 'Update'
+                                  : 'Create'}
+                        </Button>
+                    </div>
+                )}
             </form>
         </Form>
     )

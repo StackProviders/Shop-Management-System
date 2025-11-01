@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { ResponsiveDialog } from '@/components/modal'
+import { ResponsiveModal } from '@/components'
 import { CreateShopForm } from './create-shop-form'
 import { useShopActions } from '../hooks'
 import { shopApi } from '../api'
@@ -50,7 +50,7 @@ export function EditShopModal({
     if (!shopData) return null
 
     return (
-        <ResponsiveDialog
+        <ResponsiveModal
             title="Edit Shop"
             description="Update your shop information below"
             open={open}
@@ -71,6 +71,6 @@ export function EditShopModal({
                     status: shopData.status
                 }}
             />
-        </ResponsiveDialog>
+        </ResponsiveModal>
     )
 }

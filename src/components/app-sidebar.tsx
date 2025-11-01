@@ -13,8 +13,8 @@ import {
 } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
 import { ShopSwitcher } from '@/components/shop/shop-switcher'
-import { Button } from './ui/button'
-import { NavUser } from './nav-user'
+import { Button } from '@/components/ui/button'
+import { NavUser } from '@/components/nav-user'
 import {
     sidebarItems,
     MenuItem,

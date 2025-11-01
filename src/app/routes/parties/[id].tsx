@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { DetailActionsMenu } from '@/components/detail-actions-menu'
 import { X, Check } from 'lucide-react'
 import NotFoundErrorPage from '../not-found'
-import { ResponsiveRouteView } from '@/components'
+import { FormModal } from '@/components'
 
 interface PartyFormData {
     type: 'customer' | 'supplier'
@@ -119,18 +119,26 @@ export default function PartyDetailPage() {
 
     if (isEditOpen) {
         return (
-            <ResponsiveRouteView
-                isOpen={true}
-                baseRoute={`/parties/${party.id}`}
+            <FormModal
+                open={true}
+                onOpenChange={(open) =>
+                    !open && navigate(`/parties/${party.id}`)
+                }
                 title="Edit Party"
+                description="Update party information"
+                formId="edit-party-form"
+                onCancel={() => navigate(`/parties/${party.id}`)}
+                submitLabel="Update"
                 className="max-w-2xl"
             >
                 <PartyForm
                     party={party}
                     onSubmit={handleUpdateParty}
                     onCancel={() => navigate(`/parties/${party.id}`)}
+                    showActions={false}
+                    formId="edit-party-form"
                 />
-            </ResponsiveRouteView>
+            </FormModal>
         )
     }
 

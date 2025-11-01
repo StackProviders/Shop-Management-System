@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { ResponsiveDialog } from '@/components/modal'
+import { ResponsiveModal } from '@/components'
+import { Button } from '@/components/ui/button'
 import { CreateShopForm } from './create-shop-form'
 import { useShopActions } from '../hooks'
 import { useCurrentUser } from '@/features/auth'
@@ -38,17 +39,19 @@ export function CreateShopModal({
     }
 
     return (
-        <ResponsiveDialog
-            trigger={trigger}
-            title="Create Shop"
-            description="Enter shop details to create a new shop"
-            open={open}
-            onOpenChange={setOpen}
-        >
-            <CreateShopForm
-                onSubmit={handleSubmit}
-                onCancel={() => setOpen(false)}
-            />
-        </ResponsiveDialog>
+        <>
+            {trigger && <div onClick={() => setOpen(true)}>{trigger}</div>}
+            <ResponsiveModal
+                title="Create Shop"
+                description="Enter shop details to create a new shop"
+                open={open}
+                onOpenChange={setOpen}
+            >
+                <CreateShopForm
+                    onSubmit={handleSubmit}
+                    onCancel={() => setOpen(false)}
+                />
+            </ResponsiveModal>
+        </>
     )
 }

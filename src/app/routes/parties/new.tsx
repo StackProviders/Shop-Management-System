@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router'
 import { useShopContext } from '@/features/shop'
 import { usePartyMutations, PartyForm } from '@/features/parties'
 import type { Party } from '@/features/parties'
-import { ResponsiveRouteView } from '@/components'
+import { FormModal } from '@/components'
 import { useAppBar } from '@/hooks/use-app-bar'
 import { X, Check } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -83,17 +83,23 @@ export default function NewPartyPage() {
     }
 
     return (
-        <ResponsiveRouteView
-            isOpen={true}
-            baseRoute="/parties"
+        <FormModal
+            open={true}
+            onOpenChange={(open) => !open && navigate('/parties')}
             title="Create New Party"
+            description="Add a new customer or supplier"
+            formId="create-party-form"
+            onCancel={() => navigate('/parties')}
+            submitLabel="Create"
             className="max-w-2xl"
         >
             <PartyForm
                 party={initialData as Party | undefined}
                 onSubmit={handleCreate}
                 onCancel={() => navigate('/parties')}
+                showActions={false}
+                formId="create-party-form"
             />
-        </ResponsiveRouteView>
+        </FormModal>
     )
 }
