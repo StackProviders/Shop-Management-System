@@ -9,6 +9,25 @@ import {
 } from '@/features/parties'
 import { SuspenseWithPerf } from 'reactfire'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Users, Store, Plus } from 'lucide-react'
+import {
+    ListDetailRoot,
+    ListDetailHeader,
+    ListDetailHeaderContent,
+    ListDetailHeaderTitle,
+    ListDetailHeaderActions,
+    ListDetailStats,
+    ListDetailStat,
+    ListDetailBody,
+    ListDetailList,
+    ListDetailListHeader,
+    ListDetailListContent,
+    ListDetailContent
+} from '@/components/ui/list-detail-layout'
+import { Button } from '@/components/ui/button'
+import { SearchInput } from '@/components/ui/search-input'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { Outlet } from 'react-router'
 import {
     Empty,
     EmptyHeader,
@@ -16,19 +35,18 @@ import {
     EmptyDescription,
     EmptyMedia
 } from '@/components/ui/empty'
-import { Users, Store } from 'lucide-react'
-import { ListDetailLayout } from '@/components/layouts/list-detail-layout'
 
 const PartiesLayout = memo(function PartiesLayout() {
     const navigate = useNavigate()
     const { id } = useParams()
+    const location = useLocation()
+    const isMobile = useIsMobile()
     const { currentShop } = useShopContext()
     const shopId = useMemo(
         () => currentShop?.shopId || '',
         [currentShop?.shopId]
     )
 
-    const location = useLocation()
     const { parties } = usePartiesByShop(shopId)
 
     const {
@@ -110,46 +128,98 @@ const PartiesLayout = memo(function PartiesLayout() {
     }
 
     return (
-        <ListDetailLayout
-            title="Parties"
-            stats={stats}
-            searchValue={searchQuery}
-            onSearchChange={setSearchQuery}
-            searchPlaceholder="Search parties..."
-            filterComponent={
-                <PartyFilter
-                    filterType={filterType}
-                    filterStatus={filterStatus}
-                    filterBalance={filterBalance}
-                    onFilterTypeChange={setFilterType}
-                    onFilterStatusChange={setFilterStatus}
-                    onFilterBalanceChange={setFilterBalance}
-                    onClearFilters={clearFilters}
-                />
-            }
-            listComponent={
-                <PartyList
-                    parties={filteredParties}
-                    selectedParty={
-                        id ? parties.find((p) => p.id === id) || null : null
-                    }
-                    onSelectParty={handleSelectParty}
-                />
-            }
-            emptyIcon={<Users />}
-            emptyTitle={
-                parties.length === 0 ? 'No parties yet' : 'No parties found'
-            }
-            emptyDescription={
-                parties.length === 0
-                    ? 'Create your first party to get started'
-                    : 'Try adjusting your search or filters'
-            }
-            hasItems={filteredParties.length > 0}
-            onCreateNew={handleCreateNew}
-            createButtonLabel="Add Party"
-            isRouteActive={isRouteActive}
-        />
+        <ListDetailRoot>
+            <ListDetailHeader isRouteActive={isRouteActive}>
+                <ListDetailHeaderContent>
+                    <div className="flex items-center gap-2">
+                        <Users className="size-5 text-primary" />
+                        <ListDetailHeaderTitle>Parties</ListDetailHeaderTitle>
+                    </div>
+                    <ListDetailHeaderActions>
+                        <Button
+                            variant="primary"
+                            size={isMobile ? 'xs' : 'sm'}
+                            onClick={handleCreateNew}
+                        >
+                            <Plus className="size-4" />
+                            <span className="hidden xs:inline">Add Party</span>
+                        </Button>
+                    </ListDetailHeaderActions>
+                </ListDetailHeaderContent>
+                <ListDetailStats>
+                    {stats.map((stat, index) => (
+                        <ListDetailStat
+                            key={index}
+                            label={stat.label}
+                            value={stat.value}
+                        />
+                    ))}
+                </ListDetailStats>
+            </ListDetailHeader>
+
+            <ListDetailBody>
+                <ListDetailList isRouteActive={isRouteActive}>
+                    <ListDetailListHeader>
+                        <div className="flex gap-2">
+                            <SearchInput
+                                value={searchQuery}
+                                onValueChange={setSearchQuery}
+                                placeholder="Search parties..."
+                                wrapperClassName="flex-1"
+                            />
+                            <PartyFilter
+                                filterType={filterType}
+                                filterStatus={filterStatus}
+                                filterBalance={filterBalance}
+                                onFilterTypeChange={setFilterType}
+                                onFilterStatusChange={setFilterStatus}
+                                onFilterBalanceChange={setFilterBalance}
+                                onClearFilters={clearFilters}
+                            />
+                        </div>
+                    </ListDetailListHeader>
+
+                    <ListDetailListContent>
+                        {filteredParties.length === 0 ? (
+                            <div className="p-3 sm:p-4">
+                                <Empty>
+                                    <EmptyHeader>
+                                        <EmptyMedia variant="icon">
+                                            <Users />
+                                        </EmptyMedia>
+                                        <EmptyTitle>
+                                            {parties.length === 0
+                                                ? 'No parties yet'
+                                                : 'No parties found'}
+                                        </EmptyTitle>
+                                        <EmptyDescription>
+                                            {parties.length === 0
+                                                ? 'Create your first party to get started'
+                                                : 'Try adjusting your search or filters'}
+                                        </EmptyDescription>
+                                    </EmptyHeader>
+                                </Empty>
+                            </div>
+                        ) : (
+                            <PartyList
+                                parties={filteredParties}
+                                selectedParty={
+                                    id
+                                        ? parties.find((p) => p.id === id) ||
+                                          null
+                                        : null
+                                }
+                                onSelectParty={handleSelectParty}
+                            />
+                        )}
+                    </ListDetailListContent>
+                </ListDetailList>
+
+                <ListDetailContent isRouteActive={isRouteActive}>
+                    <Outlet />
+                </ListDetailContent>
+            </ListDetailBody>
+        </ListDetailRoot>
     )
 })
 

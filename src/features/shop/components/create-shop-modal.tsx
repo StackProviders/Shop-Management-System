@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { ResponsiveModal } from '@/components'
-import { Button } from '@/components/ui/button'
 import { CreateShopForm } from './create-shop-form'
 import { useShopActions } from '../hooks'
 import { useCurrentUser } from '@/features/auth'

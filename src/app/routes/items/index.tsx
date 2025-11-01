@@ -1,3 +1,3 @@
-export default function index() {
-    return <div>index</div>
+export default function ItemsPage() {
+    return <div>ItemsPage</div>
 }
