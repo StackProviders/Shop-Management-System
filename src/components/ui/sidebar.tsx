@@ -192,9 +192,11 @@ function Sidebar({
         return (
             <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
                 <SheetContent
+                    showClose={false}
                     data-sidebar="sidebar"
                     data-slot="sidebar"
                     data-mobile="true"
+                    data-state={state}
                     className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden gap-0"
                     style={
                         {
