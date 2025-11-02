@@ -1,5 +1,5 @@
 import { useMemo, useState, Suspense } from 'react'
-import { useLocation, useNavigate, Outlet, useParams } from 'react-router'
+import { useLocation, useNavigate, Outlet, useParams, Link } from 'react-router'
 import {
     ListDetailRoot,
     ListDetailHeader,
@@ -10,7 +10,7 @@ import {
     ListDetailContent
 } from '@/components/ui/list-detail-layout'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import { SearchInput } from '@/components/ui/search-input'
 import { Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -18,21 +18,9 @@ import { useShopContext } from '@/features/shop'
 import { useItems } from '@/features/items/hooks/use-items'
 import { useCategories } from '@/features/items/hooks/use-categories'
 import { useUnits } from '@/features/items/hooks/use-units'
-import { useItemActions } from '@/features/items/hooks/use-item-actions'
-import { ItemForm } from '@/features/items/components/item-form'
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle
-} from '@/components/ui/dialog'
+
 import { Skeleton } from '@/components/ui/skeleton'
-import type {
-    Item,
-    Category,
-    Unit,
-    CreateItemData
-} from '@/features/items/types'
+import type { Item, Category, Unit } from '@/features/items/types'
 
 const TABS = [
     { value: 'products', label: 'PRODUCTS' },
@@ -50,7 +38,6 @@ function ItemsContent() {
         'products' | 'services' | 'category' | 'units'
     >('products')
     const [searchQuery, setSearchQuery] = useState('')
-    const [showAddDialog, setShowAddDialog] = useState(false)
 
     const shopId = currentShop?.shopId || ''
     const { items, isLoading } = useItems(
@@ -63,7 +50,6 @@ function ItemsContent() {
     )
     const { categories } = useCategories(shopId)
     const { units } = useUnits(shopId)
-    const { createItem } = useItemActions(shopId)
 
     const isRouteActive = useMemo(
         () => !!id || pathname.includes('/new') || pathname.includes('/edit'),
@@ -88,11 +74,6 @@ function ItemsContent() {
     const handleTabChange = (value: string) => {
         setActiveTab(value as typeof activeTab)
         setSearchQuery('')
-    }
-
-    const handleAddItem = async (data: CreateItemData) => {
-        await createItem(data)
-        setShowAddDialog(false)
     }
 
     const handleItemClick = (itemId: string) => {
@@ -126,10 +107,15 @@ function ItemsContent() {
                             placeholder="Search..."
                         />
 
-                        <Button
-                            size="sm"
-                            className="w-full"
-                            onClick={() => setShowAddDialog(true)}
+                        <Link
+                            to="/items/create"
+                            className={cn(
+                                buttonVariants({
+                                    variant: 'primary',
+                                    size: 'sm'
+                                }),
+                                'w-full'
+                            )}
                         >
                             <Plus className="size-4 mr-1" />
                             Add{' '}
@@ -140,7 +126,7 @@ function ItemsContent() {
                                   : activeTab === 'category'
                                     ? 'Category'
                                     : 'Unit'}
-                        </Button>
+                        </Link>
 
                         {(activeTab === 'products' ||
                             activeTab === 'services') && (
@@ -230,34 +216,6 @@ function ItemsContent() {
                     <Outlet />
                 </ListDetailContent>
             </ListDetailBody>
-
-            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>
-                            Add{' '}
-                            {activeTab === 'products'
-                                ? 'Product'
-                                : activeTab === 'services'
-                                  ? 'Service'
-                                  : activeTab === 'category'
-                                    ? 'Category'
-                                    : 'Unit'}
-                        </DialogTitle>
-                    </DialogHeader>
-                    {(activeTab === 'products' || activeTab === 'services') && (
-                        <ItemForm
-                            type={
-                                activeTab === 'products' ? 'product' : 'service'
-                            }
-                            categories={categories}
-                            units={units}
-                            onSubmit={handleAddItem}
-                            onCancel={() => setShowAddDialog(false)}
-                        />
-                    )}
-                </DialogContent>
-            </Dialog>
         </ListDetailRoot>
     )
 }

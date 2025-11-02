@@ -47,10 +47,6 @@ export function CategorySelect({ value, onChange }: CategorySelectProps) {
         }
     }
 
-    const selectedLabels = categories
-        .filter((cat) => value.includes(cat.id))
-        .map((cat) => cat.name)
-
     return (
         <>
             <Popover onOpenChange={setOpen} open={open}>

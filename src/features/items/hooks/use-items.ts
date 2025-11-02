@@ -1,9 +1,8 @@
-import { useFirestore, useFirestoreCollectionData } from 'reactfire'
+import { useFirestoreCollectionData } from 'reactfire'
 import { itemsQueries } from '../api/items.api'
 import type { Item, ItemType } from '../types'
 
 export function useItems(shopId: string, type?: ItemType) {
-    const firestore = useFirestore()
     const q = type
         ? itemsQueries.byType(shopId, type)
         : itemsQueries.byShop(shopId)

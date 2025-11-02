@@ -16,6 +16,7 @@ import ProductDetailPage from '@/app/routes/items/products/[id]'
 import ServiceDetailPage from '@/app/routes/items/services/[id]'
 import CategoryDetailPage from '@/app/routes/items/category/[id]'
 import UnitDetailPage from '@/app/routes/items/units/[id]'
+import CreateItemPage from './routes/items/create'
 
 const createAppRouter = () =>
     createBrowserRouter([
@@ -98,6 +99,10 @@ const createAppRouter = () =>
                                     element: <UnitDetailPage />
                                 }
                             ]
+                        },
+                        {
+                            path: '/items/create',
+                            element: <CreateItemPage />
                         },
                         {
                             path: '*',

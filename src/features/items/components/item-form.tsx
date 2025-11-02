@@ -1,312 +1,280 @@
-import { useForm } from 'react-hook-form'
+import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import {
-    Form,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormControl,
-    FormMessage
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
-} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { ImagePlus, Settings, X } from 'lucide-react'
+import {
+    FormInput,
+    FormTextarea,
+    FormCombobox
+} from '@/components/ui/form-fields'
+import { itemSchema, type ItemFormData } from '../validations/item.validation'
 import type { ItemType, Category, Unit } from '../types'
-import { CategorySelect } from './category-select'
-
-const itemSchema = z.object({
-    name: z.string().min(1, 'Name is required'),
-    type: z.enum(['product', 'service']),
-    salePrice: z.number().min(0, 'Sale price must be positive'),
-    purchasePrice: z.number().min(0, 'Purchase price must be positive'),
-    mrp: z.number().optional(),
-    unit: z.string().optional(),
-    categories: z.array(z.string()).optional(),
-    description: z.string().optional(),
-    openingStock: z.number().optional(),
-    minStockAlert: z.number().optional(),
-    barcode: z.string().optional()
-})
-
-type FormData = z.infer<typeof itemSchema>
 
 interface ItemFormProps {
-    type: ItemType
+    type?: ItemType
     categories: Category[]
     units: Unit[]
-    onSubmit: (data: FormData) => Promise<void>
+    onSubmit: (data: ItemFormData) => Promise<void>
     onCancel: () => void
 }
 
-export function ItemForm({ type, units, onSubmit, onCancel }: ItemFormProps) {
-    const form = useForm<FormData>({
+export function ItemForm({
+    type: initialType = 'product',
+    units,
+    categories,
+    onSubmit,
+    onCancel
+}: ItemFormProps) {
+    const [showWholesalePrice, setShowWholesalePrice] = useState(false)
+
+    const form = useForm({
         resolver: zodResolver(itemSchema),
         defaultValues: {
             name: '',
-            type,
+            type: initialType as 'product' | 'service',
             salePrice: 0,
             purchasePrice: 0,
             unit: '',
             categories: [],
             description: '',
+            itemCode: '',
             openingStock: 0,
             minStockAlert: 0
         }
     })
 
-    return (
-        <Form {...form}>
-            <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4 p-4"
-            >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>
-                                    {type === 'product'
-                                        ? 'Item Name'
-                                        : 'Service Name'}{' '}
-                                    *
-                                </FormLabel>
-                                <FormControl>
-                                    <Input
-                                        {...field}
-                                        placeholder="Enter name"
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+    const itemType = form.watch('type')
 
-                    <FormField
-                        control={form.control}
-                        name="unit"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Unit</FormLabel>
-                                <Select
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}
-                                >
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select unit" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {units.map((unit) => (
-                                            <SelectItem
-                                                key={unit.id}
-                                                value={unit.id}
-                                            >
-                                                {unit.fullName} (
-                                                {unit.shortName})
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+    const generateItemCode = () => {
+        const code = `ITEM-${Date.now().toString().slice(-6)}`
+        form.setValue('itemCode', code)
+    }
+
+    return (
+        <FormProvider {...form}>
+            <div className="h-full flex flex-col bg-muted/20">
+                <div className="flex items-center justify-between p-4 border-b">
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-lg font-semibold">Add Item</h1>
+                        <div className="flex items-center gap-2">
+                            <Label
+                                htmlFor="type-toggle"
+                                className="text-sm font-medium"
+                            >
+                                Product
+                            </Label>
+                            <Switch
+                                id="type-toggle"
+                                checked={form.watch('type') === 'service'}
+                                onCheckedChange={(checked) =>
+                                    form.setValue(
+                                        'type',
+                                        checked ? 'service' : 'product'
+                                    )
+                                }
+                            />
+                            <Label
+                                htmlFor="type-toggle"
+                                className="text-sm font-medium"
+                            >
+                                Service
+                            </Label>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon">
+                            <Settings className="size-5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={onCancel}>
+                            <X className="size-5" />
+                        </Button>
+                    </div>
                 </div>
 
-                <FormField
-                    control={form.control}
-                    name="categories"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Categories</FormLabel>
-                            <FormControl>
-                                <CategorySelect
-                                    value={field.value || []}
-                                    onChange={field.onChange}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Description</FormLabel>
-                            <FormControl>
-                                <Textarea {...field} rows={2} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <Tabs defaultValue="pricing" className="w-full">
-                    <TabsList variant="line">
-                        <TabsTrigger value="pricing">Pricing</TabsTrigger>
-                        {type === 'product' && (
-                            <TabsTrigger value="stock">Stock</TabsTrigger>
-                        )}
-                    </TabsList>
-
-                    <TabsContent value="pricing" className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="mrp"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>MRP</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="number"
-                                                {...field}
-                                                onChange={(e) =>
-                                                    field.onChange(
-                                                        e.target.value
-                                                            ? Number(
-                                                                  e.target.value
-                                                              )
-                                                            : undefined
-                                                    )
-                                                }
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                <div className="flex-1 overflow-y-auto">
+                    <form
+                        onSubmit={form.handleSubmit(onSubmit)}
+                        className="space-y-4 p-4 md:p-6"
+                    >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormInput
+                                name="name"
+                                label="Item Name"
+                                placeholder="Enter name"
+                                required
                             />
 
-                            <FormField
-                                control={form.control}
-                                name="salePrice"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Sale Price *</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="number"
-                                                {...field}
-                                                onChange={(e) =>
-                                                    field.onChange(
-                                                        Number(e.target.value)
-                                                    )
-                                                }
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="purchasePrice"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Purchase Price *</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="number"
-                                                {...field}
-                                                onChange={(e) =>
-                                                    field.onChange(
-                                                        Number(e.target.value)
-                                                    )
-                                                }
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                            <FormCombobox
+                                name="categories"
+                                label="Category"
+                                placeholder="Select category"
+                                searchPlaceholder="Search categories..."
+                                options={categories.map((cat) => ({
+                                    value: cat.id,
+                                    label: cat.name
+                                }))}
+                                multiple
                             />
                         </div>
-                    </TabsContent>
 
-                    {type === 'product' && (
-                        <TabsContent value="stock" className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="openingStock"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Opening Stock</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    type="number"
-                                                    {...field}
-                                                    onChange={(e) =>
-                                                        field.onChange(
-                                                            Number(
-                                                                e.target.value
-                                                            )
-                                                        )
-                                                    }
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormCombobox
+                                name="unit"
+                                label="Unit"
+                                placeholder="Select unit"
+                                searchPlaceholder="Search units..."
+                                options={units.map((unit) => ({
+                                    value: unit.id,
+                                    label: `${unit.fullName} (${unit.shortName})`
+                                }))}
+                            />
 
-                                <FormField
-                                    control={form.control}
-                                    name="minStockAlert"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>
-                                                Min Stock Alert
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    type="number"
-                                                    {...field}
-                                                    onChange={(e) =>
-                                                        field.onChange(
-                                                            Number(
-                                                                e.target.value
-                                                            )
-                                                        )
-                                                    }
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                            <div className="space-y-2">
+                                <Label>Item Code</Label>
+                                <div className="flex gap-2">
+                                    <FormInput
+                                        name="itemCode"
+                                        placeholder="Item Code"
+                                        className="flex-1"
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={generateItemCode}
+                                        className="whitespace-nowrap"
+                                    >
+                                        Assign Code
+                                    </Button>
+                                </div>
                             </div>
-                        </TabsContent>
-                    )}
-                </Tabs>
+                        </div>
 
-                <div className="flex justify-end gap-2 pt-4">
-                    <Button type="button" variant="outline" onClick={onCancel}>
-                        Cancel
-                    </Button>
-                    <Button
-                        type="submit"
-                        disabled={form.formState.isSubmitting}
-                    >
-                        {form.formState.isSubmitting ? 'Saving...' : 'Save'}
-                    </Button>
+                        <div className="flex justify-end">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="gap-2"
+                            >
+                                <ImagePlus className="size-4" />
+                                Add Item Image
+                            </Button>
+                        </div>
+
+                        <FormTextarea
+                            name="description"
+                            label="Description"
+                            placeholder="Enter description"
+                            rows={2}
+                        />
+
+                        <Tabs defaultValue="pricing" className="w-full">
+                            <TabsList variant="line">
+                                <TabsTrigger value="pricing">
+                                    Pricing
+                                </TabsTrigger>
+                                {itemType === 'product' && (
+                                    <TabsTrigger value="stock">
+                                        Stock
+                                    </TabsTrigger>
+                                )}
+                            </TabsList>
+
+                            <TabsContent
+                                value="pricing"
+                                className="space-y-4 mt-4"
+                            >
+                                <FormInput
+                                    name="salePrice"
+                                    label="Sale Price"
+                                    type="number"
+                                    placeholder="0.00"
+                                    required
+                                />
+
+                                {showWholesalePrice && (
+                                    <FormInput
+                                        name="wholesalePrice"
+                                        label="Wholesale Price"
+                                        type="number"
+                                        placeholder="0.00"
+                                    />
+                                )}
+
+                                {!showWholesalePrice && (
+                                    <Button
+                                        type="button"
+                                        variant="dim"
+                                        size="sm"
+                                        onClick={() =>
+                                            setShowWholesalePrice(true)
+                                        }
+                                        className="px-0 text-primary h-auto"
+                                    >
+                                        + Add Wholesale Price
+                                    </Button>
+                                )}
+
+                                <FormInput
+                                    name="purchasePrice"
+                                    label="Purchase Price"
+                                    type="number"
+                                    placeholder="0.00"
+                                    required
+                                />
+                            </TabsContent>
+
+                            {itemType === 'product' && (
+                                <TabsContent
+                                    value="stock"
+                                    className="space-y-4"
+                                >
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FormInput
+                                            name="openingStock"
+                                            label="Opening Stock"
+                                            type="number"
+                                            placeholder="0"
+                                        />
+
+                                        <FormInput
+                                            name="minStockAlert"
+                                            label="Min Stock Alert"
+                                            type="number"
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                </TabsContent>
+                            )}
+                        </Tabs>
+
+                        <div className="flex flex-col-reverse sm:flex-row justify-between gap-2 pt-4 border-t">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={onCancel}
+                                className="w-full sm:w-auto"
+                            >
+                                Save & New
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={form.formState.isSubmitting}
+                                className="w-full sm:w-auto"
+                            >
+                                {form.formState.isSubmitting
+                                    ? 'Saving...'
+                                    : 'Save'}
+                            </Button>
+                        </div>
+                    </form>
                 </div>
-            </form>
-        </Form>
+            </div>
+        </FormProvider>
     )
 }
