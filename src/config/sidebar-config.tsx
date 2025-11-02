@@ -58,7 +58,7 @@ export const sidebarItems: SidebarItem[] = [
         id: 'items',
         label: 'Items',
         icon: IconPackage,
-        route: '/item',
+        route: '/items',
         action: {
             icon: IconPlus,
             onClick: () => console.log('Add item'),

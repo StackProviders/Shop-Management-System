@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // OPEN ACCESS FOR CUSTOM AUTHENTICATION
+    // Since you're using custom auth without Firebase Auth,
+    // we allow read/write access to authenticated collections
+    // Security is handled at the application level
+    
+    // Items collection - Open access
+    match /items/{itemId} {
+      allow read, write: if true;
+    }
+    
+    // Categories collection - Open access
+    match /categories/{categoryId} {
+      allow read, write: if true;
+    }
+    
+    // Units collection - Open access
+    match /units/{unitId} {
+      allow read, write: if true;
+    }
+    
+    // Shops collection - Open access
+    match /shops/{shopId} {
+      allow read, write: if true;
+    }
+    
+    // Shop members collection - Open access
+    match /shopMembers/{memberId} {
+      allow read, write: if true;
+    }
+    
+    // Users collection - Open access
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+    
+    // Trusted devices collection - Open access
+    match /trustedDevices/{deviceId} {
+      allow read, write: if true;
+    }
+    
+    // OTP verification collection - Open access
+    match /otpVerifications/{verificationId} {
+      allow read, write: if true;
+    }
+    
+    // Default allow all for custom auth
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

@@ -1,0 +1,83 @@
+{
+    "indexes": [
+        {
+            "collectionGroup": "items",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "shopId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "type",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "items",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "shopId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "items",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "shopId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "categories",
+                    "arrayConfig": "CONTAINS"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "categories",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "shopId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "sortOrder",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "units",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "shopId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "fullName",
+                    "order": "ASCENDING"
+                }
+            ]
+        }
+    ],
+    "fieldOverrides": []
+}

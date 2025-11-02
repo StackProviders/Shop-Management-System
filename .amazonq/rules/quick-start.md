@@ -7,6 +7,7 @@
 3. **Responsive**: ALWAYS consider desktop AND mobile
 4. **Components**: ALWAYS use shadcn/ui components first
 5. **Features**: ALWAYS import from feature roots, not internals
+6. **Data Display**: Use DataTable for tabular data, DataGrid for cards
 
 ## Quick Commands
 
@@ -28,11 +29,56 @@ import { useAuthActions } from '@/features/auth'
 import { useShopContext } from '@/features/shop'
 import { useDebounce } from '@/features/shared'
 import { Button } from '@/components/ui/button'
+import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table'
+import { DataGrid, DataGridCard } from '@/components/ui/data-grid'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
 
 // ❌ WRONG
 import { useAuthActions } from '@/features/auth/hooks/use-auth-actions'
+```
+
+## Data Display Components
+
+### DataTable - For Tabular Data
+
+```typescript
+import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table'
+import { ColumnDef } from '@tanstack/react-table'
+
+const columns: ColumnDef<Entity>[] = [
+  {
+    accessorKey: 'name',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />
+  }
+]
+
+<DataTable
+  columns={columns}
+  data={data}
+  searchKey="name"
+  isLoading={isLoading}
+  mobileCard={(row) => <MobileCard row={row} />}
+/>
+```
+
+### DataGrid - For Card Layouts
+
+```typescript
+import { DataGrid, DataGridCard } from '@/components/ui/data-grid'
+
+<DataGrid
+  data={products}
+  columns={[]}
+  renderCard={(product) => (
+    <DataGridCard>
+      <h3>{product.name}</h3>
+      <p>${product.price}</p>
+    </DataGridCard>
+  )}
+  searchKeys={['name', 'category']}
+  gridCols={{ default: 1, sm: 2, lg: 3, xl: 4 }}
+/>
 ```
 
 ## Responsive Pattern (CRITICAL)
@@ -188,7 +234,7 @@ export function useMyActions() {
 
 **Feedback**: Alert, AlertDialog, Spinner, Skeleton, Sonner
 
-**Data**: Table, Pagination, Avatar, Badge, Typography, Empty
+**Data**: Table, DataTable, DataGrid, Pagination, Avatar, Badge, Typography, Empty
 
 **Utility**: Tooltip, ScrollArea, AspectRatio, Calendar
 
@@ -272,19 +318,24 @@ if (items.length === 0) {
 - [ ] Using TypeScript with proper types (no `any`)?
 - [ ] Considering both desktop and mobile?
 - [ ] Using shadcn/ui components when available?
+- [ ] Using DataTable for tables, DataGrid for cards?
 - [ ] Importing from feature roots, not internals?
 - [ ] Using `cn()` for class merging?
 - [ ] Adding error handling with toast?
 - [ ] Including loading and empty states?
 - [ ] Following responsive design patterns?
 - [ ] Using proper form validation with Zod?
+- [ ] Providing mobile card view for DataTable?
 
 ## Documentation References
 
 - **Full Rules**: `project-rules.md`
 - **Patterns**: `component-patterns.md`
 - **Feature Guide**: `feature-guide.md`
-- **State Management**: `state-management.md` (NEW!)
+- **State Management**: `state-management.md`
+- **Data Display**: `data-display-patterns.md` (NEW!)
+- **DataTable Docs**: `src/components/ui/data-table.md` (NEW!)
+- **DataGrid Docs**: `src/components/ui/data-grid.md` (NEW!)
 - **Features List**: `../FEATURES.md`
 - **Architecture**: `../ARCHITECTURE.md`
 - **AI Guide**: `../AI_ASSISTANT_GUIDE.md`

@@ -11,6 +11,11 @@ import PartyDetailPage from '@/app/routes/parties/[id]'
 import PartiesEmptyState from '@/app/routes/parties/empty'
 import NewPartyPage from '@/app/routes/parties/new'
 import TodosPage from '@/app/routes/todos'
+import ItemsPage from '@/app/routes/items'
+import ProductDetailPage from '@/app/routes/items/products/[id]'
+import ServiceDetailPage from '@/app/routes/items/services/[id]'
+import CategoryDetailPage from '@/app/routes/items/category/[id]'
+import UnitDetailPage from '@/app/routes/items/units/[id]'
 
 const createAppRouter = () =>
     createBrowserRouter([
@@ -71,6 +76,28 @@ const createAppRouter = () =>
                         {
                             path: '/todos',
                             element: <TodosPage />
+                        },
+                        {
+                            path: '/items',
+                            element: <ItemsPage />,
+                            children: [
+                                {
+                                    path: 'products/:id',
+                                    element: <ProductDetailPage />
+                                },
+                                {
+                                    path: 'services/:id',
+                                    element: <ServiceDetailPage />
+                                },
+                                {
+                                    path: 'category/:id',
+                                    element: <CategoryDetailPage />
+                                },
+                                {
+                                    path: 'units/:id',
+                                    element: <UnitDetailPage />
+                                }
+                            ]
                         },
                         {
                             path: '*',
