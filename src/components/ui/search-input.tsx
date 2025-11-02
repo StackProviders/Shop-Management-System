@@ -49,7 +49,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 />
                 <Button
                     onClick={handleClear}
-                    variant="dim"
+                    variant="ghost"
                     className="absolute right-0"
                     disabled={value === ''}
                     type="button"

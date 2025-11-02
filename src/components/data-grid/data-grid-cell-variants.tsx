@@ -1168,7 +1168,6 @@ export function DateCell<TData>({
                         <Calendar
                             autoFocus
                             captionLayout="dropdown"
-                            mode="single"
                             className="rounded-md border shadow-sm"
                             defaultMonth={selectedDate ?? new Date()}
                             selected={selectedDate}

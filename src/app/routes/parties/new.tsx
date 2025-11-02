@@ -61,7 +61,7 @@ export default function NewPartyPage() {
                     const form = document.querySelector('form')
                     form?.requestSubmit()
                 },
-                variant: 'primary'
+                variant: 'default'
             }
         ],
         showQuickActionCenter: false

@@ -137,7 +137,7 @@ const PartiesLayout = memo(function PartiesLayout() {
                     </div>
                     <ListDetailHeaderActions>
                         <Button
-                            variant="primary"
+                            variant="default"
                             size={isMobile ? 'xs' : 'sm'}
                             onClick={handleCreateNew}
                         >

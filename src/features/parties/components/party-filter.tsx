@@ -46,7 +46,7 @@ export function PartyFilter({
     return (
         <Popover>
             <PopoverTrigger asChild>
-                <Button variant="outline" mode="icon" className="relative">
+                <Button variant="outline" className="relative">
                     <Filter className="size-4" />
                     {activeFiltersCount > 0 && (
                         <Badge
@@ -68,7 +68,7 @@ export function PartyFilter({
                         </h4>
                         {activeFiltersCount > 0 && (
                             <Button
-                                variant="dim"
+                                variant="ghost"
                                 size="xs"
                                 onClick={onClearFilters}
                                 className="h-auto"

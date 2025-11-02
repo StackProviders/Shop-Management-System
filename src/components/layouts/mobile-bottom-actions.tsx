@@ -20,7 +20,7 @@ const QuickActionButton = memo(
             <Button
                 className={cn('shadow-lg', className, action.className)}
                 onClick={action.onClick}
-                variant={action.variant || 'primary'}
+                variant={action.variant || 'default'}
             >
                 <Icon className="h-4 w-4" />
                 <span className="ml-1.5 text-sm font-medium">

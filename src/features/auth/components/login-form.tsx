@@ -262,7 +262,6 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                         <Button
                             type="button"
                             variant="ghost"
-                            mode="link"
                             className="w-full text-sm text-muted-foreground hover:text-foreground"
                             onClick={toggleLoginType}
                             disabled={loading}

@@ -23,14 +23,17 @@ import { itemSchema, type ItemFormData } from '../validations/item.validation'
 import type { ItemType, Category } from '../types'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { CategoryForm } from './category-form'
+import { BrandForm } from './brand-form'
 import { useShopContext } from '@/features/shop'
 import { UNITS } from '@/config/units'
-import { ItemImageUpload } from './item-image-upload'
+
 import { ItemSettingsSheet } from './item-settings-sheet'
 import { useItemSettings } from '../hooks/use-item-settings'
+import { useBrands } from '../hooks/use-brands'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDraftItem } from '../hooks/use-draft-item'
 import { WarrantyInput } from './warranty-input'
+import CardUpload from '@/components/upload/item-card-gallery'
 
 interface ItemFormProps {
     type?: ItemType
@@ -46,13 +49,15 @@ export function ItemForm({
     onCancel
 }: ItemFormProps) {
     const [showWholesalePrice, setShowWholesalePrice] = useState(false)
-    const [images, setImages] = useState<string[]>([])
+    const [images] = useState<string[]>([])
     const [showCategoryModal, setShowCategoryModal] = useState(false)
+    const [showBrandModal, setShowBrandModal] = useState(false)
     const [showSettings, setShowSettings] = useState(false)
     const { currentShop } = useShopContext()
     const shopId = currentShop?.shopId || 'default'
 
     const { settings, isLoading: settingsLoading } = useItemSettings(shopId)
+    const { brands } = useBrands(shopId)
     const { clearDraft } = useDraftItem()
 
     const form = useForm({
@@ -209,7 +214,7 @@ export function ItemForm({
                                                                 {...field}
                                                                 placeholder="Item Code"
                                                             />
-                                                            <InputAddon mode="icon">
+                                                            <InputAddon>
                                                                 <Button
                                                                     type="button"
                                                                     variant="ghost"
@@ -285,10 +290,21 @@ export function ItemForm({
                                             )}
                                             {settings.customFieldSettings
                                                 .brand && (
-                                                <FormInput
+                                                <FormCombobox
                                                     name="brand"
                                                     label="Brand"
-                                                    placeholder="Brand"
+                                                    placeholder="Select brand"
+                                                    searchPlaceholder="Search brands..."
+                                                    options={brands.map(
+                                                        (brand) => ({
+                                                            value: brand.id,
+                                                            label: brand.name
+                                                        })
+                                                    )}
+                                                    onAddNew={() =>
+                                                        setShowBrandModal(true)
+                                                    }
+                                                    addNewLabel="Add New Brand"
                                                 />
                                             )}
                                             {settings.customFieldSettings
@@ -311,10 +327,11 @@ export function ItemForm({
                                     <Label className="text-sm font-medium">
                                         Images
                                     </Label>
-                                    <ItemImageUpload
+                                    {/* <ItemImageUpload
                                         images={images}
                                         onChange={setImages}
-                                    />
+                                    /> */}
+                                    <CardUpload />
                                 </div>
                             </div>
 
@@ -367,7 +384,7 @@ export function ItemForm({
                                         !settings.wholesalePrice && (
                                             <Button
                                                 type="button"
-                                                variant="dim"
+                                                variant="outline"
                                                 size="sm"
                                                 onClick={() =>
                                                     setShowWholesalePrice(true)
@@ -442,6 +459,8 @@ export function ItemForm({
                 open={showCategoryModal}
                 onOpenChange={setShowCategoryModal}
             />
+
+            <BrandForm open={showBrandModal} onOpenChange={setShowBrandModal} />
 
             {currentShop?.shopId && (
                 <ItemSettingsSheet

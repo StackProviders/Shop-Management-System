@@ -74,7 +74,7 @@ export default function PartyDetailPage() {
                           const form = document.querySelector('form')
                           form?.requestSubmit()
                       },
-                      variant: 'primary'
+                      variant: 'default'
                   }
               ]
             : [],

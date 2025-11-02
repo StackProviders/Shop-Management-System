@@ -177,11 +177,11 @@ const badgeButtonVariants = cva(
     {
         variants: {
             variant: {
-                default: ''
+                primary: ''
             }
         },
         defaultVariants: {
-            variant: 'default'
+            variant: 'primary'
         }
     }
 )

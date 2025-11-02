@@ -465,32 +465,3 @@ export function useMyFeatureSearch(query: string) {
     }
 }
 ```
-
-### Optimistic Updates
-
-```typescript
-export function useMyFeatureActions() {
-    const { mutate } = useSWRConfig()
-
-    const deleteItem = async (id: string) => {
-        // Optimistically update UI
-        mutate(
-            '/my-feature/items',
-            (items: MyFeatureItem[]) => items.filter((item) => item.id !== id),
-            false
-        )
-
-        try {
-            await myFeatureApi.delete(id)
-            // Revalidate to ensure consistency
-            mutate('/my-feature/items')
-        } catch (error) {
-            // Revert on error
-            mutate('/my-feature/items')
-            throw error
-        }
-    }
-
-    return { deleteItem }
-}
-```

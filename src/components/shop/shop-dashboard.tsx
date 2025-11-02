@@ -149,7 +149,6 @@ export default function ShopDashboard() {
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                mode="icon"
                                 className="mb-0.5"
                                 onClick={() => refreshShops()}
                                 disabled={loading}

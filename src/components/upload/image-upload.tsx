@@ -1,147 +1,200 @@
-import { useState, useCallback } from 'react'
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
-import { useStorage, useStorageTask } from 'reactfire'
-import { Upload } from 'lucide-react'
+import { ReactNode, memo, useCallback } from 'react'
+import { Upload, X, WifiOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import type {
-    UploadTask,
-    UploadTaskSnapshot,
-    StorageReference
-} from 'firebase/storage'
+import { useUpload } from '@/hooks/use-upload'
+import { useOnline } from '@/hooks/use-online'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { cn } from '@/lib/utils'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 interface ImageUploadProps {
     path: string
     accept?: string
+    maxSize?: number
     onUploadComplete: (url: string) => void
     onCancel?: () => void
+    className?: string
+    children?: (props: {
+        selectFile: (file: File) => void
+        selectedFile: File | null
+        isUploading: boolean
+        uploadProgress: {
+            percentage: number
+            bytesTransferred: number
+            totalBytes: number
+        } | null
+        cancel: () => void
+        isOnline: boolean
+    }) => ReactNode
 }
 
-function UploadProgress({
-    uploadTask,
-    storageRef
+const FilePreview = memo(function FilePreview({
+    file,
+    onCancel,
+    onUpload,
+    isOnline
 }: {
-    uploadTask: UploadTask
-    storageRef: StorageReference
+    file: File
+    onCancel: () => void
+    onUpload: () => void
+    isOnline: boolean
 }) {
-    const { data: snapshot } = useStorageTask<UploadTaskSnapshot>(
-        uploadTask,
-        storageRef
-    )
-    const { bytesTransferred, totalBytes } = snapshot
-    const progress = Math.round((bytesTransferred / totalBytes) * 100)
+    const isMobile = useIsMobile()
 
     return (
-        <div className="space-y-2">
-            <Progress value={progress} />
-            <p className="text-sm text-muted-foreground text-center">
-                {progress}% uploaded
-            </p>
+        <div className="flex w-full flex-col gap-3 items-center">
+            <div className="border rounded-lg p-3 md:p-4 bg-muted/30 w-full">
+                <p className="text-sm font-medium truncate">{file.name}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+            </div>
+            {!isOnline && (
+                <Alert variant="destructive" className="w-full">
+                    <WifiOff className="size-4" />
+                    <AlertDescription className="text-xs">
+                        No internet connection
+                    </AlertDescription>
+                </Alert>
+            )}
+            <div className="flex gap-2 justify-center w-full">
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onCancel}
+                    size={isMobile ? 'sm' : 'default'}
+                    className="flex-1 md:flex-none"
+                >
+                    Cancel
+                </Button>
+                <Button
+                    type="button"
+                    onClick={onUpload}
+                    disabled={!isOnline}
+                    size={isMobile ? 'sm' : 'default'}
+                    className="flex-1 md:flex-none"
+                >
+                    Upload
+                </Button>
+            </div>
         </div>
     )
-}
+})
 
-export function ImageUpload({
+const UploadProgress = memo(function UploadProgress({
+    progress,
+    onCancel
+}: {
+    progress: {
+        percentage: number
+        bytesTransferred: number
+        totalBytes: number
+    }
+    onCancel: () => void
+}) {
+    const isMobile = useIsMobile()
+
+    return (
+        <div className="space-y-2 md:space-y-3">
+            <div className="flex items-center justify-between">
+                <span className="text-xs md:text-sm font-medium">
+                    Uploading...
+                </span>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={onCancel}
+                    className="size-7 md:size-9"
+                >
+                    <X className="size-3 md:size-4" />
+                </Button>
+            </div>
+            <Progress value={progress.percentage} className="h-1.5 md:h-2" />
+            <div className="flex justify-between text-[10px] md:text-xs text-muted-foreground">
+                <span>{progress.percentage}%</span>
+                {!isMobile && (
+                    <span>
+                        {(progress.bytesTransferred / 1024 / 1024).toFixed(1)}{' '}
+                        MB /{(progress.totalBytes / 1024 / 1024).toFixed(1)} MB
+                    </span>
+                )}
+            </div>
+        </div>
+    )
+})
+
+export const ImageUpload = memo(function ImageUpload({
     path,
     accept = 'image/png, image/jpeg',
+    maxSize,
     onUploadComplete,
-    onCancel
+    onCancel,
+    className,
+    children
 }: ImageUploadProps) {
-    const storage = useStorage()
-    const [uploadTask, setUploadTask] = useState<UploadTask | undefined>()
-    const [storageRef, setStorageRef] = useState<StorageReference | undefined>()
-    const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const isMobile = useIsMobile()
+    const isOnline = useOnline()
+    const upload = useUpload({
+        path,
+        accept,
+        maxSize,
+        onSuccess: onUploadComplete
+    })
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0]
-        if (!file) return
+    const handleFileChange = useCallback(
+        (event: React.ChangeEvent<HTMLInputElement>) => {
+            const file = event.target.files?.[0]
+            if (file) upload.selectFile(file)
+        },
+        [upload.selectFile]
+    )
 
-        if (file.size > 10 * 1024 * 1024) {
-            alert('File size must be less than 10MB')
-            return
-        }
-
-        if (!file.type.startsWith('image/')) {
-            alert('Only image files are allowed')
-            return
-        }
-
-        setSelectedFile(file)
-    }
-
-    const handleUploadConfirm = useCallback(async () => {
-        if (!selectedFile) return
-
-        const fileName = `${Date.now()}-${selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-        const newRef = ref(storage, `${path}/${fileName}`)
-        setStorageRef(newRef)
-
-        const task = uploadBytesResumable(newRef, selectedFile, {
-            contentType: selectedFile.type
-        })
-
-        task.then(async (snapshot) => {
-            const downloadURL = await getDownloadURL(snapshot.ref)
-            onUploadComplete(downloadURL)
-            setUploadTask(undefined)
-            setStorageRef(undefined)
-            setSelectedFile(null)
-        }).catch((error) => {
-            console.error('Upload failed:', error)
-            alert(`Upload failed: ${error.message}`)
-            setUploadTask(undefined)
-            setStorageRef(undefined)
-        })
-
-        setUploadTask(task)
-    }, [selectedFile, storage, path, onUploadComplete])
-
-    const handleCancel = () => {
-        setSelectedFile(null)
+    const handleCancel = useCallback(() => {
+        upload.cancel()
         onCancel?.()
+    }, [upload.cancel, onCancel])
+
+    const handleUpload = useCallback(() => {
+        if (upload.selectedFile) upload.uploadToFirebase(upload.selectedFile)
+    }, [upload.selectedFile, upload.uploadToFirebase])
+
+    if (children) {
+        return <>{children({ ...upload, isOnline })}</>
     }
 
-    if (selectedFile && !uploadTask) {
+    if (upload.selectedFile && !upload.isUploading) {
         return (
-            <div className="flex w-full flex-col gap-4 items-center">
-                <div className="border rounded-lg p-4 bg-muted/30">
-                    <p className="text-sm font-medium">{selectedFile.name}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                </div>
-                <div className="flex gap-2 justify-center">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleCancel}
-                    >
-                        Cancel
-                    </Button>
-                    <Button type="button" onClick={handleUploadConfirm}>
-                        Upload
-                    </Button>
-                </div>
-            </div>
+            <FilePreview
+                file={upload.selectedFile}
+                onCancel={handleCancel}
+                onUpload={handleUpload}
+                isOnline={isOnline}
+            />
         )
     }
 
     return (
-        <div className="w-full max-w-md space-y-4">
-            {uploadTask && storageRef ? (
+        <div
+            className={cn('w-full max-w-md space-y-3 md:space-y-4', className)}
+        >
+            {upload.isUploading && upload.uploadProgress ? (
                 <UploadProgress
-                    uploadTask={uploadTask}
-                    storageRef={storageRef}
+                    progress={upload.uploadProgress}
+                    onCancel={handleCancel}
                 />
             ) : (
                 <>
-                    <div className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center gap-3 hover:border-primary transition-colors">
-                        <Upload className="size-12 text-muted-foreground" />
+                    <div className="border-2 border-dashed rounded-lg p-4 md:p-8 flex flex-col items-center justify-center gap-2 md:gap-3 hover:border-primary transition-colors">
+                        <Upload className="size-8 md:size-12 text-muted-foreground" />
                         <div className="text-center">
-                            <p className="text-sm font-medium">
-                                Click to upload or drag and drop
+                            <p className="text-xs md:text-sm font-medium">
+                                {isMobile
+                                    ? 'Tap to upload'
+                                    : 'Click to upload or drag and drop'}
                             </p>
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                                 PNG, JPG, GIF up to 10MB
                             </p>
                         </div>
@@ -151,20 +204,29 @@ export function ImageUpload({
                             onChange={handleFileChange}
                             className="hidden"
                             id="file-upload-input"
+                            disabled={!isOnline}
                         />
                         <label htmlFor="file-upload-input">
                             <Button
                                 type="button"
-                                size="sm"
-                                className="mt-2"
-                                asChild
+                                size={isMobile ? 'sm' : 'default'}
+                                className="mt-1 md:mt-2"
+                                disabled={!isOnline}
                             >
                                 <span>Choose File</span>
                             </Button>
                         </label>
                     </div>
+                    {!isOnline && (
+                        <Alert variant="destructive">
+                            <WifiOff className="size-4" />
+                            <AlertDescription className="text-xs md:text-sm">
+                                No internet connection. Upload disabled.
+                            </AlertDescription>
+                        </Alert>
+                    )}
                 </>
             )}
         </div>
     )
-}
+})

@@ -8,6 +8,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle
 } from './ui/alert-dialog'
+import { Button } from '@/components/ui/button'
 
 interface DeleteConfirmationDialogProps {
     open: boolean
@@ -38,10 +39,12 @@ export function DeleteConfirmationDialog({
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel>{cancelText}</AlertDialogCancel>
+                    <AlertDialogCancel render={<Button variant="ghost" />}>
+                        {cancelText}
+                    </AlertDialogCancel>
                     <AlertDialogAction
-                        variant="destructive"
                         onClick={onConfirm}
+                        render={<Button variant="destructive" />}
                     >
                         {confirmText}
                     </AlertDialogAction>

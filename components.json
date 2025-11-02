@@ -21,6 +21,7 @@
     "registries": {
         "@blocks": "https://blocks.so/r/{name}.json",
         "@reui": "https://reui.io/r/{name}.json",
-        "@hooks": "https://shadcn-hooks.vercel.app/r/{name}.json"
+        "@hooks": "https://shadcn-hooks.vercel.app/r/{name}.json",
+        "@coss": "https://coss.com/ui/r/{name}.json"
     }
 }

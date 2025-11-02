@@ -82,7 +82,7 @@ export function CreateShopForm({
                 <Button
                     type="button"
                     variant="outline"
-                    size="md"
+                    size="default"
                     onClick={onCancel}
                     disabled={form.formState.isSubmitting}
                 >
@@ -90,7 +90,7 @@ export function CreateShopForm({
                 </Button>
                 <SubmitButton
                     type="submit"
-                    size="md"
+                    size="default"
                     loading={form.formState.isSubmitting}
                 >
                     {initialData ? 'Save Changes' : 'Create Shop'}

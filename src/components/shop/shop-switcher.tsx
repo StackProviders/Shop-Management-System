@@ -211,7 +211,6 @@ export function ShopSwitcher() {
                                             <Button
                                                 variant="ghost"
                                                 size="xs"
-                                                mode="icon"
                                                 onClick={(e) => {
                                                     e.stopPropagation()
                                                     setCurrentShop(shop)

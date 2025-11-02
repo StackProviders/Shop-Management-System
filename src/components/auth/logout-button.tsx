@@ -20,7 +20,6 @@ import { Spinner } from '@/components/ui/spinner'
 interface LogoutButtonProps {
     variant?: VariantProps<typeof buttonVariants>['variant']
     size?: VariantProps<typeof buttonVariants>['size']
-    mode?: VariantProps<typeof buttonVariants>['mode']
     showIcon?: boolean
     showConfirm?: boolean
     children?: ReactNode
@@ -29,8 +28,7 @@ interface LogoutButtonProps {
 
 export function LogoutButton({
     variant = 'ghost',
-    size = 'md',
-    mode,
+    size = 'default',
     showIcon = true,
     showConfirm = true,
     children,
@@ -74,7 +72,6 @@ export function LogoutButton({
         <Button
             variant={variant}
             size={size}
-            mode={mode}
             onClick={showConfirm ? undefined : handleLogout}
             disabled={isDisabled}
             aria-label="Logout"
@@ -90,7 +87,7 @@ export function LogoutButton({
 
     return (
         <AlertDialog>
-            <AlertDialogTrigger asChild>{LogoutBtn}</AlertDialogTrigger>
+            <AlertDialogTrigger>{LogoutBtn}</AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
@@ -106,7 +103,6 @@ export function LogoutButton({
                     <AlertDialogAction
                         onClick={handleLogout}
                         disabled={isDisabled}
-                        variant="destructive"
                     >
                         {isLoggingOut ? (
                             <Spinner className="size-4" />

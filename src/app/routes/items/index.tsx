@@ -111,7 +111,7 @@ function ItemsContent() {
                             to="/items/create"
                             className={cn(
                                 buttonVariants({
-                                    variant: 'primary',
+                                    variant: 'default',
                                     size: 'sm'
                                 }),
                                 'w-full'

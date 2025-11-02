@@ -114,7 +114,6 @@ export default function ShopItem({
                             <Button
                                 variant="outline"
                                 size={isMobile ? 'xs' : 'sm'}
-                                mode="icon"
                             >
                                 <MoreVertical className="size-4" />
                                 <span className="sr-only">More options</span>
@@ -152,10 +151,7 @@ export default function ShopItem({
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            variant="destructive"
-                            onClick={handleDelete}
-                        >
+                        <AlertDialogAction onClick={handleDelete}>
                             Delete
                         </AlertDialogAction>
                     </AlertDialogFooter>
