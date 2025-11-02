@@ -17,11 +17,9 @@ import {
     PopoverTrigger
 } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
-import { FormModal } from '@/components/responsive/form-modal'
 import { useCategories } from '../hooks/use-categories'
 import { useShopContext } from '@/features/shop'
 import { CategoryForm } from './category-form'
-import { useCategoryActions } from '../hooks/use-category-actions'
 
 interface CategorySelectProps {
     value: string[]
@@ -30,22 +28,9 @@ interface CategorySelectProps {
 
 export function CategorySelect({ value, onChange }: CategorySelectProps) {
     const [open, setOpen] = useState(false)
-    const [showCreateModal, setShowCreateModal] = useState(false)
+    const [showCategoryModal, setShowCategoryModal] = useState(false)
     const { currentShop } = useShopContext()
     const { categories, isLoading } = useCategories(currentShop?.shopId || '')
-    const { createCategory } = useCategoryActions()
-
-    const handleCreate = async (data: {
-        name: string
-        description?: string
-    }) => {
-        try {
-            await createCategory(data)
-            setShowCreateModal(false)
-        } catch {
-            // Error handled in useCategoryActions
-        }
-    }
 
     return (
         <>
@@ -91,7 +76,7 @@ export function CategorySelect({ value, onChange }: CategorySelectProps) {
                                     <Button
                                         className="w-full"
                                         onClick={() => {
-                                            setShowCreateModal(true)
+                                            setShowCategoryModal(true)
                                             setOpen(false)
                                         }}
                                         size="sm"
@@ -147,7 +132,7 @@ export function CategorySelect({ value, onChange }: CategorySelectProps) {
                                     <Button
                                         className="w-full justify-start text-xs"
                                         onClick={() => {
-                                            setShowCreateModal(true)
+                                            setShowCategoryModal(true)
                                             setOpen(false)
                                         }}
                                         variant="ghost"
@@ -162,16 +147,10 @@ export function CategorySelect({ value, onChange }: CategorySelectProps) {
                 </PopoverContent>
             </Popover>
 
-            <FormModal
-                open={showCreateModal}
-                onOpenChange={setShowCreateModal}
-                title="Create Category"
-                formId="category-form"
-                onCancel={() => setShowCreateModal(false)}
-                submitLabel="Create"
-            >
-                <CategoryForm onSubmit={handleCreate} formId="category-form" />
-            </FormModal>
+            <CategoryForm
+                open={showCategoryModal}
+                onOpenChange={setShowCategoryModal}
+            />
         </>
     )
 }

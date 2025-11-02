@@ -3,12 +3,12 @@ import {
     query,
     where,
     orderBy,
-    addDoc,
     doc,
     serverTimestamp,
     getFirestore
 } from 'firebase/firestore'
 import {
+    setDocWithTimeout,
     updateDocWithTimeout,
     deleteDocWithTimeout,
     waitForPendingWritesWithTimeout
@@ -34,13 +34,14 @@ export const categoriesApi = {
         data: CreateCategoryData
     ): Promise<string> => {
         const db = getFirestore()
-        const docRef = await addDoc(collection(db, COLLECTION), {
+        const newDocRef = doc(collection(db, COLLECTION))
+        await setDocWithTimeout(newDocRef, {
             ...data,
             shopId,
             sortOrder: data.sortOrder || 0,
             createdAt: serverTimestamp()
         })
-        return docRef.id
+        return newDocRef.id
     },
 
     update: async (

@@ -7,10 +7,7 @@ export function useCategoryActions() {
     const [loading, setLoading] = useState(false)
     const { currentShop } = useShopContext()
 
-    const createCategory = async (data: {
-        name: string
-        description?: string
-    }) => {
+    const createCategory = async (data: { name: string }) => {
         if (!currentShop?.shopId) {
             toast.error('No shop selected')
             return
@@ -32,5 +29,27 @@ export function useCategoryActions() {
         }
     }
 
-    return { createCategory, loading }
+    const updateCategory = async (id: string, data: { name: string }) => {
+        if (!currentShop?.shopId) {
+            toast.error('No shop selected')
+            return
+        }
+
+        setLoading(true)
+        const toastId = toast.loading('Updating category...')
+
+        try {
+            await categoriesApi.update(id, data)
+            toast.success('Category updated', { id: toastId })
+        } catch (error) {
+            const message =
+                error instanceof Error ? error.message : 'Failed to update'
+            toast.error(message, { id: toastId })
+            throw error
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return { createCategory, updateCategory, loading }
 }

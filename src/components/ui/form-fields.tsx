@@ -91,9 +91,7 @@ export const FormInput = memo(function FormInput<T extends FieldValues>({
                             <FieldLabel htmlFor={name}>
                                 {label}
                                 {required && (
-                                    <span className="text-destructive ml-1">
-                                        *
-                                    </span>
+                                    <span className="text-destructive">*</span>
                                 )}
                             </FieldLabel>
                         )}
@@ -513,17 +511,27 @@ export const FormCombobox = memo(function FormCombobox<T extends FieldValues>({
                                                     )
                                                 }
                                             >
-                                                <Check
-                                                    className={cn(
-                                                        'mr-2 size-4',
-                                                        isSelected(
+                                                {multiple ? (
+                                                    <Checkbox
+                                                        checked={isSelected(
                                                             field,
                                                             option.value
-                                                        )
-                                                            ? 'opacity-100'
-                                                            : 'opacity-0'
-                                                    )}
-                                                />
+                                                        )}
+                                                        className="mr-2"
+                                                    />
+                                                ) : (
+                                                    <Check
+                                                        className={cn(
+                                                            'mr-2 size-4',
+                                                            isSelected(
+                                                                field,
+                                                                option.value
+                                                            )
+                                                                ? 'opacity-100'
+                                                                : 'opacity-0'
+                                                        )}
+                                                    />
+                                                )}
                                                 {option.label}
                                             </CommandItem>
                                         ))}

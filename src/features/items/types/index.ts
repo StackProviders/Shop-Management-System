@@ -27,7 +27,6 @@ export interface Category {
     id: string
     shopId: string
     name: string
-    description?: string
     sortOrder: number
     createdAt: Date
 }
@@ -59,7 +58,6 @@ export interface CreateItemData {
 
 export interface CreateCategoryData {
     name: string
-    description?: string
     sortOrder?: number
 }
 

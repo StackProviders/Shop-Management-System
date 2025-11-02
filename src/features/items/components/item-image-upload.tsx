@@ -1,6 +1,4 @@
 import { useState, useMemo } from 'react'
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
-import { useStorage, useStorageTask } from 'reactfire'
 import { ImagePlus, Upload, Pencil, Trash2 } from 'lucide-react'
 import {
     Dialog,
@@ -9,62 +7,23 @@ import {
     DialogTitle
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
-import type {
-    UploadTask,
-    UploadTaskSnapshot,
-    StorageReference
-} from 'firebase/storage'
 
-interface ImageUploadProps {
+interface ItemImageUploadProps {
     images?: string[]
     onChange?: (images: string[]) => void
-    path: string
-    maxImages?: number
-    accept?: string
 }
 
-function UploadProgress({
-    uploadTask,
-    storageRef
-}: {
-    uploadTask: UploadTask
-    storageRef: StorageReference
-}) {
-    const { data: snapshot } = useStorageTask<UploadTaskSnapshot>(
-        uploadTask,
-        storageRef
-    )
-    const { bytesTransferred, totalBytes } = snapshot
-    const progress = Math.round((bytesTransferred / totalBytes) * 100)
-
-    return (
-        <div className="space-y-2">
-            <Progress value={progress} />
-            <p className="text-sm text-muted-foreground text-center">
-                {progress}% uploaded
-            </p>
-        </div>
-    )
-}
-
-export function ImageUpload({
+export function ItemImageUpload({
     images = [],
-    onChange,
-    path,
-    maxImages = 5,
-    accept = 'image/png, image/jpeg'
-}: ImageUploadProps) {
-    const storage = useStorage()
+    onChange
+}: ItemImageUploadProps) {
     const [showDialog, setShowDialog] = useState(false)
     const [selectedIndex, setSelectedIndex] = useState<number>(0)
-    const [uploadTask, setUploadTask] = useState<UploadTask | undefined>()
-    const [storageRef, setStorageRef] = useState<StorageReference | undefined>()
 
     const validImages = useMemo(() => images.filter(Boolean), [images])
-    const canAddMore = validImages.length < maxImages
+    const canAddMore = validImages.length < 5
 
     const handleImageClick = (imageIndex: number) => {
         setSelectedIndex(imageIndex)
@@ -74,46 +33,6 @@ export function ImageUpload({
     const handleAddClick = () => {
         setSelectedIndex(validImages.length)
         setShowDialog(true)
-    }
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0]
-        if (!file) return
-
-        // Validate file size (10MB)
-        if (file.size > 10 * 1024 * 1024) {
-            alert('File size must be less than 10MB')
-            return
-        }
-
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            alert('Only image files are allowed')
-            return
-        }
-
-        const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-        const newRef = ref(storage, `${path}/${fileName}`)
-        setStorageRef(newRef)
-
-        const task = uploadBytesResumable(newRef, file, {
-            contentType: file.type
-        })
-
-        task.then(async (snapshot) => {
-            const downloadURL = await getDownloadURL(snapshot.ref)
-            onChange?.([...images, downloadURL])
-            setUploadTask(undefined)
-            setStorageRef(undefined)
-            setShowDialog(false)
-        }).catch((error) => {
-            console.error('Upload failed:', error)
-            alert(`Upload failed: ${error.message}`)
-            setUploadTask(undefined)
-            setStorageRef(undefined)
-        })
-
-        setUploadTask(task)
     }
 
     const handleRemoveImage = () => {
@@ -246,8 +165,8 @@ export function ImageUpload({
                                     className="flex-1 m-0 data-[state=active]:flex flex-col"
                                 >
                                     <div className="flex-1 p-6 flex items-center justify-center bg-muted/30">
-                                        <div className="w-full max-w-md space-y-4">
-                                            <div className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center gap-3 hover:border-primary transition-colors">
+                                        <div className="w-full max-w-md">
+                                            <div className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center gap-3 hover:border-primary transition-colors cursor-pointer">
                                                 <Upload className="size-12 text-muted-foreground" />
                                                 <div className="text-center">
                                                     <p className="text-sm font-medium">
@@ -258,32 +177,14 @@ export function ImageUpload({
                                                         PNG, JPG, GIF up to 10MB
                                                     </p>
                                                 </div>
-                                                <input
-                                                    type="file"
-                                                    accept={accept}
-                                                    onChange={handleFileChange}
-                                                    disabled={!!uploadTask}
-                                                    className="hidden"
-                                                    id="file-upload-input"
-                                                />
-                                                <label htmlFor="file-upload-input">
-                                                    <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        className="mt-2"
-                                                        disabled={!!uploadTask}
-                                                        asChild
-                                                    >
-                                                        <span>Choose File</span>
-                                                    </Button>
-                                                </label>
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    className="mt-2"
+                                                >
+                                                    Choose File
+                                                </Button>
                                             </div>
-                                            {uploadTask && storageRef && (
-                                                <UploadProgress
-                                                    uploadTask={uploadTask}
-                                                    storageRef={storageRef}
-                                                />
-                                            )}
                                         </div>
                                     </div>
 
