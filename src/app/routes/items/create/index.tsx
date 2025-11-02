@@ -1,10 +1,5 @@
 import { useNavigate } from 'react-router'
-import {
-    ItemForm,
-    useCategories,
-    useItemActions,
-    useUnits
-} from '@/features/items'
+import { ItemForm, useCategories, useItemActions } from '@/features/items'
 import type { CreateItemData } from '@/features/items'
 import { useShopContext } from '@/features/shop'
 
@@ -14,7 +9,6 @@ export default function CreateItemPage() {
     const shopId = currentShop?.shopId || ''
     const { createItem } = useItemActions(shopId)
     const { categories } = useCategories(shopId)
-    const { units } = useUnits(shopId)
 
     const handleAddItem = async (data: CreateItemData) => {
         await createItem(data)
@@ -28,7 +22,6 @@ export default function CreateItemPage() {
     return (
         <ItemForm
             categories={categories}
-            units={units}
             onSubmit={handleAddItem}
             onCancel={handleCancel}
         />
