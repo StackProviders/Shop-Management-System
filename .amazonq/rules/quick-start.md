@@ -329,13 +329,9 @@ if (items.length === 0) {
 
 ## Documentation References
 
-- **Full Rules**: `project-rules.md`
-- **Patterns**: `component-patterns.md`
+- **Project Rules**: `project-rules.md` - Complete architecture guide
+- **Scaling Guide**: `SCALING_GUIDE.md` - Quick feature creation
+- **Component Patterns**: `component-patterns.md`
+- **Data Display**: `data-display-patterns.md`
 - **Feature Guide**: `feature-guide.md`
-- **State Management**: `state-management.md`
-- **Data Display**: `data-display-patterns.md` (NEW!)
-- **DataTable Docs**: `src/components/ui/data-table.md` (NEW!)
-- **DataGrid Docs**: `src/components/ui/data-grid.md` (NEW!)
-- **Features List**: `../FEATURES.md`
-- **Architecture**: `../ARCHITECTURE.md`
-- **AI Guide**: `../AI_ASSISTANT_GUIDE.md`
+- **ReactFire Guide**: `reactfire-guide.md`

@@ -1,4 +1,4 @@
-# Shop Management System - AI Assistant Rules
+# Shop Management System - Project Rules
 
 ## Package Manager
 
@@ -8,517 +8,798 @@
 
 ## Project Architecture
 
-### Feature-Based Structure
+### Feature-Based Structure (Bulletproof React Pattern)
 
-- Follow **bulletproof-react** architecture pattern
-- Organize code by features in `src/features/`
-- Each feature is self-contained with: `api/`, `components/`, `hooks/`, `types/`, `utils/`
-- Use barrel exports (`index.ts`) for clean imports
+```
+src/features/feature-name/
+├── api/              # API layer (optional, use hooks directly with ReactFire)
+├── components/       # Feature-specific components
+├── hooks/           # Feature-specific hooks (queries + mutations)
+├── types/           # TypeScript interfaces
+├── validations/     # Zod schemas (optional)
+└── index.ts         # Barrel export
+```
 
 ### Import Patterns
 
 ```typescript
 // ✅ CORRECT - Import from feature root
-import { useAuthActions, LoginForm } from '@/features/auth'
-import { useShopContext, ShopProvider } from '@/features/shop'
-import { useDebounce, formatDate } from '@/features/shared'
+import { useItems, useItemActions } from '@/features/items'
+import { usePartiesByShop, usePartyMutations } from '@/features/parties'
+import { useShopContext } from '@/features/shop'
 
 // ❌ WRONG - Don't import from internal paths
-import { useAuthActions } from '@/features/auth/hooks/use-auth-actions'
+import { useItems } from '@/features/items/hooks/use-items'
+```
+
+## State Management Architecture
+
+### ReactFire + Firestore (PRIMARY)
+
+**Use ReactFire hooks for all real-time data:**
+
+```typescript
+import {
+    useFirestore,
+    useFirestoreCollectionData,
+    useFirestoreDocData
+} from 'reactfire'
+import { collection, query, where, doc } from 'firebase/firestore'
+
+// Collection query
+export function useItems(shopId: string) {
+    const firestore = useFirestore()
+    const q = query(
+        collection(firestore, 'items'),
+        where('shopId', '==', shopId)
+    )
+
+    const { status, data } = useFirestoreCollectionData(q, { idField: 'id' })
+
+    return {
+        items: (data as Item[]) ?? [],
+        isLoading: status === 'loading',
+        error: status === 'error'
+    }
+}
+
+// Document query
+export function useItem(id: string) {
+    const firestore = useFirestore()
+    const itemRef = doc(firestore, 'items', id)
+
+    const { status, data } = useFirestoreDocData(itemRef, { idField: 'id' })
+
+    return {
+        item: data as Item | undefined,
+        isLoading: status === 'loading'
+    }
+}
+```
+
+### Mutations with Firestore Utils
+
+**Use firestore-utils for all write operations:**
+
+```typescript
+import { collection, doc, Timestamp } from 'firebase/firestore'
+import { useFirestore } from 'reactfire'
+import { toast } from 'sonner'
+import {
+    setDocWithTimeout,
+    updateDocWithTimeout,
+    deleteDocWithTimeout
+} from '@/lib/firestore-utils'
+
+export function useItemMutations(shopId: string) {
+    const firestore = useFirestore()
+
+    const createItem = async (data: CreateItemData) => {
+        const toastId = toast.loading('Creating...')
+        try {
+            const newDocRef = doc(collection(firestore, 'items'))
+            await setDocWithTimeout(newDocRef, {
+                ...data,
+                shopId,
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now()
+            })
+            toast.success('Created successfully', { id: toastId })
+            return newDocRef.id
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed', {
+                id: toastId
+            })
+            throw error
+        }
+    }
+
+    const updateItem = async (id: string, data: Partial<CreateItemData>) => {
+        const toastId = toast.loading('Updating...')
+        try {
+            await updateDocWithTimeout(doc(firestore, 'items', id), {
+                ...data,
+                updatedAt: Timestamp.now()
+            })
+            toast.success('Updated successfully', { id: toastId })
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed', {
+                id: toastId
+            })
+            throw error
+        }
+    }
+
+    const deleteItem = async (id: string) => {
+        const toastId = toast.loading('Deleting...')
+        try {
+            await deleteDocWithTimeout(doc(firestore, 'items', id))
+            toast.success('Deleted successfully', { id: toastId })
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed', {
+                id: toastId
+            })
+            throw error
+        }
+    }
+
+    return { createItem, updateItem, deleteItem }
+}
+```
+
+### Zustand (SECONDARY - Only for UI State)
+
+**Use Zustand ONLY for:**
+
+- UI state (modals, drawers, filters)
+- Non-persistent app state
+- Cross-component communication
+
+```typescript
+import { create } from 'zustand'
+
+interface UIState {
+    isModalOpen: boolean
+    openModal: () => void
+    closeModal: () => void
+}
+
+export const useUIStore = create<UIState>((set) => ({
+    isModalOpen: false,
+    openModal: () => set({ isModalOpen: true }),
+    closeModal: () => set({ isModalOpen: false })
+}))
+```
+
+## Feature Development Pattern
+
+### Step 1: Define Types
+
+```typescript
+// src/features/my-feature/types/index.ts
+export interface MyEntity {
+    id: string
+    shopId: string
+    name: string
+    status: 'active' | 'inactive'
+    createdAt: Date | Timestamp
+    updatedAt: Date | Timestamp
+}
+
+export interface CreateMyEntityData {
+    name: string
+    status?: 'active' | 'inactive'
+}
+
+export interface UpdateMyEntityData {
+    name?: string
+    status?: 'active' | 'inactive'
+}
+```
+
+### Step 2: Create Query Hook
+
+```typescript
+// src/features/my-feature/hooks/use-my-entity-queries.ts
+import { collection, query, where, doc } from 'firebase/firestore'
+import {
+    useFirestore,
+    useFirestoreCollectionData,
+    useFirestoreDocData
+} from 'reactfire'
+import { MyEntity } from '../types'
+
+export function useMyEntities(shopId: string) {
+    const firestore = useFirestore()
+    const q = query(
+        collection(firestore, 'my-entities'),
+        where('shopId', '==', shopId)
+    )
+
+    const { status, data } = useFirestoreCollectionData(q, { idField: 'id' })
+
+    return {
+        entities: (data as MyEntity[]) ?? [],
+        isLoading: status === 'loading',
+        error: status === 'error' ? new Error('Failed to load') : null
+    }
+}
+
+export function useMyEntity(id: string) {
+    const firestore = useFirestore()
+    const entityRef = doc(firestore, 'my-entities', id)
+
+    const { status, data } = useFirestoreDocData(entityRef, { idField: 'id' })
+
+    return {
+        entity: data as MyEntity | undefined,
+        isLoading: status === 'loading'
+    }
+}
+```
+
+### Step 3: Create Mutation Hook
+
+```typescript
+// src/features/my-feature/hooks/use-my-entity-mutations.ts
+import { collection, doc, Timestamp } from 'firebase/firestore'
+import { useFirestore } from 'reactfire'
+import { toast } from 'sonner'
+import {
+    setDocWithTimeout,
+    updateDocWithTimeout,
+    deleteDocWithTimeout
+} from '@/lib/firestore-utils'
+import { CreateMyEntityData, UpdateMyEntityData } from '../types'
+
+export function useMyEntityMutations(shopId: string) {
+    const firestore = useFirestore()
+
+    const createEntity = async (data: CreateMyEntityData) => {
+        const toastId = toast.loading('Creating...')
+        try {
+            const newDocRef = doc(collection(firestore, 'my-entities'))
+            await setDocWithTimeout(newDocRef, {
+                ...data,
+                shopId,
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now()
+            })
+            toast.success('Created successfully', { id: toastId })
+            return newDocRef.id
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed', {
+                id: toastId
+            })
+            throw error
+        }
+    }
+
+    const updateEntity = async (id: string, data: UpdateMyEntityData) => {
+        const toastId = toast.loading('Updating...')
+        try {
+            await updateDocWithTimeout(doc(firestore, 'my-entities', id), {
+                ...data,
+                updatedAt: Timestamp.now()
+            })
+            toast.success('Updated successfully', { id: toastId })
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed', {
+                id: toastId
+            })
+            throw error
+        }
+    }
+
+    const deleteEntity = async (id: string) => {
+        const toastId = toast.loading('Deleting...')
+        try {
+            await deleteDocWithTimeout(doc(firestore, 'my-entities', id))
+            toast.success('Deleted successfully', { id: toastId })
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed', {
+                id: toastId
+            })
+            throw error
+        }
+    }
+
+    return { createEntity, updateEntity, deleteEntity }
+}
+```
+
+### Step 4: Create Components
+
+```typescript
+// src/features/my-feature/components/my-entity-list.tsx
+import { useMyEntities } from '../hooks/use-my-entity-queries'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Empty } from '@/components/ui/empty'
+
+export function MyEntityList({ shopId }: { shopId: string }) {
+    const { entities, isLoading, error } = useMyEntities(shopId)
+
+    if (isLoading) {
+        return <Skeleton className="h-20 w-full" />
+    }
+
+    if (error) {
+        return <div className="text-destructive">Error loading data</div>
+    }
+
+    if (entities.length === 0) {
+        return <Empty title="No items found" />
+    }
+
+    return (
+        <div className="space-y-2">
+            {entities.map((entity) => (
+                <div key={entity.id}>{entity.name}</div>
+            ))}
+        </div>
+    )
+}
+```
+
+### Step 5: Create Barrel Export
+
+```typescript
+// src/features/my-feature/index.ts
+export * from './hooks/use-my-entity-queries'
+export * from './hooks/use-my-entity-mutations'
+export * from './components/my-entity-list'
+export * from './types'
 ```
 
 ## UI/UX Guidelines
 
-### Responsive Design (Desktop & Mobile)
+### Responsive Design (CRITICAL)
 
-- **ALWAYS** design for both desktop and mobile
-- Use `useIsMobile()` hook from `@/hooks/use-mobile` to detect screen size
-- Mobile breakpoint: 768px
-- Use responsive Tailwind classes: `md:`, `lg:`, `sm:`
+**ALWAYS design for both desktop and mobile:**
 
-### Component Usage Priority
+```typescript
+import { useIsMobile } from '@/hooks/use-mobile'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Drawer, DrawerContent } from '@/components/ui/drawer'
 
-1. **shadcn/ui components** from `@/components/ui/` (PRIMARY)
-2. **Custom components** from `@/components/` (SECONDARY)
-3. Create new components only when necessary
+function ResponsiveModal({ open, onOpenChange, children }) {
+    const isMobile = useIsMobile()
+
+    if (isMobile) {
+        return (
+            <Drawer open={open} onOpenChange={onOpenChange}>
+                <DrawerContent>{children}</DrawerContent>
+            </Drawer>
+        )
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>{children}</DialogContent>
+        </Dialog>
+    )
+}
+```
+
+### Component Priority
+
+1. **shadcn/ui components** (`@/components/ui/*`) - ALWAYS use first
+2. **Custom shared components** (`@/components/*`) - Use when needed
+3. **Feature components** (`@/features/*/components/*`) - Feature-specific
+4. **Create new** - Only when absolutely necessary
 
 ### Available shadcn/ui Components
 
-- Layout: `Card`, `Sheet`, `Dialog`, `Drawer`, `Tabs`, `Accordion`, `Separator`, `ListDetailLayout` (see below)
-- Forms: `Input`, `Button`, `Select`, `Checkbox`, `Label`, `Form`, `PhoneInput`
-- Navigation: `Sidebar`, `DropdownMenu`, `Command`
-- Feedback: `Alert`, `AlertDialog`, `Spinner`, `Skeleton`, `Sonner` (toast)
-- Data: `Table`, `Pagination`, `Avatar`, `Badge`
-- Utility: `Tooltip`, `Popover`, `ScrollArea`, `AspectRatio`
+**Layout**: Card, Sheet, Dialog, Drawer, Tabs, Accordion, Separator, Sidebar, ListDetailLayout
+
+**Forms**: Input, Button, Select, Checkbox, Label, Form, PhoneInput, InputOTP, Textarea, RadioGroup, Switch, Slider
+
+**Navigation**: DropdownMenu, Command, Popover
+
+**Feedback**: Alert, AlertDialog, Spinner, Skeleton, Sonner (toast), Progress
+
+**Data Display**: Table, DataTable, DataGrid, Pagination, Avatar, Badge, Typography, Empty
+
+**Utility**: Tooltip, ScrollArea, AspectRatio, Calendar, Cropper
 
 ### List Detail Layout System
 
-**CRITICAL: Use for all master-detail interfaces**
-
-Import from `@/components/ui/list-detail-layout`:
+**Use for all master-detail interfaces:**
 
 ```typescript
 import {
     ListDetailRoot,
     ListDetailHeader,
-    ListDetailHeaderContent,
-    ListDetailHeaderTitle,
-    ListDetailHeaderActions,
-    ListDetailStats,
-    ListDetailStat,
     ListDetailBody,
     ListDetailList,
     ListDetailListHeader,
     ListDetailListContent,
-    ListDetailContent,
-    ListDetailContentHeader,
-    ListDetailContentHeaderTitle,
-    ListDetailContentHeaderInfo,
-    ListDetailContentHeaderInfoItem,
-    ListDetailContentBody
+    ListDetailContent
 } from '@/components/ui/list-detail-layout'
-```
 
-**When to Use:**
+function MyListPage() {
+    const { pathname } = useLocation()
+    const { id } = useParams()
 
-- Building list + detail views (e.g., Parties, Products, Orders)
-- Creating master-detail interfaces
-- Any page with sidebar list and detail panel
-
-**Basic Structure:**
-
-```typescript
-<ListDetailRoot>
-    <ListDetailHeader isRouteActive={isRouteActive}>
-        <ListDetailHeaderContent>
-            <ListDetailHeaderTitle>Title</ListDetailHeaderTitle>
-            <ListDetailHeaderActions>
-                <Button>Add New</Button>
-            </ListDetailHeaderActions>
-        </ListDetailHeaderContent>
-        <ListDetailStats>
-            <ListDetailStat label="Total" value={100} />
-        </ListDetailStats>
-    </ListDetailHeader>
-
-    <ListDetailBody>
-        <ListDetailList isRouteActive={isRouteActive}>
-            <ListDetailListHeader>
-                <SearchInput />
-            </ListDetailListHeader>
-            <ListDetailListContent>
-                {/* List items */}
-            </ListDetailListContent>
-        </ListDetailList>
-
-        <ListDetailContent isRouteActive={isRouteActive}>
-            <Outlet />
-        </ListDetailContent>
-    </ListDetailBody>
-</ListDetailRoot>
-```
-
-**Detail Page Structure:**
-
-```typescript
-<>
-    <ListDetailContentHeader>
-        <ListDetailContentHeaderTitle>
-            <h2>Item Name</h2>
-            <Button>Edit</Button>
-        </ListDetailContentHeaderTitle>
-        <ListDetailContentHeaderInfo>
-            <ListDetailContentHeaderInfoItem label="Email" value="email@example.com" />
-            <ListDetailContentHeaderInfoItem label="Phone" value="+1234567890" />
-        </ListDetailContentHeaderInfo>
-    </ListDetailContentHeader>
-
-    <ListDetailContentBody>
-        {/* Main content */}
-    </ListDetailContentBody>
-</>
-```
-
-**Required Props:**
-
-- `isRouteActive`: Boolean indicating if detail route is active
-    ```typescript
     const isRouteActive = useMemo(
         () => !!id || pathname.includes('/new') || pathname.includes('/edit'),
         [id, pathname]
     )
-    ```
 
-**Key Features:**
+    return (
+        <ListDetailRoot>
+            <ListDetailHeader isRouteActive={isRouteActive}>
+                {/* Header content */}
+            </ListDetailHeader>
 
-- ✅ Fully responsive (mobile/desktop)
-- ✅ Automatic show/hide on mobile
-- ✅ Composable components
-- ✅ Type-safe with TypeScript
-- ✅ Accepts `className` for customization
-- ✅ Built-in `ScrollArea` support
+            <ListDetailBody>
+                <ListDetailList isRouteActive={isRouteActive}>
+                    <ListDetailListHeader>
+                        <SearchInput />
+                    </ListDetailListHeader>
+                    <ListDetailListContent>
+                        {/* List items */}
+                    </ListDetailListContent>
+                </ListDetailList>
 
-**Documentation:** See `src/components/ui/list-detail-layout.md` for complete guide
-
-**Examples:**
-
-- Parties: `src/app/routes/parties/index.tsx`
-- Party Detail: `src/features/parties/components/party-detail.tsx`
-
-### Mobile-First Components
-
-```typescript
-// Use Drawer for mobile, Dialog for desktop
-import { useIsMobile } from '@/hooks/use-mobile'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
-import { Drawer, DrawerContent } from '@/components/ui/drawer'
-
-function ResponsiveModal() {
-  const isMobile = useIsMobile()
-
-  if (isMobile) {
-    return <Drawer><DrawerContent>...</DrawerContent></Drawer>
-  }
-
-  return <Dialog><DialogContent>...</DialogContent></Dialog>
+                <ListDetailContent isRouteActive={isRouteActive}>
+                    <Outlet />
+                </ListDetailContent>
+            </ListDetailBody>
+        </ListDetailRoot>
+    )
 }
 ```
 
-### Button Variants
-
-```typescript
-// Available variants
-<Button variant="primary">Primary</Button>
-<Button variant="secondary">Secondary</Button>
-<Button variant="outline">Outline</Button>
-<Button variant="ghost">Ghost</Button>
-<Button variant="destructive">Destructive</Button>
-
-// Sizes
-<Button size="xs">Extra Small</Button>
-<Button size="sm">Small</Button>
-<Button size="md">Medium</Button>
-<Button size="lg">Large</Button>
-
-// Loading state
-<SubmitButton loading={isLoading}>Submit</SubmitButton>
-```
-
-## Code Style
+## Code Style & Best Practices
 
 ### TypeScript
 
-- **ALWAYS** use TypeScript with proper types
-- Define interfaces for all data structures
-- Use type inference where appropriate
-- Avoid `any` type
-
 ```typescript
-// ✅ CORRECT
-interface CreateShopData {
-    shopname: string
-    email?: string
+// ✅ CORRECT - Proper types
+interface CreateItemData {
+    name: string
+    price: number
+    description?: string
 }
 
-function createShop(data: CreateShopData): Promise<Shop> {
+function createItem(data: CreateItemData): Promise<string> {
     // ...
 }
 
-// ❌ WRONG
-function createShop(data: any) {
+// ❌ WRONG - Using any
+function createItem(data: any) {
     // ...
 }
 ```
 
 ### React Patterns
 
-- Use functional components with hooks
-- Extract business logic into custom hooks
-- Keep components focused on UI
-- Use `React.memo()` for expensive components
-
 ```typescript
-// ✅ CORRECT - Logic in hook
-function useShopForm() {
-  const { createShop } = useShopActions()
-  const [loading, setLoading] = useState(false)
+// ✅ CORRECT - Hooks for logic, components for UI
+function useItemForm() {
+    const { createItem } = useItemMutations(shopId)
+    const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (data: CreateShopData) => {
-    setLoading(true)
-    await createShop(data)
-    setLoading(false)
-  }
+    const handleSubmit = async (data: CreateItemData) => {
+        setLoading(true)
+        try {
+            await createItem(data)
+        } finally {
+            setLoading(false)
+        }
+    }
 
-  return { handleSubmit, loading }
+    return { handleSubmit, loading }
 }
 
-// Component uses the hook
-function ShopForm() {
-  const { handleSubmit, loading } = useShopForm()
-  return <form onSubmit={handleSubmit}>...</form>
+function ItemForm() {
+    const { handleSubmit, loading } = useItemForm()
+    return <form onSubmit={handleSubmit}>...</form>
 }
 ```
 
-### Styling
-
-- Use Tailwind CSS for all styling
-- Use `cn()` utility from `@/lib/utils` to merge classes
-- Follow mobile-first approach
-- Use design tokens from theme
+### Styling with Tailwind
 
 ```typescript
 import { cn } from '@/lib/utils'
 
+// ✅ CORRECT - Use cn() for class merging
 <div className={cn(
-  "flex items-center gap-2",
-  "md:gap-4 md:flex-row",
-  isMobile && "flex-col"
+    "base-classes",
+    "md:desktop-classes",
+    condition && "conditional-classes",
+    className
 )}>
-```
 
-## State Management
-
-### Local State
-
-- Use `useState` for component-level state
-- Use `useReducer` for complex state logic
-
-### Global State (Zustand)
-
-- Use `createEntityStore` from `@/features/shared` for entity management
-- Automatic optimistic updates support
-- Centralized state with minimal re-renders
-
-### Server State (Firestore Real-time)
-
-- Use query-based API with `createFirestoreApi`
-- Real-time subscriptions with automatic updates
-- Optimistic updates for instant UI feedback
-
-```typescript
-// Create store
-import { createEntityStore } from '@/features/shared'
-export const useMyStore = createEntityStore<MyEntity>()
-
-// Use in hook
-import { useEffect } from 'react'
-import { myApi, myQueries } from '../api/my.api'
-import { useMyStore } from './use-my-store'
-
-export function useMyEntities() {
-    const { items, setItems, setLoading, setError } = useMyStore()
-
-    useEffect(() => {
-        setLoading(true)
-        const unsubscribe = myApi.subscribe(
-            myQueries.all(),
-            (data) => {
-                setItems(data)
-                setLoading(false)
-            },
-            (err) => setError(err.message)
-        )
-        return () => unsubscribe()
-    }, [])
-
-    return { entities: items }
-}
-```
-
-**See `state-management.md` for complete guide**
-
-## Error Handling
-
-- Always wrap async operations in try-catch
-- Use toast notifications for user feedback
-- Provide meaningful error messages
-
-```typescript
-import { toast } from 'sonner'
-
-try {
-    await createShop(data)
-    toast.success('Shop created successfully')
-} catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    toast.error(message)
-}
+// ❌ WRONG - String concatenation
+<div className={"base " + (condition ? "active" : "")}>
 ```
 
 ## Forms
 
-- Use `react-hook-form` with `zod` validation
-- Use `Form` component from `@/components/ui/form`
-- Validate on submit, show errors inline
+### React Hook Form + Zod
 
 ```typescript
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 
 const schema = z.object({
-  shopname: z.string().min(3, 'Name must be at least 3 characters')
+    name: z.string().min(3, 'Name must be at least 3 characters'),
+    email: z.string().email('Invalid email')
 })
 
-function ShopForm() {
-  const form = useForm({
-    resolver: zodResolver(schema)
-  })
+type FormData = z.infer<typeof schema>
 
-  return <Form {...form}>...</Form>
+function MyForm() {
+    const form = useForm<FormData>({
+        resolver: zodResolver(schema),
+        defaultValues: { name: '', email: '' }
+    })
+
+    const onSubmit = async (data: FormData) => {
+        // Handle submission
+    }
+
+    return (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Name</FormLabel>
+                            <FormControl>
+                                <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <SubmitButton loading={form.formState.isSubmitting}>
+                    Submit
+                </SubmitButton>
+            </form>
+        </Form>
+    )
 }
 ```
 
-## Performance
-
-- Use `React.lazy()` for code splitting
-- Debounce search inputs with `useDebounce` from `@/features/shared`
-- Memoize expensive calculations with `useMemo`
-- Memoize callbacks with `useCallback`
-
-## Testing
-
-- Write tests for utilities and hooks
-- Use React Testing Library for components
-- Test user interactions, not implementation details
-
-## File Naming
-
-- Components: PascalCase (`ShopDashboard.tsx`)
-- Hooks: camelCase with `use` prefix (`use-shop-actions.ts`)
-- Utils: kebab-case (`format-date.ts`)
-- Types: kebab-case (`shop-types.ts`)
-
-## Comments
-
-- Minimize comments by writing self-documenting code
-- Use JSDoc for public APIs
-- Explain "why", not "what"
-
-## Component Documentation
-
-- List Detail Layout: `src/components/ui/list-detail-layout.md`
-- Component Patterns: `.amazonq/rules/component-patterns.md`
-- Feature Guide: `.amazonq/rules/feature-guide.md`
-
-## Security
-
-- Never expose API keys or secrets
-- Validate all user inputs
-- Use role-based access control (RBAC)
-- Check permissions before actions
+## Error Handling
 
 ```typescript
+import { toast } from 'sonner'
+
+// ✅ CORRECT - Always use toast for user feedback
+try {
+    await createItem(data)
+    toast.success('Item created successfully')
+} catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    toast.error(message)
+}
+
+// ✅ CORRECT - Loading toast pattern
+const toastId = toast.loading('Creating item...')
+try {
+    await createItem(data)
+    toast.success('Item created', { id: toastId })
+} catch (error) {
+    toast.error('Failed to create', { id: toastId })
+}
+```
+
+## Performance Optimization
+
+### Memoization
+
+```typescript
+// Memoize expensive calculations
+const filteredItems = useMemo(() => {
+    return items.filter((item) => item.name.includes(search))
+}, [items, search])
+
+// Memoize callbacks
+const handleClick = useCallback(
+    (id: string) => {
+        navigate(`/items/${id}`)
+    },
+    [navigate]
+)
+
+// Memoize components
+const MemoizedItem = React.memo(ItemCard)
+```
+
+### Code Splitting
+
+```typescript
+// Lazy load routes
+const ItemsPage = lazy(() => import('./routes/items'))
+
+// Use Suspense
+<Suspense fallback={<Skeleton />}>
+    <ItemsPage />
+</Suspense>
+```
+
+## File Naming Conventions
+
+- **Components**: PascalCase (`ItemForm.tsx`, `PartyList.tsx`)
+- **Hooks**: camelCase with `use` prefix (`use-items.ts`, `use-party-mutations.ts`)
+- **Utils**: kebab-case (`format-date.ts`, `validation.ts`)
+- **Types**: kebab-case (`index.ts`, `settings.ts`)
+- **API**: kebab-case (`items.api.ts`, `shop.api.ts`)
+
+## Security Best Practices
+
+```typescript
+// ✅ CORRECT - Check permissions
 import { hasPermission } from '@/features/shop'
 
-if (!hasPermission(userRole, 'manage_members')) {
+if (!hasPermission(userRole, 'manage_items')) {
     toast.error('You do not have permission')
     return
 }
+
+// ✅ CORRECT - Validate inputs
+const schema = z.object({
+    email: z.string().email(),
+    phone: z.string().regex(/^\+?[1-9]\d{1,14}$/)
+})
+
+// ✅ CORRECT - Never expose secrets
+// Use environment variables
+const apiKey = import.meta.env.VITE_API_KEY
 ```
 
-## Tauri-Specific
+## Testing
 
-- Use Tauri plugins for native features
-- Handle both web and native contexts
-- Test on both desktop and mobile platforms
+```typescript
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import { ItemList } from './item-list'
 
-## Git Workflow
+describe('ItemList', () => {
+    it('renders items when loaded', async () => {
+        render(<ItemList shopId="test-shop" />)
 
-- Write clear commit messages
-- Use conventional commits format
-- Run linter before committing (automatic via Husky)
+        await waitFor(() => {
+            expect(screen.getByText('Item 1')).toBeInTheDocument()
+        })
+    })
+})
+```
 
-## Documentation
+## Feature Development Checklist
 
-- Update README.md when adding features
-- Document complex logic
-- Keep architecture docs in sync
+- [ ] Types defined in `types/index.ts`
+- [ ] Query hooks in `hooks/use-*-queries.ts`
+- [ ] Mutation hooks in `hooks/use-*-mutations.ts`
+- [ ] Components with loading/error/empty states
+- [ ] Responsive design (mobile & desktop)
+- [ ] Form validation with Zod
+- [ ] Error handling with toast
+- [ ] Barrel export in `index.ts`
+- [ ] Route created and added to router
+- [ ] TypeScript with no `any` types
+- [ ] Suspense boundaries for async components
 
-## List Detail Layout Rules
+## Common Patterns
 
-**ALWAYS use List Detail Layout components for master-detail interfaces**
+### Sorting with Timestamp
 
-### Component Selection Rules
+```typescript
+const sortedItems = (data ?? []).sort((a, b) => {
+    const aTime =
+        a.createdAt instanceof Date
+            ? a.createdAt.getTime()
+            : (a.createdAt as Timestamp).toMillis()
+    const bTime =
+        b.createdAt instanceof Date
+            ? b.createdAt.getTime()
+            : (b.createdAt as Timestamp).toMillis()
+    return bTime - aTime
+})
+```
 
-1. **List Page (with sidebar):**
-    - Start with `ListDetailRoot`
-    - Add `ListDetailHeader` for page header
-    - Use `ListDetailBody` for main content
-    - Use `ListDetailList` for left sidebar
-    - Use `ListDetailContent` with `<Outlet />` for detail
+### Conditional Queries
 
-2. **Detail Page (right side):**
-    - Use `ListDetailContentHeader` for header card
-    - Use `ListDetailContentHeaderInfo` for info grid
-    - Use `ListDetailContentBody` for main content
+```typescript
+export function useItems(shopId: string, type?: ItemType) {
+    const firestore = useFirestore()
 
-3. **Always pass `isRouteActive`:**
-    ```typescript
-    const isRouteActive = useMemo(
-        () => !!id || pathname.includes('/new') || pathname.includes('/edit'),
-        [id, pathname]
-    )
-    ```
+    const q = type
+        ? query(
+              collection(firestore, 'items'),
+              where('shopId', '==', shopId),
+              where('type', '==', type)
+          )
+        : query(collection(firestore, 'items'), where('shopId', '==', shopId))
 
-### Code Generation Rules
+    const { status, data } = useFirestoreCollectionData(q, { idField: 'id' })
 
-**DO:**
+    return {
+        items: (data as Item[]) ?? [],
+        isLoading: status === 'loading'
+    }
+}
+```
 
-- ✅ Import only needed components
-- ✅ Pass `isRouteActive` to Header, List, and Content
-- ✅ Use `Outlet` in `ListDetailContent`
-- ✅ Compose components for flexibility
-- ✅ Add `className` for custom styling
-- ✅ Use `ListDetailContentHeaderInfoItem` for info display
+### Draft State (Local Storage)
 
-**DON'T:**
+```typescript
+export function useDraftItem(itemId?: string) {
+    const { currentShop } = useShopContext()
+    const draftKey = `draft-item-${currentShop?.shopId || 'temp'}-${itemId || 'new'}`
 
-- ❌ Create custom divs for layout structure
-- ❌ Use `Card` component for detail headers
-- ❌ Hardcode responsive behavior
-- ❌ Skip `isRouteActive` prop
-- ❌ Mix old and new patterns
+    const [draftData, setDraftData] = useState<Partial<ItemFormData>>()
 
-### Migration Pattern
+    useEffect(() => {
+        const saved = localStorage.getItem(draftKey)
+        if (saved) {
+            try {
+                setDraftData(JSON.parse(saved))
+            } catch (e) {
+                console.error('Failed to load draft:', e)
+            }
+        }
+    }, [draftKey])
+
+    const saveDraft = (data: Partial<ItemFormData>) => {
+        setDraftData(data)
+        localStorage.setItem(draftKey, JSON.stringify(data))
+    }
+
+    const clearDraft = () => {
+        localStorage.removeItem(draftKey)
+        setDraftData(undefined)
+    }
+
+    return { draftData, saveDraft, clearDraft }
+}
+```
+
+## Migration from Old Patterns
+
+### Old: SWR + Custom API
 
 ```typescript
 // ❌ OLD - Don't use
-<Card>
-    <CardContent>
-        <div className="flex justify-between">
-            <h2>{title}</h2>
-            <Button>Edit</Button>
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-            <div>
-                <span>Label:</span>
-                <span>{value}</span>
-            </div>
-        </div>
-    </CardContent>
-</Card>
-
-// ✅ NEW - Use this
-<ListDetailContentHeader>
-    <ListDetailContentHeaderTitle>
-        <h2>{title}</h2>
-        <Button>Edit</Button>
-    </ListDetailContentHeaderTitle>
-    <ListDetailContentHeaderInfo>
-        <ListDetailContentHeaderInfoItem label="Label" value={value} />
-    </ListDetailContentHeaderInfo>
-</ListDetailContentHeader>
+import useSWR from 'swr'
+export function useItems() {
+    const { data, error } = useSWR('/api/items', fetcher)
+    return { items: data ?? [], error }
+}
 ```
 
-### Quick Reference
+### New: ReactFire
 
-**Page Header:** `ListDetailHeader` → `ListDetailHeaderContent` → `ListDetailHeaderTitle` + `ListDetailHeaderActions`
+```typescript
+// ✅ NEW - Use this
+import { useFirestore, useFirestoreCollectionData } from 'reactfire'
+export function useItems(shopId: string) {
+    const firestore = useFirestore()
+    const q = query(
+        collection(firestore, 'items'),
+        where('shopId', '==', shopId)
+    )
+    const { status, data } = useFirestoreCollectionData(q, { idField: 'id' })
+    return {
+        items: (data as Item[]) ?? [],
+        isLoading: status === 'loading'
+    }
+}
+```
 
-**List Sidebar:** `ListDetailList` → `ListDetailListHeader` + `ListDetailListContent`
+## Documentation References
 
-**Detail Content:** `ListDetailContent` → `ListDetailContentHeader` + `ListDetailContentBody`
-
-**Info Display:** `ListDetailContentHeaderInfo` → `ListDetailContentHeaderInfoItem` (multiple)
-
-**Full docs:** `src/components/ui/list-detail-layout.md`
+- **Scaling Guide**: `.amazonq/rules/SCALING_GUIDE.md` - Quick feature creation
+- **Component Patterns**: `.amazonq/rules/component-patterns.md`
+- **Data Display**: `.amazonq/rules/data-display-patterns.md`
+- **Feature Guide**: `.amazonq/rules/feature-guide.md`
+- **Quick Start**: `.amazonq/rules/quick-start.md`
+- **ReactFire Guide**: `.amazonq/rules/reactfire-guide.md`
