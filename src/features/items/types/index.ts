@@ -19,6 +19,7 @@ export interface Item {
     barcode?: string
     description?: string
     taxRate?: number
+    status?: 'draft' | 'active' | 'inactive'
     createdAt: Date
     updatedAt: Date
 }

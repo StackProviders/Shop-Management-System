@@ -1,17 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useCallback } from 'react'
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { useStorage, useStorageTask } from 'reactfire'
-import { ImagePlus, Upload, Pencil, Trash2 } from 'lucide-react'
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle
-} from '@/components/ui/dialog'
+import { Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { cn } from '@/lib/utils'
 import type {
     UploadTask,
     UploadTaskSnapshot,
@@ -19,11 +11,10 @@ import type {
 } from 'firebase/storage'
 
 interface ImageUploadProps {
-    images?: string[]
-    onChange?: (images: string[]) => void
     path: string
-    maxImages?: number
     accept?: string
+    onUploadComplete: (url: string) => void
+    onCancel?: () => void
 }
 
 function UploadProgress({
@@ -51,61 +42,50 @@ function UploadProgress({
 }
 
 export function ImageUpload({
-    images = [],
-    onChange,
     path,
-    maxImages = 5,
-    accept = 'image/png, image/jpeg'
+    accept = 'image/png, image/jpeg',
+    onUploadComplete,
+    onCancel
 }: ImageUploadProps) {
     const storage = useStorage()
-    const [showDialog, setShowDialog] = useState(false)
-    const [selectedIndex, setSelectedIndex] = useState<number>(0)
     const [uploadTask, setUploadTask] = useState<UploadTask | undefined>()
     const [storageRef, setStorageRef] = useState<StorageReference | undefined>()
-
-    const validImages = useMemo(() => images.filter(Boolean), [images])
-    const canAddMore = validImages.length < maxImages
-
-    const handleImageClick = (imageIndex: number) => {
-        setSelectedIndex(imageIndex)
-        setShowDialog(true)
-    }
-
-    const handleAddClick = () => {
-        setSelectedIndex(validImages.length)
-        setShowDialog(true)
-    }
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0]
         if (!file) return
 
-        // Validate file size (10MB)
         if (file.size > 10 * 1024 * 1024) {
             alert('File size must be less than 10MB')
             return
         }
 
-        // Validate file type
         if (!file.type.startsWith('image/')) {
             alert('Only image files are allowed')
             return
         }
 
-        const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+        setSelectedFile(file)
+    }
+
+    const handleUploadConfirm = useCallback(async () => {
+        if (!selectedFile) return
+
+        const fileName = `${Date.now()}-${selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
         const newRef = ref(storage, `${path}/${fileName}`)
         setStorageRef(newRef)
 
-        const task = uploadBytesResumable(newRef, file, {
-            contentType: file.type
+        const task = uploadBytesResumable(newRef, selectedFile, {
+            contentType: selectedFile.type
         })
 
         task.then(async (snapshot) => {
             const downloadURL = await getDownloadURL(snapshot.ref)
-            onChange?.([...images, downloadURL])
+            onUploadComplete(downloadURL)
             setUploadTask(undefined)
             setStorageRef(undefined)
-            setShowDialog(false)
+            setSelectedFile(null)
         }).catch((error) => {
             console.error('Upload failed:', error)
             alert(`Upload failed: ${error.message}`)
@@ -114,205 +94,77 @@ export function ImageUpload({
         })
 
         setUploadTask(task)
+    }, [selectedFile, storage, path, onUploadComplete])
+
+    const handleCancel = () => {
+        setSelectedFile(null)
+        onCancel?.()
     }
 
-    const handleRemoveImage = () => {
-        const actualIndex = images.indexOf(validImages[selectedIndex])
-        if (actualIndex !== -1) {
-            const newImages = [...images]
-            newImages.splice(actualIndex, 1)
-            onChange?.(newImages)
-            setShowDialog(false)
-        }
+    if (selectedFile && !uploadTask) {
+        return (
+            <div className="flex w-full flex-col gap-4 items-center">
+                <div className="border rounded-lg p-4 bg-muted/30">
+                    <p className="text-sm font-medium">{selectedFile.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                </div>
+                <div className="flex gap-2 justify-center">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleCancel}
+                    >
+                        Cancel
+                    </Button>
+                    <Button type="button" onClick={handleUploadConfirm}>
+                        Upload
+                    </Button>
+                </div>
+            </div>
+        )
     }
 
     return (
-        <>
-            <div className="flex items-center gap-2">
-                {validImages.map((image, i) => (
-                    <button
-                        key={i}
-                        type="button"
-                        onClick={() => handleImageClick(i)}
-                        className="w-12 h-12 border-2 rounded-md transition-colors overflow-hidden flex-shrink-0 border-border hover:border-primary"
-                    >
-                        <img
-                            src={image}
-                            alt={`Item ${i + 1}`}
-                            className="w-full h-full object-cover"
-                        />
-                    </button>
-                ))}
-                {canAddMore && (
-                    <button
-                        type="button"
-                        onClick={handleAddClick}
-                        className="w-12 h-12 border-2 border-dashed rounded-md hover:border-primary transition-colors flex items-center justify-center bg-muted/30 flex-shrink-0"
-                    >
-                        <ImagePlus className="size-4 text-muted-foreground" />
-                    </button>
-                )}
-            </div>
-
-            <Dialog open={showDialog} onOpenChange={setShowDialog}>
-                <DialogContent className="max-w-5xl h-[600px] p-0">
-                    <DialogHeader className="px-6 py-4 border-b">
-                        <DialogTitle>
-                            {selectedIndex < validImages.length
-                                ? 'Preview Image'
-                                : 'Upload Image'}
-                        </DialogTitle>
-                    </DialogHeader>
-
-                    <Tabs
-                        value={`image-${selectedIndex}`}
-                        onValueChange={(val) =>
-                            setSelectedIndex(Number(val.split('-')[1]))
-                        }
-                        className="h-[calc(600px-120px)] flex"
-                    >
-                        <TabsList className="flex-col h-full w-[100px] border-r p-2 gap-2 bg-transparent">
-                            {validImages.map((image, i) => (
-                                <TabsTrigger
-                                    key={i}
-                                    value={`image-${i}`}
-                                    className={cn(
-                                        'w-full h-[80px] border-2 rounded-md p-0 overflow-hidden',
-                                        'data-[state=active]:border-primary data-[state=inactive]:border-border'
-                                    )}
-                                >
-                                    <img
-                                        src={image}
-                                        alt={`Thumbnail ${i + 1}`}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </TabsTrigger>
-                            ))}
-
-                            {canAddMore && (
-                                <TabsTrigger
-                                    value={`image-${validImages.length}`}
-                                    className={cn(
-                                        'w-full h-[80px] border-2 border-dashed rounded-md',
-                                        'data-[state=active]:border-primary data-[state=inactive]:border-border',
-                                        'flex items-center justify-center bg-muted/30'
-                                    )}
-                                >
-                                    <ImagePlus className="size-4 text-muted-foreground" />
-                                </TabsTrigger>
-                            )}
-                        </TabsList>
-
-                        <div className="flex-1 flex flex-col">
-                            {validImages.map((image, i) => (
-                                <TabsContent
-                                    key={i}
-                                    value={`image-${i}`}
-                                    className="flex-1 m-0 data-[state=active]:flex flex-col"
-                                >
-                                    <div className="flex-1 p-6 flex items-center justify-center bg-muted/30">
-                                        <img
-                                            src={image}
-                                            alt="Preview"
-                                            className="max-w-full max-h-full object-contain"
-                                        />
-                                    </div>
-
-                                    <div className="border-t p-4 flex justify-center gap-3">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={handleRemoveImage}
-                                            className="gap-2"
-                                        >
-                                            <Trash2 className="size-4" />
-                                            Remove Image
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            className="gap-2"
-                                        >
-                                            <Pencil className="size-4" />
-                                            Edit Image
-                                        </Button>
-                                    </div>
-                                </TabsContent>
-                            ))}
-
-                            {canAddMore && (
-                                <TabsContent
-                                    value={`image-${validImages.length}`}
-                                    className="flex-1 m-0 data-[state=active]:flex flex-col"
-                                >
-                                    <div className="flex-1 p-6 flex items-center justify-center bg-muted/30">
-                                        <div className="w-full max-w-md space-y-4">
-                                            <div className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center gap-3 hover:border-primary transition-colors">
-                                                <Upload className="size-12 text-muted-foreground" />
-                                                <div className="text-center">
-                                                    <p className="text-sm font-medium">
-                                                        Click to upload or drag
-                                                        and drop
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground mt-1">
-                                                        PNG, JPG, GIF up to 10MB
-                                                    </p>
-                                                </div>
-                                                <input
-                                                    type="file"
-                                                    accept={accept}
-                                                    onChange={handleFileChange}
-                                                    disabled={!!uploadTask}
-                                                    className="hidden"
-                                                    id="file-upload-input"
-                                                />
-                                                <label htmlFor="file-upload-input">
-                                                    <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        className="mt-2"
-                                                        disabled={!!uploadTask}
-                                                        asChild
-                                                    >
-                                                        <span>Choose File</span>
-                                                    </Button>
-                                                </label>
-                                            </div>
-                                            {uploadTask && storageRef && (
-                                                <UploadProgress
-                                                    uploadTask={uploadTask}
-                                                    storageRef={storageRef}
-                                                />
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="border-t p-4 flex justify-center gap-3">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            disabled
-                                            className="gap-2"
-                                        >
-                                            <Trash2 className="size-4" />
-                                            Remove Image
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            disabled
-                                            className="gap-2"
-                                        >
-                                            <Pencil className="size-4" />
-                                            Edit Image
-                                        </Button>
-                                    </div>
-                                </TabsContent>
-                            )}
+        <div className="w-full max-w-md space-y-4">
+            {uploadTask && storageRef ? (
+                <UploadProgress
+                    uploadTask={uploadTask}
+                    storageRef={storageRef}
+                />
+            ) : (
+                <>
+                    <div className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center gap-3 hover:border-primary transition-colors">
+                        <Upload className="size-12 text-muted-foreground" />
+                        <div className="text-center">
+                            <p className="text-sm font-medium">
+                                Click to upload or drag and drop
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                PNG, JPG, GIF up to 10MB
+                            </p>
                         </div>
-                    </Tabs>
-                </DialogContent>
-            </Dialog>
-        </>
+                        <input
+                            type="file"
+                            accept={accept}
+                            onChange={handleFileChange}
+                            className="hidden"
+                            id="file-upload-input"
+                        />
+                        <label htmlFor="file-upload-input">
+                            <Button
+                                type="button"
+                                size="sm"
+                                className="mt-2"
+                                asChild
+                            >
+                                <span>Choose File</span>
+                            </Button>
+                        </label>
+                    </div>
+                </>
+            )}
+        </div>
     )
 }

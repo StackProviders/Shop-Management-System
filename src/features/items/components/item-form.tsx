@@ -22,10 +22,15 @@ import {
 import { itemSchema, type ItemFormData } from '../validations/item.validation'
 import type { ItemType, Category } from '../types'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
-import { ImageUpload } from '@/components/upload/image-upload'
 import { CategoryForm } from './category-form'
 import { useShopContext } from '@/features/shop'
 import { UNITS } from '@/config/units'
+import { ItemImageUpload } from './item-image-upload'
+import { ItemSettingsSheet } from './item-settings-sheet'
+import { useItemSettings } from '../hooks/use-item-settings'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useDraftItem } from '../hooks/use-draft-item'
+import { WarrantyInput } from './warranty-input'
 
 interface ItemFormProps {
     type?: ItemType
@@ -43,6 +48,12 @@ export function ItemForm({
     const [showWholesalePrice, setShowWholesalePrice] = useState(false)
     const [images, setImages] = useState<string[]>([])
     const [showCategoryModal, setShowCategoryModal] = useState(false)
+    const [showSettings, setShowSettings] = useState(false)
+    const { currentShop } = useShopContext()
+    const shopId = currentShop?.shopId || 'default'
+
+    const { settings, isLoading: settingsLoading } = useItemSettings(shopId)
+    const { clearDraft } = useDraftItem()
 
     const form = useForm({
         resolver: zodResolver(itemSchema),
@@ -56,12 +67,17 @@ export function ItemForm({
             description: '',
             itemCode: '',
             openingStock: 0,
-            minStockAlert: 0
+            minStockAlert: 0,
+            status: 'draft'
         }
     })
 
+    const handleFormSubmit = async (data: ItemFormData) => {
+        await onSubmit({ ...data, images, status: 'active' })
+        clearDraft()
+    }
+
     const itemType = form.watch('type')
-    const { currentShop } = useShopContext()
 
     const generateItemCode = () => {
         const shopName = currentShop?.shopName || ''
@@ -107,7 +123,11 @@ export function ItemForm({
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setShowSettings(true)}
+                        >
                             <Settings className="size-5" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={onCancel}>
@@ -117,237 +137,285 @@ export function ItemForm({
                 </CardHeader>
 
                 <CardContent className="flex-1 overflow-y-auto">
-                    <form
-                        onSubmit={form.handleSubmit(onSubmit)}
-                        className="space-y-6"
-                    >
-                        {/* Main Grid Layout */}
-                        <div className="grid grid-cols-1 lg:grid-cols-[1fr_550px] gap-6">
-                            {/* Left Column - Form Fields */}
-                            <div className="space-y-4">
-                                {/* Row 1: Item Name & Category */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <FormInput
-                                        name="name"
-                                        label="Item Name"
-                                        placeholder="Enter name"
-                                        required
-                                    />
-
-                                    <FormCombobox
-                                        name="categories"
-                                        label="Category"
-                                        placeholder="Select category"
-                                        searchPlaceholder="Search categories..."
-                                        options={categories.map((cat) => ({
-                                            value: cat.id,
-                                            label: cat.name
-                                        }))}
-                                        multiple
-                                        onAddNew={() =>
-                                            setShowCategoryModal(true)
-                                        }
-                                        addNewLabel="Add New Category"
-                                    />
-                                </div>
-
-                                {/* Row 2: Unit & Item Code */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <FormCombobox
-                                        name="unit"
-                                        label="Unit"
-                                        placeholder="Select unit"
-                                        searchPlaceholder="Search units..."
-                                        options={UNITS.map((unit) => ({
-                                            value: unit.id,
-                                            label: `${unit.fullName} (${unit.shortName})`
-                                        }))}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="itemCode"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Item Code</FormLabel>
-                                                <FormControl>
-                                                    <InputGroup className="bg-background">
-                                                        <Input
-                                                            {...field}
-                                                            placeholder="Item Code"
-                                                        />
-                                                        <InputAddon mode="icon">
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={
-                                                                    generateItemCode
-                                                                }
-                                                                className="h-full rounded-none"
-                                                            >
-                                                                Assign Code
-                                                            </Button>
-                                                        </InputAddon>
-                                                    </InputGroup>
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-
-                                {/* Row 3: Description */}
-                                <FormTextarea
-                                    name="description"
-                                    label="Description"
-                                    placeholder="Enter description"
-                                    rows={3}
-                                />
-
-                                {/* Row 4: Additional Fields (3 columns) */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                                    <FormInput
-                                        name="colour"
-                                        label="Colour"
-                                        placeholder="Colour"
-                                    />
-                                    <FormInput
-                                        name="material"
-                                        label="Material"
-                                        placeholder="Material"
-                                    />
-                                    <FormInput
-                                        name="mfgDate"
-                                        label="Mfg. Date"
-                                        placeholder="Mfg. Date"
-                                    />
-                                </div>
-
-                                {/* Row 5: Additional Fields (3 columns) */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                                    <FormInput
-                                        name="expDate"
-                                        label="Exp. Date"
-                                        placeholder="Exp. Date"
-                                    />
-                                    <FormInput
-                                        name="size"
-                                        label="Size"
-                                        placeholder="Size"
-                                    />
-                                    <FormInput
-                                        name="brand"
-                                        label="Brand"
-                                        placeholder="Brand"
-                                    />
-                                </div>
+                    {settingsLoading ? (
+                        <div className="space-y-6">
+                            <Skeleton className="h-10 w-full" />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
                             </div>
-
-                            {/* Right Column - Image Upload */}
-                            <div className="flex items-start justify-end pt-8">
-                                <ImageUpload
-                                    images={images}
-                                    onChange={setImages}
-                                    path="items"
-                                    maxImages={5}
-                                />
-                            </div>
+                            <Skeleton className="h-20 w-full" />
                         </div>
-
-                        {/* Tabs Section */}
-                        <Tabs defaultValue="pricing" className="w-full">
-                            <TabsList variant="line">
-                                <TabsTrigger value="pricing">
-                                    Pricing
-                                </TabsTrigger>
-                                {itemType === 'product' && (
-                                    <TabsTrigger value="stock">
-                                        Stock
-                                    </TabsTrigger>
-                                )}
-                            </TabsList>
-
-                            <TabsContent
-                                value="pricing"
-                                className="space-y-4 mt-4"
-                            >
-                                <div className="max-w-xs">
-                                    <FormInput
-                                        name="salePrice"
-                                        label="Sale Price"
-                                        type="number"
-                                        placeholder="0.00"
-                                        required
-                                    />
-                                </div>
-
-                                {showWholesalePrice && (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+                    ) : (
+                        <div className="space-y-6">
+                            {/* Main Grid Layout */}
+                            <div className="grid grid-cols-1 lg:grid-cols-[1fr_550px] gap-6">
+                                {/* Left Column - Form Fields */}
+                                <div className="space-y-4">
+                                    {/* Row 2: Unit & Item Code */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Row 1: Item Name */}
                                         <FormInput
-                                            name="wholesalePrice"
-                                            label="Wholesale Price"
-                                            type="number"
-                                            placeholder="0.00"
+                                            name="name"
+                                            label="Item Name"
+                                            placeholder="Enter name"
+                                            required
                                         />
-                                        <FormInput
-                                            name="minWholesaleQty"
-                                            label="Minimum Wholesale Qty"
-                                            type="number"
-                                            placeholder="0"
+                                        {settings.category && (
+                                            <FormCombobox
+                                                name="categories"
+                                                label="Category"
+                                                placeholder="Select category"
+                                                searchPlaceholder="Search categories..."
+                                                options={categories.map(
+                                                    (cat) => ({
+                                                        value: cat.id,
+                                                        label: cat.name
+                                                    })
+                                                )}
+                                                multiple
+                                                onAddNew={() =>
+                                                    setShowCategoryModal(true)
+                                                }
+                                                addNewLabel="Add New Category"
+                                            />
+                                        )}
+                                    </div>
+
+                                    {/* Row 3: Unit & Item Code */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FormCombobox
+                                            name="unit"
+                                            label="Unit"
+                                            placeholder="Select unit"
+                                            searchPlaceholder="Search units..."
+                                            options={UNITS.map((unit) => ({
+                                                value: unit.id,
+                                                label: `${unit.fullName} (${unit.shortName})`
+                                            }))}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="itemCode"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>
+                                                        Item Code
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <InputGroup className="bg-background">
+                                                            <Input
+                                                                {...field}
+                                                                placeholder="Item Code"
+                                                            />
+                                                            <InputAddon mode="icon">
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={
+                                                                        generateItemCode
+                                                                    }
+                                                                    className="h-full rounded-none"
+                                                                >
+                                                                    Assign Code
+                                                                </Button>
+                                                            </InputAddon>
+                                                        </InputGroup>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
                                         />
                                     </div>
-                                )}
 
-                                {!showWholesalePrice && (
-                                    <Button
-                                        type="button"
-                                        variant="dim"
-                                        size="sm"
-                                        onClick={() =>
-                                            setShowWholesalePrice(true)
-                                        }
-                                        className="px-0 text-primary h-auto"
-                                    >
-                                        + Add Wholesale Price
-                                    </Button>
-                                )}
+                                    {/* Description */}
+                                    {settings.description && (
+                                        <FormTextarea
+                                            name="description"
+                                            label="Description"
+                                            placeholder="Enter description"
+                                            rows={3}
+                                        />
+                                    )}
 
-                                <div className="max-w-xs">
-                                    <FormInput
-                                        name="purchasePrice"
-                                        label="Purchase Price"
-                                        type="number"
-                                        placeholder="0.00"
-                                        required
+                                    {/* Custom Fields */}
+                                    {settings.customFields && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+                                            {settings.customFieldSettings
+                                                .colour && (
+                                                <FormInput
+                                                    name="colour"
+                                                    label="Colour"
+                                                    placeholder="Colour"
+                                                />
+                                            )}
+                                            {settings.customFieldSettings
+                                                .material && (
+                                                <FormInput
+                                                    name="material"
+                                                    label="Material"
+                                                    placeholder="Material"
+                                                />
+                                            )}
+                                            {settings.customFieldSettings
+                                                .mfgDate && (
+                                                <FormInput
+                                                    name="mfgDate"
+                                                    label="Mfg. Date"
+                                                    placeholder="Mfg. Date"
+                                                />
+                                            )}
+                                            {settings.customFieldSettings
+                                                .expDate && (
+                                                <FormInput
+                                                    name="expDate"
+                                                    label="Exp. Date"
+                                                    placeholder="Exp. Date"
+                                                />
+                                            )}
+                                            {settings.customFieldSettings
+                                                .size && (
+                                                <FormInput
+                                                    name="size"
+                                                    label="Size"
+                                                    placeholder="Size"
+                                                />
+                                            )}
+                                            {settings.customFieldSettings
+                                                .brand && (
+                                                <FormInput
+                                                    name="brand"
+                                                    label="Brand"
+                                                    placeholder="Brand"
+                                                />
+                                            )}
+                                            {settings.customFieldSettings
+                                                .warranty && (
+                                                <WarrantyInput
+                                                    availablePeriods={
+                                                        settings.warrantyPeriods
+                                                    }
+                                                    customPeriods={
+                                                        settings.customWarrantyPeriods
+                                                    }
+                                                />
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Right Column - Image Upload */}
+                                <div className="flex flex-col gap-1.5 items-center">
+                                    <Label className="text-sm font-medium">
+                                        Images
+                                    </Label>
+                                    <ItemImageUpload
+                                        images={images}
+                                        onChange={setImages}
                                     />
                                 </div>
-                            </TabsContent>
+                            </div>
 
-                            {itemType === 'product' && (
+                            {/* Tabs Section */}
+                            <Tabs defaultValue="pricing" className="w-full">
+                                <TabsList variant="line">
+                                    <TabsTrigger value="pricing">
+                                        Pricing
+                                    </TabsTrigger>
+                                    {itemType === 'product' && (
+                                        <TabsTrigger value="stock">
+                                            Stock
+                                        </TabsTrigger>
+                                    )}
+                                </TabsList>
+
                                 <TabsContent
-                                    value="stock"
+                                    value="pricing"
                                     className="space-y-4 mt-4"
                                 >
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+                                    <div className="max-w-xs">
                                         <FormInput
-                                            name="openingStock"
-                                            label="Opening Stock"
+                                            name="salePrice"
+                                            label="Sale Price"
                                             type="number"
-                                            placeholder="0"
-                                        />
-
-                                        <FormInput
-                                            name="minStockAlert"
-                                            label="Min Stock Alert"
-                                            type="number"
-                                            placeholder="0"
+                                            placeholder="0.00"
+                                            required
                                         />
                                     </div>
+
+                                    {(showWholesalePrice ||
+                                        settings.wholesalePrice) && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+                                            <FormInput
+                                                name="wholesalePrice"
+                                                label="Wholesale Price"
+                                                type="number"
+                                                placeholder="0.00"
+                                            />
+                                            <FormInput
+                                                name="minWholesaleQty"
+                                                label="Minimum Wholesale Qty"
+                                                type="number"
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {!showWholesalePrice &&
+                                        !settings.wholesalePrice && (
+                                            <Button
+                                                type="button"
+                                                variant="dim"
+                                                size="sm"
+                                                onClick={() =>
+                                                    setShowWholesalePrice(true)
+                                                }
+                                                className="px-0 text-primary h-auto"
+                                            >
+                                                + Add Wholesale Price
+                                            </Button>
+                                        )}
+
+                                    {itemType === 'product' && (
+                                        <div className="max-w-xs">
+                                            <FormInput
+                                                name="purchasePrice"
+                                                label="Purchase Price"
+                                                type="number"
+                                                placeholder="0.00"
+                                                required
+                                            />
+                                        </div>
+                                    )}
                                 </TabsContent>
-                            )}
-                        </Tabs>
-                    </form>
+
+                                {itemType === 'product' && (
+                                    <TabsContent
+                                        value="stock"
+                                        className="space-y-4 mt-4"
+                                    >
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+                                            <FormInput
+                                                name="openingStock"
+                                                label="Opening Stock"
+                                                type="number"
+                                                placeholder="0"
+                                            />
+
+                                            <FormInput
+                                                name="minStockAlert"
+                                                label="Min Stock Alert"
+                                                type="number"
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                    </TabsContent>
+                                )}
+                            </Tabs>
+                        </div>
+                    )}
                 </CardContent>
                 {/* Footer Actions */}
                 <CardFooter className="flex flex-col-reverse sm:flex-row justify-end gap-3 border-t">
@@ -360,7 +428,8 @@ export function ItemForm({
                         Delete
                     </Button>
                     <Button
-                        type="submit"
+                        type="button"
+                        onClick={form.handleSubmit(handleFormSubmit)}
                         disabled={form.formState.isSubmitting}
                         className="w-full sm:w-auto min-w-[120px]"
                     >
@@ -373,6 +442,14 @@ export function ItemForm({
                 open={showCategoryModal}
                 onOpenChange={setShowCategoryModal}
             />
+
+            {currentShop?.shopId && (
+                <ItemSettingsSheet
+                    open={showSettings}
+                    onOpenChange={setShowSettings}
+                    shopId={currentShop.shopId}
+                />
+            )}
         </FormProvider>
     )
 }

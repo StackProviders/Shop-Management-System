@@ -409,7 +409,20 @@ export const FormCombobox = memo(function FormCombobox<T extends FieldValues>({
                 if (value.length === 1) {
                     return options.find((opt) => opt.value === value[0])?.label
                 }
-                return `${value.length} selected`
+                if (value.length <= 3) {
+                    return value
+                        .map(
+                            (v) => options.find((opt) => opt.value === v)?.label
+                        )
+                        .filter(Boolean)
+                        .join(', ')
+                }
+                const lastThree = value.slice(-3)
+                const labels = lastThree
+                    .map((v) => options.find((opt) => opt.value === v)?.label)
+                    .filter(Boolean)
+                    .join(', ')
+                return `${labels}, Etc`
             }
 
             return (
@@ -490,7 +503,9 @@ export const FormCombobox = memo(function FormCombobox<T extends FieldValues>({
                                     buttonClassName
                                 )}
                             >
-                                {getDisplayValue(field.value)}
+                                <span className="truncate">
+                                    {getDisplayValue(field.value)}
+                                </span>
                                 <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
@@ -532,7 +547,12 @@ export const FormCombobox = memo(function FormCombobox<T extends FieldValues>({
                                                         )}
                                                     />
                                                 )}
-                                                {option.label}
+                                                <span
+                                                    title={option.label}
+                                                    className="truncate max-w-[200px] md:max-w-[250px]"
+                                                >
+                                                    {option.label}
+                                                </span>
                                             </CommandItem>
                                         ))}
                                     </CommandGroup>

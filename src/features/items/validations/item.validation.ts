@@ -13,7 +13,9 @@ export const itemSchema = z.object({
     itemCode: z.string().optional(),
     openingStock: z.number().optional(),
     minStockAlert: z.number().optional(),
-    barcode: z.string().optional()
+    barcode: z.string().optional(),
+    images: z.array(z.string()).optional(),
+    status: z.enum(['draft', 'active', 'inactive']).optional()
 })
 
 export type ItemFormData = z.infer<typeof itemSchema>
