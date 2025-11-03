@@ -5,7 +5,8 @@ import type { Party } from '@/features/parties'
 import { FormModal } from '@/components'
 import { useAppBar } from '@/hooks/use-app-bar'
 import { X, Check } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
+import type { UseFormReturn } from 'react-hook-form'
 
 interface PartyFormData {
     type: 'customer' | 'supplier'
@@ -23,6 +24,19 @@ export default function NewPartyPage() {
     const { currentShop } = useShopContext()
     const { createParty } = usePartyMutations(currentShop?.shopId || '')
     const [initialData, setInitialData] = useState<Partial<Party> | undefined>()
+    const [form, setForm] = useState<UseFormReturn<PartyFormData> | null>(null)
+    const [isDirty, setIsDirty] = useState(false)
+
+    const handleFormChange = useCallback(
+        (formInstance: UseFormReturn<PartyFormData>) => {
+            setForm(formInstance)
+            const subscription = formInstance.watch(() => {
+                setIsDirty(formInstance.formState.isDirty)
+            })
+            return () => subscription.unsubscribe()
+        },
+        []
+    )
 
     useEffect(() => {
         const state = location.state as { duplicateFrom?: PartyFormData }
@@ -79,6 +93,7 @@ export default function NewPartyPage() {
             balance: data.balance,
             status: data.status
         })
+        form?.reset()
         navigate(`/parties/${id}`)
     }
 
@@ -89,16 +104,16 @@ export default function NewPartyPage() {
             title="Create New Party"
             description="Add a new customer or supplier"
             formId="create-party-form"
-            onCancel={() => navigate('/parties')}
+            onCancel={() => form?.reset()}
             submitLabel="Create"
             className="max-w-2xl"
+            isDirty={isDirty}
         >
             <PartyForm
                 party={initialData as Party | undefined}
                 onSubmit={handleCreate}
-                onCancel={() => navigate('/parties')}
-                showActions={false}
                 formId="create-party-form"
+                onFormChange={handleFormChange}
             />
         </FormModal>
     )

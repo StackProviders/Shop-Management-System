@@ -147,7 +147,8 @@ export default function GalleryUpload({
                             Total:{' '}
                             {formatBytes(
                                 files.reduce(
-                                    (acc, file) => acc + file.file.size,
+                                    (acc: number, file: FileWithPreview) =>
+                                        acc + file.file.size,
                                     0
                                 )
                             )}
@@ -162,7 +163,7 @@ export default function GalleryUpload({
             {/* Image Grid */}
             {files.length > 0 && (
                 <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                    {files.map((fileItem) => (
+                    {files.map((fileItem: FileWithPreview) => (
                         <div
                             key={fileItem.id}
                             className="group relative aspect-square"
@@ -226,7 +227,7 @@ export default function GalleryUpload({
                     <TriangleAlert className="h-4 w-4" />
                     <AlertTitle>File upload error(s)</AlertTitle>
                     <AlertDescription>
-                        {errors.map((error, index) => (
+                        {errors.map((error: string, index: number) => (
                             <p key={index} className="last:mb-0">
                                 {error}
                             </p>

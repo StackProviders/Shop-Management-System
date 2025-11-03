@@ -72,7 +72,7 @@ function SubmitButton({
     ...props
 }: React.ComponentProps<typeof Button> & { loading?: boolean }) {
     return (
-        <Button disabled={loading || disabled} {...props}>
+        <Button type="submit" disabled={loading || disabled} {...props}>
             {loading ? <Spinner className="size-4" /> : children}
         </Button>
     )

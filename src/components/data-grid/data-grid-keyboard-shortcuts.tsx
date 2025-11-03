@@ -55,11 +55,6 @@ function DataGridKeyboardShortcutsImpl({
         }
     }, [])
 
-    const onOpenAutoFocus = React.useCallback((event: Event) => {
-        event.preventDefault()
-        inputRef.current?.focus()
-    }, [])
-
     const onInputChange = React.useCallback(
         (event: React.ChangeEvent<HTMLInputElement>) => {
             setInput(event.target.value)
@@ -237,6 +232,7 @@ function DataGridKeyboardShortcutsImpl({
             ) {
                 event.preventDefault()
                 setOpen(true)
+                setTimeout(() => inputRef.current?.focus(), 0)
             }
         }
 
@@ -248,13 +244,13 @@ function DataGridKeyboardShortcutsImpl({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent
-                className="max-w-2xl px-0"
-                onOpenAutoFocus={onOpenAutoFocus}
-                showCloseButton={false}
-            >
-                <DialogClose className="absolute top-6 right-6" asChild>
-                    <Button variant="ghost" size="icon" className="size-6">
+            <DialogContent className="max-w-2xl px-0" showCloseButton={false}>
+                <DialogClose>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-6 right-6 size-6"
+                    >
                         <XIcon />
                     </Button>
                 </DialogClose>

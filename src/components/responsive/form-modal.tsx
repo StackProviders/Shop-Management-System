@@ -1,6 +1,16 @@
-import { ReactNode, memo } from 'react'
+import { ReactNode, memo, useState } from 'react'
 import { ResponsiveModal } from './responsive-modal'
-import { Button, SubmitButton } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogCancel,
+    AlertDialogAction
+} from '@/components/ui/alert-dialog'
 
 interface FormModalProps {
     open: boolean
@@ -9,7 +19,7 @@ interface FormModalProps {
     description?: string
     children: ReactNode
     formId: string
-    onCancel: () => void
+    onCancel?: () => void
     submitLabel?: string
     cancelLabel?: string
     className?: string
@@ -17,6 +27,9 @@ interface FormModalProps {
     showHeader?: boolean
     header?: ReactNode
     isSubmitting?: boolean
+    isDirty?: boolean
+    confirmTitle?: string
+    confirmDescription?: string
 }
 
 export const FormModal = memo(function FormModal({
@@ -33,40 +46,68 @@ export const FormModal = memo(function FormModal({
     contentClassName,
     showHeader,
     header,
-    isSubmitting = false
+    isSubmitting = false,
+    isDirty = false,
+    confirmTitle = 'Discard changes?',
+    confirmDescription = 'Your changes will be lost.'
 }: FormModalProps) {
+    const [confirmOpen, setConfirmOpen] = useState(false)
+
+    const handleOpenChange = (newOpen: boolean) => {
+        if (!newOpen && isDirty) {
+            setConfirmOpen(true)
+        } else {
+            onOpenChange(newOpen)
+        }
+    }
+
+    const handleDiscard = () => {
+        setConfirmOpen(false)
+        onCancel?.()
+        onOpenChange(false)
+    }
+
     return (
-        <ResponsiveModal
-            open={open}
-            onOpenChange={onOpenChange}
-            title={title}
-            description={description}
-            className={className}
-            contentClassName={contentClassName}
-            showHeader={showHeader}
-            header={header}
-            footer={
-                <div className="flex gap-2 w-full">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={onCancel}
-                        disabled={isSubmitting}
-                        className="flex-1"
-                    >
-                        {cancelLabel}
-                    </Button>
-                    <SubmitButton
-                        form={formId}
-                        loading={isSubmitting}
-                        className="flex-1"
-                    >
-                        {submitLabel}
-                    </SubmitButton>
-                </div>
-            }
-        >
-            {children}
-        </ResponsiveModal>
+        <>
+            <ResponsiveModal
+                open={open}
+                onOpenChange={handleOpenChange}
+                title={title}
+                description={description}
+                className={className}
+                contentClassName={contentClassName}
+                showHeader={showHeader}
+                header={header}
+                showCloseButton={!isDirty}
+                formId={formId}
+                isSubmitting={isSubmitting}
+                submitLabel={submitLabel}
+                cancelLabel={cancelLabel}
+            >
+                {children}
+            </ResponsiveModal>
+
+            <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{confirmTitle}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {confirmDescription}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel render={<Button variant="ghost" />}>
+                            Go back
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            render={<Button variant="destructive-outline" />}
+                            onClick={handleDiscard}
+                        >
+                            Discard
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     )
 })

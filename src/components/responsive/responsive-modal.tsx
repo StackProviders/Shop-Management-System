@@ -2,12 +2,12 @@ import { ReactNode } from 'react'
 import { useIsMobile } from '@/hooks/use-mobile'
 import {
     Dialog,
-    DialogContent,
     DialogHeader,
     DialogTitle,
     DialogDescription,
-    DialogBody,
-    DialogFooter
+    DialogFooter,
+    DialogPopup,
+    DialogClose
 } from '@/components/ui/dialog'
 import {
     Drawer,
@@ -15,9 +15,11 @@ import {
     DrawerHeader,
     DrawerTitle,
     DrawerDescription,
-    DrawerFooter
+    DrawerFooter,
+    DrawerClose
 } from '@/components/ui/drawer'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Button, SubmitButton } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 interface ResponsiveModalProps {
@@ -31,6 +33,11 @@ interface ResponsiveModalProps {
     contentClassName?: string
     showHeader?: boolean
     header?: ReactNode
+    showCloseButton?: boolean
+    formId?: string
+    submitLabel?: string
+    cancelLabel?: string
+    isSubmitting?: boolean
 }
 
 export function ResponsiveModal({
@@ -43,9 +50,54 @@ export function ResponsiveModal({
     className,
     contentClassName,
     showHeader = true,
-    header
+    header,
+    showCloseButton = true,
+    formId,
+    submitLabel = 'Save',
+    cancelLabel = 'Cancel',
+    isSubmitting = false
 }: ResponsiveModalProps) {
     const isMobile = useIsMobile()
+
+    const defaultFooter = formId ? (
+        <div className="flex gap-2 w-full justify-end">
+            {isMobile ? (
+                <>
+                    <DrawerClose asChild>
+                        <Button
+                            variant="ghost"
+                            className="flex-1"
+                            disabled={isSubmitting}
+                        >
+                            {cancelLabel}
+                        </Button>
+                    </DrawerClose>
+                    <SubmitButton
+                        form={formId}
+                        className="flex-1"
+                        loading={isSubmitting}
+                    >
+                        {submitLabel}
+                    </SubmitButton>
+                </>
+            ) : (
+                <>
+                    <DialogClose
+                        render={
+                            <Button variant="ghost" disabled={isSubmitting} />
+                        }
+                    >
+                        {cancelLabel}
+                    </DialogClose>
+                    <SubmitButton form={formId} loading={isSubmitting}>
+                        {submitLabel}
+                    </SubmitButton>
+                </>
+            )}
+        </div>
+    ) : null
+
+    const footerContent = footer ?? defaultFooter
 
     if (isMobile) {
         return (
@@ -67,9 +119,9 @@ export function ResponsiveModal({
                             {children}
                         </div>
                     </ScrollArea>
-                    {footer && (
+                    {footerContent && (
                         <DrawerFooter className="flex-shrink-0 border-t bg-background">
-                            {footer}
+                            {footerContent}
                         </DrawerFooter>
                     )}
                 </DrawerContent>
@@ -79,15 +131,16 @@ export function ResponsiveModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent
+            <DialogPopup
                 className={cn(
-                    'flex flex-col max-w-2xl max-h-[90vh] p-0',
+                    'flex flex-col max-w-2xl max-h-[90vh]',
                     className
                 )}
+                showCloseButton={showCloseButton}
             >
                 {showHeader &&
                     (header || (
-                        <DialogHeader className="flex-shrink-0 px-6 pt-6">
+                        <DialogHeader className="flex-shrink-0">
                             {title && <DialogTitle>{title}</DialogTitle>}
                             {description && (
                                 <DialogDescription>
@@ -96,15 +149,15 @@ export function ResponsiveModal({
                             )}
                         </DialogHeader>
                     ))}
-                <DialogBody className="flex-1 overflow-y-auto px-6">
+                <div className="flex-1 overflow-y-auto">
                     <div className={contentClassName}>{children}</div>
-                </DialogBody>
-                {footer && (
-                    <DialogFooter className="flex-shrink-0 px-6 pb-6 border-t pt-4">
-                        {footer}
+                </div>
+                {footerContent && (
+                    <DialogFooter className="flex-shrink-0">
+                        {footerContent}
                     </DialogFooter>
                 )}
-            </DialogContent>
+            </DialogPopup>
         </Dialog>
     )
 }
