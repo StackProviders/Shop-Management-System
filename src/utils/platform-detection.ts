@@ -18,6 +18,9 @@ export interface PlatformInfo {
     isDesktop: boolean
     isAndroid: boolean
     isIOS: boolean
+    isMacOS: boolean
+    isWindows: boolean
+    isLinux: boolean
     isTauri: boolean
     userAgent: string
 }
@@ -63,6 +66,9 @@ export function getPlatform(): PlatformInfo {
         isDesktop: !isMobile && isTauri,
         isAndroid,
         isIOS,
+        isMacOS: platform === 'macos',
+        isWindows: platform === 'windows',
+        isLinux: platform === 'linux',
         isTauri,
         userAgent: navigator.userAgent
     }

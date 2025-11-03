@@ -19,9 +19,14 @@ import {
     SuspenseWithPerf
 } from 'reactfire'
 import { Spinner } from '@/components/ui/spinner'
+import { useMainWindowEventListeners } from '@/hooks/useMainWindowEventListeners'
+import TitleBar from '@/components/titlebar/TitleBar'
 
 function AppContent() {
     const { isDesktop, isMobile } = useMemo(() => getPlatform(), [])
+
+    // Set up global event listeners (keyboard shortcuts, etc.)
+    useMainWindowEventListeners()
 
     useEffect(() => {
         if (isDesktop) {
@@ -67,12 +72,19 @@ function FirestoreWrapper() {
 }
 
 export default function App() {
+    const { isDesktop } = useMemo(() => getPlatform(), [])
+
     return (
-        <SuspenseWithPerf
-            fallback={<Spinner fullScreen={true} className="size-6" />}
-            traceId="app-init"
-        >
-            <FirestoreWrapper />
-        </SuspenseWithPerf>
+        <div className="flex flex-col h-screen w-screen overflow-hidden">
+            {isDesktop && <TitleBar title="Shop Management System" />}
+            <div className="flex-1 overflow-hidden">
+                <SuspenseWithPerf
+                    fallback={<Spinner fullScreen={true} className="size-6" />}
+                    traceId="app-init"
+                >
+                    <FirestoreWrapper />
+                </SuspenseWithPerf>
+            </div>
+        </div>
     )
 }

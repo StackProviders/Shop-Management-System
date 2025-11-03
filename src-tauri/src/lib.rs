@@ -1,11 +1,10 @@
 use tauri_plugin_dialog;
+use tauri::Manager;
 
 mod commands;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    env_logger::init();
-
     let cache_config = tauri_plugin_cache::CacheConfig {
         cache_dir: Some("image_cache".into()),
         cache_file_name: Some("images.json".into()),
@@ -17,6 +16,10 @@ pub fn run() {
     };
 
     let mut builder = tauri::Builder::default()
+        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_log::Builder::new().build())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_persisted_scope::init())
         .plugin(tauri_plugin_cache::init_with_config(cache_config))
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_upload::init())
@@ -39,15 +42,23 @@ pub fn run() {
             .plugin(tauri_plugin_system_info::init());
     }
 
+
     builder
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             #[cfg(desktop)]
-            let _ = app
-                .handle()
-                .plugin(tauri_plugin_updater::Builder::new().build());
+            {
+                let _ = app
+                    .handle()
+                    .plugin(tauri_plugin_updater::Builder::new().build());
+                
+                // Ensure decorations are disabled
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.set_decorations(false);
+                }
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
