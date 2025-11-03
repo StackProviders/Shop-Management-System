@@ -134,8 +134,6 @@ export default function PartyDetailPage() {
                 <PartyForm
                     party={party}
                     onSubmit={handleUpdateParty}
-                    onCancel={() => navigate(`/parties/${party.id}`)}
-                    showActions={false}
                     formId="edit-party-form"
                 />
             </FormModal>

@@ -1,64 +1,51 @@
-import { useRef, forwardRef } from 'react'
 import { Search, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input, InputWrapper } from '@/components/ui/input'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
 export interface SearchInputProps
-    extends React.InputHTMLAttributes<HTMLInputElement> {
+    extends Omit<
+        React.InputHTMLAttributes<HTMLInputElement>,
+        'value' | 'onChange'
+    > {
     value: string
     onValueChange: (value: string) => void
     onClear?: () => void
     wrapperClassName?: string
 }
 
-export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
-    (
-        {
-            value,
-            onValueChange,
-            onClear,
-            className,
-            wrapperClassName,
-            placeholder = 'Search...',
-            ...props
-        },
-        ref
-    ) => {
-        const inputRef = useRef<HTMLInputElement>(null)
-        const finalRef = (ref as React.RefObject<HTMLInputElement>) || inputRef
-
-        const handleClear = () => {
-            onValueChange('')
-            onClear?.()
-            if (finalRef.current) {
-                finalRef.current.focus()
-            }
-        }
-
-        return (
-            <InputWrapper className={cn('relative', wrapperClassName)}>
-                <Search className="size-4" />
-                <Input
-                    ref={finalRef}
-                    value={value}
-                    onChange={(e) => onValueChange(e.target.value)}
-                    placeholder={placeholder}
-                    className={className}
-                    {...props}
-                />
-                <Button
-                    onClick={handleClear}
-                    variant="ghost"
-                    className="absolute right-0"
-                    disabled={value === ''}
-                    type="button"
-                >
-                    {value !== '' && <X size={16} />}
-                </Button>
-            </InputWrapper>
-        )
+export function SearchInput({
+    value,
+    onValueChange,
+    onClear,
+    className,
+    wrapperClassName,
+    placeholder = 'Search...',
+    ...props
+}: SearchInputProps) {
+    const handleClear = () => {
+        onValueChange('')
+        onClear?.()
     }
-)
 
-SearchInput.displayName = 'SearchInput'
+    return (
+        <div className={cn('relative', wrapperClassName)}>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+            <Input
+                value={value}
+                onChange={(e) => onValueChange(e.target.value)}
+                placeholder={placeholder}
+                className={cn('px-5', className)}
+                {...props}
+            />
+            {value !== '' && (
+                <button
+                    onClick={handleClear}
+                    type="button"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 size-7 inline-flex items-center justify-center rounded-md hover:bg-accent transition-colors"
+                >
+                    <X className="size-4" />
+                </button>
+            )}
+        </div>
+    )
+}

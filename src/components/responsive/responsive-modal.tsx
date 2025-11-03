@@ -120,7 +120,7 @@ export function ResponsiveModal({
                         </div>
                     </ScrollArea>
                     {footerContent && (
-                        <DrawerFooter className="flex-shrink-0 border-t bg-background">
+                        <DrawerFooter className="flex-shrink-0">
                             {footerContent}
                         </DrawerFooter>
                     )}

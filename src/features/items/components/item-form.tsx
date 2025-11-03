@@ -11,7 +11,7 @@ import {
     FormTextarea,
     FormCombobox
 } from '@/components/ui/form-fields'
-import { InputGroup, InputAddon, Input } from '@/components/ui/input'
+import { Input } from '@/components/ui/input'
 import {
     FormField,
     FormItem,
@@ -209,25 +209,21 @@ export function ItemForm({
                                                         Item Code
                                                     </FormLabel>
                                                     <FormControl>
-                                                        <InputGroup className="bg-background">
-                                                            <Input
-                                                                {...field}
-                                                                placeholder="Item Code"
-                                                            />
-                                                            <InputAddon>
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    onClick={
-                                                                        generateItemCode
-                                                                    }
-                                                                    className="h-full rounded-none"
-                                                                >
-                                                                    Assign Code
-                                                                </Button>
-                                                            </InputAddon>
-                                                        </InputGroup>
+                                                        <Input
+                                                            {...field}
+                                                            placeholder="Item Code"
+                                                        />
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={
+                                                                generateItemCode
+                                                            }
+                                                            className="h-full rounded-none w-full"
+                                                        >
+                                                            Assign Code
+                                                        </Button>
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>

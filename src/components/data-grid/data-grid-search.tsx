@@ -1,7 +1,6 @@
 import { ChevronDown, ChevronUp, X } from 'lucide-react'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { useDebouncedCallback } from '@/hooks/use-debounced-callback'
 import type { SearchState } from '@/types/data-grid'
 
@@ -156,13 +155,13 @@ function DataGridSearchImpl({
             className="fade-in-0 slide-in-from-top-2 absolute top-4 right-4 z-50 flex animate-in flex-col gap-2 rounded-lg border bg-background p-2 shadow-lg"
         >
             <div className="flex items-center gap-2">
-                <Input
+                <input
                     autoComplete="off"
                     autoCorrect="off"
                     autoCapitalize="off"
                     spellCheck={false}
                     placeholder="Find in table..."
-                    className="h-8 w-64"
+                    className="h-8 w-64 rounded-lg border border-input bg-background px-3 py-1.5 text-sm outline-none ring-ring/24 transition-shadow placeholder:text-muted-foreground/64 focus-visible:border-ring focus-visible:ring-[3px]"
                     ref={inputRef}
                     value={searchQuery}
                     onChange={onChange}

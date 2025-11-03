@@ -91,27 +91,41 @@ function DataTableActionBarAction({
     children,
     ...props
 }: DataTableActionBarActionProps) {
-    const trigger = (
-        <Button
-            variant="secondary"
-            size={size}
-            className={cn(
-                'gap-1.5 border border-secondary bg-secondary/50 hover:bg-secondary/70 [&>svg]:size-3.5',
-                size === 'icon' ? 'size-7' : 'h-7',
-                className
-            )}
-            disabled={disabled || isPending}
-            {...props}
-        >
-            {isPending ? <Loader className="animate-spin" /> : children}
-        </Button>
-    )
-
-    if (!tooltip) return trigger
+    if (!tooltip) {
+        return (
+            <Button
+                variant="secondary"
+                size={size}
+                className={cn(
+                    'gap-1.5 border border-secondary bg-secondary/50 hover:bg-secondary/70 [&>svg]:size-3.5',
+                    size === 'icon' ? 'size-7' : 'h-7',
+                    className
+                )}
+                disabled={disabled || isPending}
+                {...props}
+            >
+                {isPending ? <Loader className="animate-spin" /> : children}
+            </Button>
+        )
+    }
 
     return (
         <Tooltip>
-            <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+            <TooltipTrigger asChild>
+                <Button
+                    variant="secondary"
+                    size={size}
+                    className={cn(
+                        'gap-1.5 border border-secondary bg-secondary/50 hover:bg-secondary/70 [&>svg]:size-3.5',
+                        size === 'icon' ? 'size-7' : 'h-7',
+                        className
+                    )}
+                    disabled={disabled || isPending}
+                    {...props}
+                >
+                    {isPending ? <Loader className="animate-spin" /> : children}
+                </Button>
+            </TooltipTrigger>
             <TooltipContent
                 sideOffset={6}
                 className="border bg-accent font-semibold text-foreground dark:bg-zinc-900 [&>span]:hidden"

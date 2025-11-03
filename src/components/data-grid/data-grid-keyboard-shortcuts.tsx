@@ -9,7 +9,6 @@ import {
     DialogHeader,
     DialogTitle
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { Kbd, KbdGroup } from '@/components/ui/kbd'
 import { Separator } from '@/components/ui/separator'
 
@@ -264,10 +263,10 @@ function DataGridKeyboardShortcutsImpl({
                 <div className="px-6">
                     <div className="relative">
                         <SearchIcon className="-translate-y-1/2 absolute top-1/2 left-3 size-3.5 text-muted-foreground" />
-                        <Input
+                        <input
                             ref={inputRef}
                             placeholder="Search shortcuts..."
-                            className="h-8 pl-8"
+                            className="w-full min-w-0 rounded-[inherit] px-[calc(--spacing(3)-1px)] py-[calc(--spacing(1.5)-1px)] outline-none placeholder:text-muted-foreground/64 h-8 pl-8 border border-input bg-background"
                             value={input}
                             onChange={onInputChange}
                         />
