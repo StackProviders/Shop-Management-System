@@ -15,6 +15,15 @@ export const itemSchema = z.object({
     minStockAlert: z.number().optional(),
     barcode: z.string().optional(),
     images: z.array(z.string()).optional(),
+    customFields: z
+        .array(
+            z.object({
+                name: z.string(),
+                value: z.string(),
+                printInInvoice: z.boolean()
+            })
+        )
+        .optional(),
     status: z.enum(['draft', 'active', 'inactive']).optional()
 })
 

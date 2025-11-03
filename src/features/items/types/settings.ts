@@ -3,6 +3,11 @@ export interface CustomWarrantyPeriod {
     days: number
 }
 
+export interface CustomFieldName {
+    name: string
+    printInInvoice: boolean
+}
+
 export interface ItemSettings {
     id: string
     shopId: string
@@ -24,6 +29,7 @@ export interface ItemSettings {
     }
     warrantyPeriods: string[]
     customWarrantyPeriods: CustomWarrantyPeriod[]
+    customFieldNames?: CustomFieldName[]
     createdAt: Date
     updatedAt: Date
 }
@@ -47,4 +53,5 @@ export interface UpdateItemSettingsData {
     }
     warrantyPeriods?: string[]
     customWarrantyPeriods?: CustomWarrantyPeriod[]
+    customFieldNames?: CustomFieldName[]
 }

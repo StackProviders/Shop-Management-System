@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { WARRANTY_PERIODS } from '@/config/warranty-periods'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Trash2 } from 'lucide-react'
 
 interface ItemSettingsSheetProps {
     open: boolean
@@ -318,6 +318,108 @@ export function ItemSettingsSheet({
                                 })
                             }
                         />
+                    </div>
+                    <Separator />
+
+                    <div>
+                        <Label className="mb-3 block">Custom Fields</Label>
+                        <div className="space-y-3">
+                            {localSettings.customFieldNames?.map(
+                                (field, index) => (
+                                    <div
+                                        key={index}
+                                        className="flex items-center gap-2 p-2 border rounded-md"
+                                    >
+                                        <div className="flex-1">
+                                            <Input
+                                                value={field.name}
+                                                onChange={(e) => {
+                                                    const updated = [
+                                                        ...(localSettings.customFieldNames ||
+                                                            [])
+                                                    ]
+                                                    updated[index] = {
+                                                        ...updated[index],
+                                                        name: e.target.value
+                                                    }
+                                                    setLocalSettings({
+                                                        ...localSettings,
+                                                        customFieldNames:
+                                                            updated
+                                                    })
+                                                }}
+                                                placeholder="Field name (e.g., Colour, Size)"
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Checkbox
+                                                id={`print-${index}`}
+                                                checked={field.printInInvoice}
+                                                onCheckedChange={(checked) => {
+                                                    const updated = [
+                                                        ...(localSettings.customFieldNames ||
+                                                            [])
+                                                    ]
+                                                    updated[index] = {
+                                                        ...updated[index],
+                                                        printInInvoice:
+                                                            !!checked
+                                                    }
+                                                    setLocalSettings({
+                                                        ...localSettings,
+                                                        customFieldNames:
+                                                            updated
+                                                    })
+                                                }}
+                                            />
+                                            <Label
+                                                htmlFor={`print-${index}`}
+                                                className="text-xs cursor-pointer whitespace-nowrap"
+                                            >
+                                                Print
+                                            </Label>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => {
+                                                const updated = (
+                                                    localSettings.customFieldNames ||
+                                                    []
+                                                ).filter((_, i) => i !== index)
+                                                setLocalSettings({
+                                                    ...localSettings,
+                                                    customFieldNames: updated
+                                                })
+                                            }}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                )
+                            )}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    const updated = [
+                                        ...(localSettings.customFieldNames ||
+                                            []),
+                                        { name: '', printInInvoice: false }
+                                    ]
+                                    setLocalSettings({
+                                        ...localSettings,
+                                        customFieldNames: updated
+                                    })
+                                }}
+                                className="w-full"
+                            >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Custom Field
+                            </Button>
+                        </div>
                     </div>
 
                     {localSettings.customFieldSettings.warranty && (

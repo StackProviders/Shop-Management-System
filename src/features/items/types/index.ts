@@ -1,5 +1,11 @@
 export type ItemType = 'product' | 'service'
 
+export interface CustomField {
+    name: string
+    value: string
+    printInInvoice: boolean
+}
+
 export interface Item {
     id: string
     shopId: string
@@ -19,6 +25,7 @@ export interface Item {
     barcode?: string
     description?: string
     taxRate?: number
+    customFields?: CustomField[]
     status?: 'draft' | 'active' | 'inactive'
     createdAt: Date
     updatedAt: Date

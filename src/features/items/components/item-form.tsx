@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Settings, X } from 'lucide-react'
+import { Settings, X, Plus, Trash2 } from 'lucide-react'
 import {
     FormInput,
     FormTextarea,
@@ -26,7 +26,6 @@ import { CategoryForm } from './category-form'
 import { BrandForm } from './brand-form'
 import { useShopContext } from '@/features/shop'
 import { UNITS } from '@/config/units'
-
 import { ItemSettingsSheet } from './item-settings-sheet'
 import { useItemSettings } from '../hooks/use-item-settings'
 import { useBrands } from '../hooks/use-brands'
@@ -34,6 +33,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useDraftItem } from '../hooks/use-draft-item'
 import { WarrantyInput } from './warranty-input'
 import { ItemImageUpload } from './item-image-upload'
+import { Checkbox } from '@/components/ui/checkbox'
 
 interface ItemFormProps {
     type?: ItemType
@@ -53,6 +53,9 @@ export function ItemForm({
     const [showCategoryModal, setShowCategoryModal] = useState(false)
     const [showBrandModal, setShowBrandModal] = useState(false)
     const [showSettings, setShowSettings] = useState(false)
+    const [customFields, setCustomFields] = useState<
+        Array<{ name: string; value: string; printInInvoice: boolean }>
+    >([])
     const { currentShop } = useShopContext()
     const shopId = currentShop?.shopId || 'default'
 
@@ -78,7 +81,7 @@ export function ItemForm({
     })
 
     const handleFormSubmit = async (data: ItemFormData) => {
-        await onSubmit({ ...data, images, status: 'active' })
+        await onSubmit({ ...data, images, customFields, status: 'active' })
         clearDraft()
     }
 
@@ -209,21 +212,22 @@ export function ItemForm({
                                                         Item Code
                                                     </FormLabel>
                                                     <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                            placeholder="Item Code"
-                                                        />
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={
-                                                                generateItemCode
-                                                            }
-                                                            className="h-full rounded-none w-full"
-                                                        >
-                                                            Assign Code
-                                                        </Button>
+                                                        <div className="flex items-center gap-2">
+                                                            <Input
+                                                                {...field}
+                                                                className=""
+                                                                placeholder="Item Code"
+                                                            />
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                onClick={
+                                                                    generateItemCode
+                                                                }
+                                                            >
+                                                                Assign Code
+                                                            </Button>
+                                                        </div>
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -316,6 +320,153 @@ export function ItemForm({
                                             )}
                                         </div>
                                     )}
+
+                                    {/* Dynamic Custom Fields */}
+                                    {settings.customFieldNames &&
+                                        settings.customFieldNames.length >
+                                            0 && (
+                                            <div className="space-y-3 mt-4">
+                                                <Label className="text-sm font-medium">
+                                                    Additional Fields
+                                                </Label>
+                                                {customFields.map(
+                                                    (field, index) => (
+                                                        <div
+                                                            key={index}
+                                                            className="flex items-start gap-2"
+                                                        >
+                                                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                                <Input
+                                                                    value={
+                                                                        field.name
+                                                                    }
+                                                                    onChange={(
+                                                                        e
+                                                                    ) => {
+                                                                        const updated =
+                                                                            [
+                                                                                ...customFields
+                                                                            ]
+                                                                        updated[
+                                                                            index
+                                                                        ] = {
+                                                                            ...updated[
+                                                                                index
+                                                                            ],
+                                                                            name: e
+                                                                                .target
+                                                                                .value
+                                                                        }
+                                                                        setCustomFields(
+                                                                            updated
+                                                                        )
+                                                                    }}
+                                                                    placeholder="Field name"
+                                                                />
+                                                                <Input
+                                                                    value={
+                                                                        field.value
+                                                                    }
+                                                                    onChange={(
+                                                                        e
+                                                                    ) => {
+                                                                        const updated =
+                                                                            [
+                                                                                ...customFields
+                                                                            ]
+                                                                        updated[
+                                                                            index
+                                                                        ] = {
+                                                                            ...updated[
+                                                                                index
+                                                                            ],
+                                                                            value: e
+                                                                                .target
+                                                                                .value
+                                                                        }
+                                                                        setCustomFields(
+                                                                            updated
+                                                                        )
+                                                                    }}
+                                                                    placeholder="Value"
+                                                                />
+                                                            </div>
+                                                            <div className="flex items-center gap-2 pt-2">
+                                                                <Checkbox
+                                                                    id={`custom-print-${index}`}
+                                                                    checked={
+                                                                        field.printInInvoice
+                                                                    }
+                                                                    onCheckedChange={(
+                                                                        checked
+                                                                    ) => {
+                                                                        const updated =
+                                                                            [
+                                                                                ...customFields
+                                                                            ]
+                                                                        updated[
+                                                                            index
+                                                                        ] = {
+                                                                            ...updated[
+                                                                                index
+                                                                            ],
+                                                                            printInInvoice:
+                                                                                !!checked
+                                                                        }
+                                                                        setCustomFields(
+                                                                            updated
+                                                                        )
+                                                                    }}
+                                                                />
+                                                                <Label
+                                                                    htmlFor={`custom-print-${index}`}
+                                                                    className="text-xs cursor-pointer whitespace-nowrap"
+                                                                >
+                                                                    Print
+                                                                </Label>
+                                                            </div>
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() => {
+                                                                    setCustomFields(
+                                                                        customFields.filter(
+                                                                            (
+                                                                                _,
+                                                                                i
+                                                                            ) =>
+                                                                                i !==
+                                                                                index
+                                                                        )
+                                                                    )
+                                                                }}
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                    )
+                                                )}
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setCustomFields([
+                                                            ...customFields,
+                                                            {
+                                                                name: '',
+                                                                value: '',
+                                                                printInInvoice: false
+                                                            }
+                                                        ])
+                                                    }}
+                                                >
+                                                    <Plus className="h-4 w-4 mr-2" />
+                                                    Add Field
+                                                </Button>
+                                            </div>
+                                        )}
                                 </div>
 
                                 {/* Right Column - Image Upload */}
@@ -347,7 +498,7 @@ export function ItemForm({
                                     value="pricing"
                                     className="space-y-4 mt-4"
                                 >
-                                    <div className="max-w-xs">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
                                         <FormInput
                                             name="salePrice"
                                             label="Sale Price"
@@ -355,6 +506,14 @@ export function ItemForm({
                                             placeholder="0.00"
                                             required
                                         />
+                                        {settings.mrpPrice && (
+                                            <FormInput
+                                                name="mrp"
+                                                label="MRP"
+                                                type="number"
+                                                placeholder="0.00"
+                                            />
+                                        )}
                                     </div>
 
                                     {(showWholesalePrice ||

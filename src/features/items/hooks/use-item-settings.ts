@@ -38,6 +38,7 @@ function getDefaultSettings(shopId: string): ItemSettings {
         },
         warrantyPeriods: ['1-year', '2-years'],
         customWarrantyPeriods: [],
+        customFieldNames: [],
         createdAt: new Date(),
         updatedAt: new Date()
     }
