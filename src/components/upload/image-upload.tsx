@@ -1,7 +1,6 @@
 import { ReactNode, memo, useCallback } from 'react'
-import { Upload, X, WifiOff } from 'lucide-react'
+import { Upload, WifiOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
 import { useUpload } from '@/hooks/use-upload'
 import { useOnline } from '@/hooks/use-online'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -83,47 +82,46 @@ const FilePreview = memo(function FilePreview({
 })
 
 const UploadProgress = memo(function UploadProgress({
-    progress,
-    onCancel
+    progress
 }: {
     progress: {
         percentage: number
         bytesTransferred: number
         totalBytes: number
     }
-    onCancel: () => void
 }) {
-    const isMobile = useIsMobile()
-
     return (
-        <div className="space-y-2 md:space-y-3">
-            <div className="flex items-center justify-between">
-                <span className="text-xs md:text-sm font-medium">
-                    Uploading...
-                </span>
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={onCancel}
-                    className="size-7 md:size-9"
-                >
-                    <X className="size-3 md:size-4" />
-                </Button>
-            </div>
-            <Progress value={progress.percentage} className="h-1.5 md:h-2" />
-            <div className="flex justify-between text-[10px] md:text-xs text-muted-foreground">
-                <span>{progress.percentage}%</span>
-                {!isMobile && (
-                    <span>
-                        {(progress.bytesTransferred / 1024 / 1024).toFixed(1)}{' '}
-                        MB /{(progress.totalBytes / 1024 / 1024).toFixed(1)} MB
-                    </span>
-                )}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-md">
+            <div className="relative">
+                <svg className="size-12 -rotate-90" viewBox="0 0 48 48">
+                    <circle
+                        cx="24"
+                        cy="24"
+                        r="20"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        className="text-muted/60"
+                    />
+                    <circle
+                        cx="24"
+                        cy="24"
+                        r="20"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeDasharray={`${2 * Math.PI * 20}`}
+                        strokeDashoffset={`${2 * Math.PI * 20 * (1 - progress.percentage / 100)}`}
+                        className="text-white transition-all duration-300"
+                        strokeLinecap="round"
+                    />
+                </svg>
             </div>
         </div>
     )
 })
+
+export { UploadProgress }
 
 export const ImageUpload = memo(function ImageUpload({
     path,
@@ -180,10 +178,7 @@ export const ImageUpload = memo(function ImageUpload({
             className={cn('w-full max-w-md space-y-3 md:space-y-4', className)}
         >
             {upload.isUploading && upload.uploadProgress ? (
-                <UploadProgress
-                    progress={upload.uploadProgress}
-                    onCancel={handleCancel}
-                />
+                <UploadProgress progress={upload.uploadProgress} />
             ) : (
                 <>
                     <div className="border-2 border-dashed rounded-lg p-4 md:p-8 flex flex-col items-center justify-center gap-2 md:gap-3 hover:border-primary transition-colors">

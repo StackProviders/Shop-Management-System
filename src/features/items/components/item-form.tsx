@@ -33,7 +33,7 @@ import { useBrands } from '../hooks/use-brands'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDraftItem } from '../hooks/use-draft-item'
 import { WarrantyInput } from './warranty-input'
-import CardUpload from '@/components/upload/item-card-gallery'
+import { ItemImageUpload } from './item-image-upload'
 
 interface ItemFormProps {
     type?: ItemType
@@ -49,7 +49,7 @@ export function ItemForm({
     onCancel
 }: ItemFormProps) {
     const [showWholesalePrice, setShowWholesalePrice] = useState(false)
-    const [images] = useState<string[]>([])
+    const [images, setImages] = useState<string[]>([])
     const [showCategoryModal, setShowCategoryModal] = useState(false)
     const [showBrandModal, setShowBrandModal] = useState(false)
     const [showSettings, setShowSettings] = useState(false)
@@ -327,11 +327,10 @@ export function ItemForm({
                                     <Label className="text-sm font-medium">
                                         Images
                                     </Label>
-                                    {/* <ItemImageUpload
+                                    <ItemImageUpload
                                         images={images}
                                         onChange={setImages}
-                                    /> */}
-                                    <CardUpload />
+                                    />
                                 </div>
                             </div>
 

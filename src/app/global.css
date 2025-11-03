@@ -160,6 +160,16 @@
     }
 }
 
+@layer utilities {
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+}
+
 /* Safe area inset variables */
 :root {
     --sat: env(safe-area-inset-top, 0px);

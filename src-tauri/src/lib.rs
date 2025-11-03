@@ -16,8 +16,7 @@ pub fn run() {
         compression_method: Some(tauri_plugin_cache::CompressionMethod::Zlib),
     };
 
-    let builder = tauri::Builder::default()
-        .plugin(tauri_plugin_window_state::Builder::new().build())
+    let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_cache::init_with_config(cache_config))
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_upload::init())
@@ -27,12 +26,18 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build());
 
     #[cfg(any(target_os = "android", target_os = "ios"))]
-    let builder = builder
-        .plugin(tauri_plugin_barcode_scanner::init())
-        .plugin(tauri_plugin_safe_area_insets::init());
+    {
+        builder = builder
+            .plugin(tauri_plugin_barcode_scanner::init())
+            .plugin(tauri_plugin_safe_area_insets::init());
+    }
 
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
-    let builder = builder.plugin(tauri_plugin_system_info::init());
+    {
+        builder = builder
+            .plugin(tauri_plugin_window_state::Builder::new().build())
+            .plugin(tauri_plugin_system_info::init());
+    }
 
     builder
         .plugin(tauri_plugin_shell::init())
