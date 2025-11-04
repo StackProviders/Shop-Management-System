@@ -31,7 +31,7 @@ export function TodoForm({ onSuccess }: TodoFormProps) {
     })
 
     const onSubmit = async (data: FormData) => {
-        await createTodo(data)
+        await createTodo({ ...data, completed: false })
         form.reset()
         onSuccess?.()
     }
