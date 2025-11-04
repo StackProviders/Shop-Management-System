@@ -10,7 +10,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { DetailActionsMenu } from '@/components/detail-actions-menu'
 import { X, Check } from 'lucide-react'
-import NotFoundErrorPage from '../not-found'
+import NotFoundErrorPage from '@/app/pages/not-found'
 import { FormModal } from '@/components'
 
 interface PartyFormData {

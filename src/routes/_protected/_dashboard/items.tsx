@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
-import { useMemo, useState, Suspense } from 'react'
+import { Suspense } from 'react'
+import { useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from '@tanstack/react-router'
 import {
     ListDetailRoot,

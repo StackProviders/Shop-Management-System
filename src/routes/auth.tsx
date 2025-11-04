@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { PublicRoute } from '@/components/auth/auth-guard'
-import AuthPage from '@/app/routes/auth'
+import AuthPage from '@/app/pages/auth'
 import { Suspense } from 'react'
 
 export const Route = createFileRoute('/auth')({
