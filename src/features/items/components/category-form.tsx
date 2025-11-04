@@ -1,7 +1,7 @@
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { FormInput } from '@/components/ui/form-fields'
+import { FormInput } from '@/components/common'
 import { FormModal } from '@/components/responsive/form-modal'
 import { useCategoryActions } from '../hooks/use-category-actions'
 import type { Category } from '../types'

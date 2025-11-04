@@ -14,11 +14,11 @@ import {
     PartyForm
 } from '@/features/parties'
 import { Skeleton } from '@/components/ui/skeleton'
-import { DetailActionsMenu } from '@/components/detail-actions-menu'
 import { X, Check } from 'lucide-react'
 import NotFoundErrorPage from '@/app/pages/not-found'
 import { FormModal } from '@/components'
 import { useCallback } from 'react'
+import { DetailActionsMenu } from '@/components/common'
 
 interface PartyFormData {
     type: 'customer' | 'supplier'

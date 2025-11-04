@@ -8,16 +8,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle
-} from '@/components/ui/alert-dialog'
+import { ConfirmationDialog } from '@/components/common'
 import {
     Item,
     ItemActions,
@@ -137,26 +128,15 @@ export default function ShopItem({
                 </ItemActions>
             </Item>
 
-            <AlertDialog
+            <ConfirmationDialog
                 open={deleteDialogOpen}
                 onOpenChange={setDeleteDialogOpen}
-            >
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Shop</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Are you sure you want to delete &ldquo;{shop.name}
-                            &rdquo;? This action cannot be undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete}>
-                            Delete
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+                onConfirm={handleDelete}
+                title="Delete Shop"
+                description={`Are you sure you want to delete "${shop.name}"? This action cannot be undone.`}
+                confirmText="Delete"
+                variant="destructive"
+            />
         </div>
     )
 }

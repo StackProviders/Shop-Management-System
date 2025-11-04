@@ -3,17 +3,7 @@ import { useAuth } from '@/features/auth'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { LogOut } from 'lucide-react'
 import { VariantProps } from 'class-variance-authority'
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger
-} from '@/components/ui/alert-dialog'
+import { ConfirmationDialog } from '@/components/common'
 import { useNavigate } from '@tanstack/react-router'
 import { Spinner } from '@/components/ui/spinner'
 
@@ -25,7 +15,7 @@ interface LogoutButtonProps {
     children?: ReactNode
     className?: string
     alertOpen?: boolean
-    onAlertClose?: () => void
+    onAlertClose?: (open: boolean) => void
 }
 
 export function LogoutButton({
@@ -88,36 +78,19 @@ export function LogoutButton({
     }
 
     return (
-        <AlertDialog open={alertOpen} onOpenChange={onAlertClose}>
-            <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Are you sure you want to logout? You&apos;ll need to
-                        sign in again to access your account.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isLoggingOut}>
-                        Cancel
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                        disabled={isDisabled}
-                        onClick={(e) => {
-                            e.preventDefault()
-                            handleLogout()
-                        }}
-                    >
-                        {isLoggingOut ? (
-                            <Spinner className="size-4" />
-                        ) : (
-                            showIcon && <LogOut className="size-4" />
-                        )}
-                        <span>Logout</span>
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+        <>
+            {children && (
+                <div onClick={() => onAlertClose?.(true)}>{children}</div>
+            )}
+            <ConfirmationDialog
+                open={alertOpen ?? false}
+                onOpenChange={(open) => onAlertClose?.(open)}
+                onConfirm={handleLogout}
+                title="Confirm Logout"
+                description="Are you sure you want to logout? You'll need to sign in again to access your account."
+                confirmText="Logout"
+                cancelText="Cancel"
+            />
+        </>
     )
 }

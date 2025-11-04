@@ -9,7 +9,7 @@ import {
     DropdownMenuShortcut,
     DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
+import { ConfirmationDialog } from '../dialogs/confirmation-dialog'
 import { Copy, MoreVertical, Pen, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -92,11 +92,14 @@ export function DetailActionsMenu<T extends { id: string }>({
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            <DeleteConfirmationDialog
+            <ConfirmationDialog
                 open={deleteConfirmOpen}
                 onOpenChange={setDeleteConfirmOpen}
                 onConfirm={handleDelete}
+                title="Delete Item"
                 description={`This will permanently delete ${itemName}. This action cannot be undone.`}
+                confirmText="Delete"
+                variant="destructive"
             />
         </>
     )

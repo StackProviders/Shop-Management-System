@@ -21,7 +21,7 @@ import {
     useSidebar
 } from '@/components/ui/sidebar'
 import { useAuth } from '@/features/auth'
-import { LogoutButton } from './auth'
+import { LogoutButton } from '../auth'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 

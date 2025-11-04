@@ -1,5 +1,6 @@
-import { useState, useMemo, ReactNode } from 'react'
-import { RefreshCw, UserRound, Store, Inbox, Plus } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { RefreshCw, UserRound, Store, Plus } from 'lucide-react'
+import { EmptyState, LoadingState } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { SearchInput } from '@/components/ui/search-input'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -9,36 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Heading4 } from '@/components/ui/typography'
 import { LogoutButton } from '../auth'
 import { toast } from 'sonner'
-import { Spinner } from '@/components/ui/spinner'
 import { useCurrentUser } from '@/features/auth'
 import { useShopActions, useShopContext } from '@/features/shop'
 import type { UserShopAccess } from '@/features/shop'
 import { useNavigate } from '@tanstack/react-router'
-
-const EmptyState = ({
-    title,
-    description,
-    action
-}: {
-    title: string
-    description: string
-    action?: ReactNode
-}) => (
-    <div className="flex flex-col items-center gap-3 p-6 text-center">
-        <Inbox className="size-12 text-muted-foreground" />
-        <div>
-            <p className="font-medium text-sm">{title}</p>
-            <p className="text-muted-foreground text-xs">{description}</p>
-        </div>
-        {action}
-    </div>
-)
-
-const LoadingState = () => (
-    <div className="flex justify-center items-center p-12">
-        <Spinner className="size-6" />
-    </div>
-)
 
 export default function ShopDashboard() {
     const [searchQuery, setSearchQuery] = useState('')

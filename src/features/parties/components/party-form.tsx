@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect } from 'react'
 import { Form } from '@/components/ui/form'
-import { FormInput, FormSelect } from '@/components/ui/form-fields'
+import { FormInput, FormSelect } from '@/components/common'
 import { Party } from '../types'
 import { partyFormSchema, PartyFormData } from '../validations'
 

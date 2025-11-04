@@ -51,8 +51,7 @@ export function Image({
                     setLoading(false)
                 }
             })
-            .catch((err) => {
-                console.error('Image cache error:', err)
+            .catch(() => {
                 if (mounted) {
                     setImageSrc(src)
                     setLoading(false)

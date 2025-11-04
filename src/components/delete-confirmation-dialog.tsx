@@ -1,14 +1,4 @@
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle
-} from './ui/alert-dialog'
-import { Button } from '@/components/ui/button'
+import { ConfirmationDialog } from './common/dialogs/confirmation-dialog'
 
 interface DeleteConfirmationDialogProps {
     open: boolean
@@ -30,26 +20,15 @@ export function DeleteConfirmationDialog({
     cancelText = 'Cancel'
 }: DeleteConfirmationDialogProps) {
     return (
-        <AlertDialog open={open} onOpenChange={onOpenChange}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>{title}</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        {description}
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel render={<Button variant="ghost" />}>
-                        {cancelText}
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                        onClick={onConfirm}
-                        render={<Button variant="destructive" />}
-                    >
-                        {confirmText}
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+        <ConfirmationDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            onConfirm={onConfirm}
+            title={title}
+            description={description}
+            confirmText={confirmText}
+            cancelText={cancelText}
+            variant="destructive"
+        />
     )
 }

@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button'
 import { SquarePen } from 'lucide-react'
 import { Party } from '../types'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { DetailActionsMenu } from '@/components/detail-actions-menu'
 import { usePartyMutations } from '@/features/parties'
 import {
     ListDetailContentHeader,
@@ -12,6 +11,7 @@ import {
     ListDetailContentBody
 } from '@/components/ui/list-detail-layout'
 import { useNavigate } from '@tanstack/react-router'
+import { DetailActionsMenu } from '@/components'
 
 interface PartyDetailProps {
     party: Party

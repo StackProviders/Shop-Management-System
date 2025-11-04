@@ -14,7 +14,7 @@ import {
 import { cn } from '@/lib/utils'
 import { ShopSwitcher } from '@/components/shop/shop-switcher'
 import { Button } from '@/components/ui/button'
-import { NavUser } from '@/components/nav-user'
+import { NavUser } from '@/components/sidebar/nav-user'
 import {
     sidebarItems,
     MenuItem,

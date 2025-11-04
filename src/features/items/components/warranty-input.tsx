@@ -1,4 +1,4 @@
-import { FormCombobox } from '@/components/ui/form-fields'
+import { FormCombobox } from '@/components/common'
 import { WARRANTY_PERIODS } from '@/config/warranty-periods'
 import type { CustomWarrantyPeriod } from '../types/settings'
 

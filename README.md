@@ -57,6 +57,13 @@ The application follows the **bulletproof-react** architecture pattern for bette
 - **[/docs/implementation/MIGRATION_COMPLETE.md](./docs/implementation/MIGRATION_COMPLETE.md)** - Migration summary
 - **[/docs/implementation/QUICK_START.md](./docs/implementation/QUICK_START.md)** - Quick start guide
 
+### Component Refactoring (NEW!)
+
+- **[/docs/REFACTORING_SUMMARY.md](./docs/REFACTORING_SUMMARY.md)** - Refactoring overview
+- **[/docs/REFACTORING_GUIDE.md](./docs/REFACTORING_GUIDE.md)** - Detailed migration guide
+- **[/docs/COMPONENT_QUICK_REFERENCE.md](./docs/COMPONENT_QUICK_REFERENCE.md)** - Quick reference
+- **[/docs/COMPONENT_CLEANUP_TODO.md](./docs/COMPONENT_CLEANUP_TODO.md)** - Remaining tasks
+
 ### User Guides
 
 - **[/docs/guides/data-table.md](./docs/guides/data-table.md)** - DataTable usage

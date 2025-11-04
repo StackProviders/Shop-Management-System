@@ -9,7 +9,8 @@ export * from './layouts/protected-layout'
 export { ResponsiveModal } from './responsive/responsive-modal'
 export { FormModal } from './responsive/form-modal'
 
-// Shared
+// Shared (Backward compatibility)
 export { DeleteConfirmationDialog } from './delete-confirmation-dialog'
+export { DetailActionsMenu } from './common'
 export { default as Logo } from './logo'
 export { ThemeSwitcher } from './theme-switcher'

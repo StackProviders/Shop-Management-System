@@ -6,11 +6,7 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Settings, X, Plus, Trash2 } from 'lucide-react'
-import {
-    FormInput,
-    FormTextarea,
-    FormCombobox
-} from '@/components/ui/form-fields'
+import { FormInput, FormTextarea, FormCombobox } from '@/components/common'
 import { Input } from '@/components/ui/input'
 import {
     FormField,
