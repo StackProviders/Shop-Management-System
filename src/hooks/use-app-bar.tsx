@@ -4,7 +4,7 @@ import {
     AppBarConfig
 } from '@/components/providers/app-bar'
 import { useIsMobile } from './use-mobile'
-import { useLocation } from 'react-router'
+import { useLocation } from '@tanstack/react-router'
 
 interface UseAppBarConfig extends AppBarConfig {
     mobileOnly?: boolean

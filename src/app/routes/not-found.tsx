@@ -7,7 +7,7 @@ import {
     ErrorDescription,
     ErrorActions
 } from '@/features/errors/error-base'
-import { useNavigate } from 'react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { Home, ArrowLeft, Search } from 'lucide-react'
 
 export default function NotFoundErrorPage() {
@@ -29,7 +29,7 @@ export default function NotFoundErrorPage() {
             </div>
             <ErrorActions>
                 <Button
-                    onClick={() => navigate(-1)}
+                    onClick={() => window.history.back()}
                     variant="outline"
                     className="w-full sm:w-auto"
                 >
@@ -37,7 +37,7 @@ export default function NotFoundErrorPage() {
                     Go back
                 </Button>
                 <Button
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate({ to: '/' })}
                     className="w-full sm:w-auto"
                 >
                     <Home className="mr-2 h-4 w-4" />

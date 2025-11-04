@@ -33,9 +33,12 @@ import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table'
 import { DataGrid, DataGridCard } from '@/components/ui/data-grid'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
+import { Link, useNavigate, useParams } from '@tanstack/react-router'
+import { useTypedNavigate } from '@/lib/router-utils'
 
 // ❌ WRONG
 import { useAuthActions } from '@/features/auth/hooks/use-auth-actions'
+import { Link } from 'react-router-dom' // Use @tanstack/react-router
 ```
 
 ## Data Display Components
@@ -327,6 +330,58 @@ if (items.length === 0) {
 - [ ] Using proper form validation with Zod?
 - [ ] Providing mobile card view for DataTable?
 
+## Navigation (TanStack Router)
+
+```typescript
+import { Link, useNavigate } from '@tanstack/react-router'
+import { useTypedNavigate } from '@/lib/router-utils'
+
+// Type-safe navigation helper
+const nav = useTypedNavigate()
+nav.toParties()
+nav.toParty('123')
+nav.back()
+
+// Link component
+<Link to="/parties">Parties</Link>
+<Link to="/parties/$id" params={{ id: '123' }}>View Party</Link>
+
+// Navigate hook
+const navigate = useNavigate()
+navigate({ to: '/parties/$id', params: { id: '123' } })
+```
+
+## URL Search Params (nuqs)
+
+```typescript
+import { createStandardSchemaV1, parseAsString, parseAsInteger, useQueryStates } from 'nuqs'
+
+// Define schema
+const searchParams = {
+  search: parseAsString.withDefault(''),
+  page: parseAsInteger.withDefault(1)
+}
+
+// In route file
+export const Route = createFileRoute('/items')({
+  validateSearch: createStandardSchemaV1(searchParams, {
+    partialOutput: true
+  })
+})
+
+// In component
+function ItemsList() {
+  const [{ search, page }, setParams] = useQueryStates(searchParams)
+
+  return (
+    <input
+      value={search}
+      onChange={(e) => setParams({ search: e.target.value })}
+    />
+  )
+}
+```
+
 ## Documentation References
 
 - **Project Rules**: `project-rules.md` - Complete architecture guide
@@ -335,3 +390,5 @@ if (items.length === 0) {
 - **Data Display**: `data-display-patterns.md`
 - **Feature Guide**: `feature-guide.md`
 - **ReactFire Guide**: `reactfire-guide.md`
+- **TanStack Router**: `tanstack-router-guide.md` - Routing guide
+- **nuqs Integration**: `NUQS_INTEGRATION.md` - URL search params

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,
@@ -36,12 +36,12 @@ export function DetailActionsMenu<T extends { id: string }>({
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
     const handleEdit = () => {
-        navigate(editPath)
+        navigate({ to: editPath })
     }
 
     const handleDuplicate = () => {
         const duplicateData = getDuplicateData(item)
-        navigate(duplicatePath, { state: { duplicateFrom: duplicateData } })
+        navigate({ to: duplicatePath, state: duplicateData })
         toast.success(`${itemName} data copied for duplication`)
     }
 
@@ -49,7 +49,7 @@ export function DetailActionsMenu<T extends { id: string }>({
         try {
             await onDelete(item.id)
             setDeleteConfirmOpen(false)
-            navigate(listPath)
+            navigate({ to: listPath })
         } catch {
             // Error handled in mutation hook
         }

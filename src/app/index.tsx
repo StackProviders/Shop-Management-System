@@ -1,6 +1,7 @@
 import './global.css'
 
-import AppRouter from '@/app/router'
+import { RouterProvider } from '@tanstack/react-router'
+import { router } from '@/app/router'
 import AppProvider from '@/app/provider'
 import { useEffect, useMemo } from 'react'
 import { checkForAppUpdates } from '@/lib/updater'
@@ -29,7 +30,7 @@ function AppContent() {
         }
     }, [isDesktop])
 
-    const content = <AppRouter />
+    const content = <RouterProvider router={router} />
 
     return (
         <SafeAreaProvider>

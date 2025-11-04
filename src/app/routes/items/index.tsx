@@ -1,5 +1,5 @@
-import { useMemo, useState, Suspense } from 'react'
-import { useLocation, useNavigate, Outlet, useParams, Link } from 'react-router'
+import { useMemo, useState, Suspense, ReactNode } from 'react'
+import { useLocation, useNavigate, useParams } from '@tanstack/react-router'
 import {
     ListDetailRoot,
     ListDetailHeader,
@@ -10,7 +10,7 @@ import {
     ListDetailContent
 } from '@/components/ui/list-detail-layout'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { buttonVariants } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { SearchInput } from '@/components/ui/search-input'
 import { Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -21,6 +21,7 @@ import { useUnits } from '@/features/items/hooks/use-units'
 
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Item, Category, Unit } from '@/features/items/types'
+import { useTypedNavigate } from '@/lib/router-utils'
 
 const TABS = [
     { value: 'products', label: 'PRODUCTS' },
@@ -29,15 +30,20 @@ const TABS = [
     { value: 'units', label: 'UNITS' }
 ]
 
-function ItemsContent() {
+interface ItemsContentProps {
+    children?: ReactNode
+}
+
+function ItemsContent({ children }: ItemsContentProps) {
     const { pathname } = useLocation()
     const navigate = useNavigate()
-    const { id } = useParams()
+    const { id } = useParams({ strict: false })
     const { currentShop } = useShopContext()
     const [activeTab, setActiveTab] = useState<
         'products' | 'services' | 'category' | 'units'
     >('products')
     const [searchQuery, setSearchQuery] = useState('')
+    const { toCreateItem } = useTypedNavigate()
 
     const shopId = currentShop?.shopId || ''
     const { items, isLoading } = useItems(
@@ -77,7 +83,7 @@ function ItemsContent() {
     }
 
     const handleItemClick = (itemId: string) => {
-        navigate(`/items/${activeTab}/${itemId}`)
+        navigate({ to: `/items/${activeTab}/${itemId}` })
     }
 
     return (
@@ -107,15 +113,10 @@ function ItemsContent() {
                             placeholder="Search..."
                         />
 
-                        <Link
-                            to="/items/create"
-                            className={cn(
-                                buttonVariants({
-                                    variant: 'default',
-                                    size: 'sm'
-                                }),
-                                'w-full'
-                            )}
+                        <Button
+                            onClick={toCreateItem}
+                            size="sm"
+                            className="w-full"
                         >
                             <Plus className="size-4 mr-1" />
                             Add{' '}
@@ -126,7 +127,7 @@ function ItemsContent() {
                                   : activeTab === 'category'
                                     ? 'Category'
                                     : 'Unit'}
-                        </Link>
+                        </Button>
 
                         {(activeTab === 'products' ||
                             activeTab === 'services') && (
@@ -213,7 +214,7 @@ function ItemsContent() {
                 </ListDetailList>
 
                 <ListDetailContent isRouteActive={isRouteActive}>
-                    <Outlet />
+                    {children}
                 </ListDetailContent>
             </ListDetailBody>
         </ListDetailRoot>

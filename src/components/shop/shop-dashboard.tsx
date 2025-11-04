@@ -13,7 +13,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { useCurrentUser } from '@/features/auth'
 import { useShopActions, useShopContext } from '@/features/shop'
 import type { UserShopAccess } from '@/features/shop'
-import { useNavigate } from 'react-router'
+import { useNavigate } from '@tanstack/react-router'
 
 const EmptyState = ({
     title,
@@ -68,7 +68,7 @@ export default function ShopDashboard() {
         const shop = userShops.find((s) => s.shopId === shopId)
         if (shop) {
             setCurrentShop(shop)
-            navigate('/')
+            navigate({ to: '/' })
         }
     }
 

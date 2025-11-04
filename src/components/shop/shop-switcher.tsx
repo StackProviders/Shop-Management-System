@@ -12,7 +12,7 @@ import {
     LayoutGrid
 } from 'lucide-react'
 import { memo, useMemo, useState, useTransition, useEffect } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { useShopContext, getShopAccessHistory } from '@/features/shop'
 import { CreateShopModal } from '@/features/shop'
 import { Button } from '@/components/ui/button'
@@ -214,7 +214,9 @@ export function ShopSwitcher() {
                                                 onClick={(e) => {
                                                     e.stopPropagation()
                                                     setCurrentShop(shop)
-                                                    navigate('/settings')
+                                                    navigate({
+                                                        to: '/settings'
+                                                    })
                                                 }}
                                             >
                                                 <Settings className="size-3.5" />
@@ -226,7 +228,7 @@ export function ShopSwitcher() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                                 className="gap-2 p-2"
-                                onClick={() => navigate('/shops')}
+                                onClick={() => navigate({ to: '/shops' })}
                             >
                                 <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                                     <LayoutGrid className="size-4" />

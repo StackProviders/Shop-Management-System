@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from 'react-router'
+import { useNavigate, useLocation } from '@tanstack/react-router'
 import { useShopContext } from '@/features/shop'
 import { usePartyMutations, PartyForm } from '@/features/parties'
 import type { Party } from '@/features/parties'
@@ -59,13 +59,13 @@ export default function NewPartyPage() {
     useAppBar({
         title: 'Create New Party',
         showBackButton: true,
-        onBack: () => navigate('/parties'),
+        onBack: () => navigate({ to: '/parties' }),
         showBottomActions: true,
         bottomActions: [
             {
                 icon: X,
                 label: 'Cancel',
-                onClick: () => navigate('/parties'),
+                onClick: () => navigate({ to: '/parties' }),
                 variant: 'outline'
             },
             {
@@ -94,13 +94,13 @@ export default function NewPartyPage() {
             status: data.status
         })
         form?.reset()
-        navigate(`/parties/${id}`)
+        navigate({ to: `/parties/${id}` })
     }
 
     return (
         <FormModal
             open={true}
-            onOpenChange={(open) => !open && navigate('/parties')}
+            onOpenChange={(open) => !open && navigate({ to: '/parties' })}
             title="Create New Party"
             description="Add a new customer or supplier"
             formId="create-party-form"

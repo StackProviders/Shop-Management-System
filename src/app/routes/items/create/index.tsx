@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { ItemForm, useCategories, useItemActions } from '@/features/items'
 import type { CreateItemData } from '@/features/items'
 import { useShopContext } from '@/features/shop'
@@ -12,11 +12,11 @@ export default function CreateItemPage() {
 
     const handleAddItem = async (data: CreateItemData) => {
         await createItem(data)
-        navigate('/items')
+        navigate({ to: '/items' })
     }
 
     const handleCancel = () => {
-        navigate('/items')
+        navigate({ to: '/items' })
     }
 
     return (

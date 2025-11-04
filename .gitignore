@@ -35,3 +35,6 @@ upload.keystore.base64
 .tauri
 .tauri-key
 .tauri-key.pub
+
+# TanStack Router generated files
+src/routeTree.gen.ts

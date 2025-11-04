@@ -1,10 +1,10 @@
 import { ProtectedRoute } from '@/components/auth/auth-guard'
-import { Outlet } from 'react-router'
+import { ReactNode } from 'react'
 
-export function ProtectedLayout() {
-    return (
-        <ProtectedRoute>
-            <Outlet />
-        </ProtectedRoute>
-    )
+interface ProtectedLayoutProps {
+    children?: ReactNode
+}
+
+export function ProtectedLayout({ children }: ProtectedLayoutProps) {
+    return <ProtectedRoute>{children}</ProtectedRoute>
 }

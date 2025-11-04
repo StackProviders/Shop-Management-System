@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useCallback, memo } from 'react'
-import { useNavigate, useParams, useLocation } from 'react-router'
+import { useEffect, useMemo, useRef, useCallback, memo, ReactNode } from 'react'
+import { useNavigate, useParams, useLocation } from '@tanstack/react-router'
 import { useShopContext } from '@/features/shop'
 import {
     usePartiesByShop,
@@ -27,7 +27,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { SearchInput } from '@/components/ui/search-input'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { Outlet } from 'react-router'
 import {
     Empty,
     EmptyHeader,
@@ -36,9 +35,15 @@ import {
     EmptyMedia
 } from '@/components/ui/empty'
 
-const PartiesLayout = memo(function PartiesLayout() {
+interface PartiesLayoutProps {
+    children?: ReactNode
+}
+
+const PartiesLayout = memo(function PartiesLayout({
+    children
+}: PartiesLayoutProps) {
     const navigate = useNavigate()
-    const { id } = useParams()
+    const { id } = useParams({ strict: false })
     const location = useLocation()
     const isMobile = useIsMobile()
     const { currentShop } = useShopContext()
@@ -95,17 +100,17 @@ const PartiesLayout = memo(function PartiesLayout() {
 
         if (filteredParties.length > 0) {
             hasNavigated.current = true
-            navigate(`/parties/${filteredParties[0].id}`, { replace: true })
+            navigate({ to: `/parties/${filteredParties[0].id}`, replace: true })
         }
     }, [isRouteActive, filteredParties, navigate])
 
     const handleSelectParty = useCallback(
-        (party: { id: string }) => navigate(`/parties/${party.id}`),
+        (party: { id: string }) => navigate({ to: `/parties/${party.id}` }),
         [navigate]
     )
 
     const handleCreateNew = useCallback(
-        () => navigate('/parties/new'),
+        () => navigate({ to: '/parties/new' }),
         [navigate]
     )
 
@@ -216,14 +221,14 @@ const PartiesLayout = memo(function PartiesLayout() {
                 </ListDetailList>
 
                 <ListDetailContent isRouteActive={isRouteActive}>
-                    <Outlet />
+                    {children}
                 </ListDetailContent>
             </ListDetailBody>
         </ListDetailRoot>
     )
 })
 
-export default function PartiesPage() {
+export default function PartiesPage({ children }: { children?: ReactNode }) {
     return (
         <SuspenseWithPerf
             fallback={
@@ -264,7 +269,7 @@ export default function PartiesPage() {
             }
             traceId="parties-page"
         >
-            <PartiesLayout />
+            <PartiesLayout>{children}</PartiesLayout>
         </SuspenseWithPerf>
     )
 }

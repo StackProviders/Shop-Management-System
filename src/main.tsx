@@ -1,6 +1,5 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { NuqsAdapter } from 'nuqs/adapters/react-router/v7'
 import App from '@/app'
 import { initializeDesktop } from '@/lib/desktop'
 import { firebaseConfig } from '@/lib/firebase'
@@ -25,9 +24,7 @@ if (typeof window !== 'undefined' && '__TAURI__' in window) {
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <React.StrictMode>
         <FirebaseAppProvider firebaseConfig={firebaseConfig} suspense={true}>
-            <NuqsAdapter>
-                <App />
-            </NuqsAdapter>
+            <App />
         </FirebaseAppProvider>
     </React.StrictMode>
 )

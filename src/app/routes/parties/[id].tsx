@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useLocation } from 'react-router'
+import { useParams, useNavigate, useLocation } from '@tanstack/react-router'
 import { useShopContext } from '@/features/shop'
 import { useAppBar } from '@/hooks/use-app-bar'
 import {
@@ -24,7 +24,7 @@ interface PartyFormData {
 }
 
 export default function PartyDetailPage() {
-    const { id } = useParams<{ id: string }>()
+    const { id } = useParams({ strict: false })
     const navigate = useNavigate()
     const location = useLocation()
     const { currentShop } = useShopContext()
@@ -56,7 +56,8 @@ export default function PartyDetailPage() {
     useAppBar({
         title: isEditOpen ? 'Edit Party' : party?.name || 'Party',
         showBackButton: true,
-        onBack: () => navigate(isEditOpen ? `/parties/${id}` : '/parties'),
+        onBack: () =>
+            navigate({ to: isEditOpen ? `/parties/${id}` : '/parties' }),
         actions: isEditOpen ? undefined : actions,
         showBottomActions: true,
         bottomActions: isEditOpen
@@ -64,7 +65,7 @@ export default function PartyDetailPage() {
                   {
                       icon: X,
                       label: 'Cancel',
-                      onClick: () => navigate(`/parties/${id}`),
+                      onClick: () => navigate({ to: `/parties/${id}` }),
                       variant: 'outline'
                   },
                   {
@@ -114,7 +115,7 @@ export default function PartyDetailPage() {
             balance: data.balance,
             status: data.status
         })
-        navigate(`/parties/${party.id}`)
+        navigate({ to: `/parties/${party.id}` })
     }
 
     if (isEditOpen) {
@@ -122,12 +123,12 @@ export default function PartyDetailPage() {
             <FormModal
                 open={true}
                 onOpenChange={(open) =>
-                    !open && navigate(`/parties/${party.id}`)
+                    !open && navigate({ to: `/parties/${party.id}` })
                 }
                 title="Edit Party"
                 description="Update party information"
                 formId="edit-party-form"
-                onCancel={() => navigate(`/parties/${party.id}`)}
+                onCancel={() => navigate({ to: `/parties/${party.id}` })}
                 submitLabel="Update"
                 className="max-w-2xl"
             >
@@ -144,7 +145,7 @@ export default function PartyDetailPage() {
         <div className="h-full overflow-y-auto">
             <PartyDetail
                 party={party}
-                onEdit={() => navigate(`/parties/${id}/edit`)}
+                onEdit={() => navigate({ to: `/parties/${id}/edit` })}
                 shopId={currentShop?.shopId ?? ''}
             />
         </div>

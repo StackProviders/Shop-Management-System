@@ -14,7 +14,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
-import { useNavigate } from 'react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { Spinner } from '@/components/ui/spinner'
 
 interface LogoutButtonProps {
@@ -24,6 +24,8 @@ interface LogoutButtonProps {
     showConfirm?: boolean
     children?: ReactNode
     className?: string
+    alertOpen?: boolean
+    onAlertClose?: () => void
 }
 
 export function LogoutButton({
@@ -32,7 +34,9 @@ export function LogoutButton({
     showIcon = true,
     showConfirm = true,
     children,
-    className
+    className,
+    alertOpen,
+    onAlertClose
 }: LogoutButtonProps) {
     const { logout, authState } = useAuth()
     const navigate = useNavigate()
@@ -42,7 +46,7 @@ export function LogoutButton({
         setIsLoggingOut(true)
         try {
             await logout()
-            navigate('/auth', { replace: true })
+            navigate({ to: '/auth', replace: true })
         } catch (error) {
             console.error('Logout failed:', error)
             setIsLoggingOut(false)
@@ -66,28 +70,26 @@ export function LogoutButton({
         [isLoggingOut, showIcon, isIconSize]
     )
 
-    const LogoutBtn = children ? (
-        <div onClick={showConfirm ? undefined : handleLogout}>{children}</div>
-    ) : (
-        <Button
-            variant={variant}
-            size={size}
-            onClick={showConfirm ? undefined : handleLogout}
-            disabled={isDisabled}
-            aria-label="Logout"
-            className={className}
-        >
-            {buttonContent}
-        </Button>
-    )
-
     if (!showConfirm) {
-        return LogoutBtn
+        return children ? (
+            <div onClick={handleLogout}>{children}</div>
+        ) : (
+            <Button
+                variant={variant}
+                size={size}
+                onClick={handleLogout}
+                disabled={isDisabled}
+                aria-label="Logout"
+                className={className}
+            >
+                {buttonContent}
+            </Button>
+        )
     }
 
     return (
-        <AlertDialog>
-            <AlertDialogTrigger>{LogoutBtn}</AlertDialogTrigger>
+        <AlertDialog open={alertOpen} onOpenChange={onAlertClose}>
+            <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
@@ -101,8 +103,11 @@ export function LogoutButton({
                         Cancel
                     </AlertDialogCancel>
                     <AlertDialogAction
-                        onClick={handleLogout}
                         disabled={isDisabled}
+                        onClick={(e) => {
+                            e.preventDefault()
+                            handleLogout()
+                        }}
                     >
                         {isLoggingOut ? (
                             <Spinner className="size-4" />

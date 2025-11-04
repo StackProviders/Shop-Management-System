@@ -1,6 +1,6 @@
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Link } from 'react-router'
+import { Link } from '@tanstack/react-router'
 import { useShopContext } from '@/features/shop'
 
 export default function HomePage() {

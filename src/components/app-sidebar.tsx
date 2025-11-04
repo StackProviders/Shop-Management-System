@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router'
+import { useNavigate, useLocation } from '@tanstack/react-router'
 import { IconArrowLeft } from '@tabler/icons-react'
 import {
     Sidebar,
@@ -63,7 +63,7 @@ export function AppSidebar() {
                 setActiveItem(item.id)
                 setSelectedSubItem(null)
             } else if (item.route) {
-                navigate(item.route)
+                navigate({ to: item.route })
                 setOpenMobile(false)
             }
         },
@@ -73,7 +73,7 @@ export function AppSidebar() {
     const handleSubItemClick = useCallback(
         (subItem: SidebarSubItem) => {
             if (subItem.route) {
-                navigate(subItem.route)
+                navigate({ to: subItem.route })
                 setSelectedSubItem(subItem.id)
                 setOpenMobile(false)
             }

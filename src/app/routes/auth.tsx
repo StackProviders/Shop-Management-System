@@ -1,12 +1,12 @@
 import { LoginForm, ProfileForm, useAuth } from '@/features/auth/components'
 import { Button } from '@/components/ui/button'
-import { useNavigate } from 'react-router'
+import { useNavigate } from '@tanstack/react-router'
 
 export function AuthPage() {
     const navigate = useNavigate()
 
     const handleAuthSuccess = () => {
-        navigate('/shops')
+        navigate({ to: '/shops' })
     }
 
     return (

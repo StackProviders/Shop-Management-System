@@ -1,5 +1,5 @@
 import { useState, memo } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import {
     Drawer,
@@ -39,7 +39,7 @@ export const MobileBottomActions = memo(() => {
     const navigate = useNavigate()
 
     const handleNavigate = (href: string) => {
-        navigate(href)
+        navigate({ to: href })
         setIsDrawerOpen(false)
     }
 

@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { Navigate, useLocation } from 'react-router'
+import { Navigate } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { Spinner } from '../ui/spinner'
 
@@ -15,20 +15,13 @@ export function AuthGuard({
     redirectTo
 }: AuthGuardProps) {
     const { isAuthenticated, loading } = useAuthStore()
-    const location = useLocation()
 
     if (loading) {
         return <Spinner className="size-8" fullScreen />
     }
 
     if (requireAuth && !isAuthenticated) {
-        return (
-            <Navigate
-                to={redirectTo || '/auth'}
-                state={{ from: location }}
-                replace
-            />
-        )
+        return <Navigate to={redirectTo || '/auth'} replace />
     }
 
     if (!requireAuth && isAuthenticated) {

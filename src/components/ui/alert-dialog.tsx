@@ -1,25 +1,38 @@
+import { memo } from 'react'
 import { AlertDialog as AlertDialogPrimitive } from '@base-ui-components/react/alert-dialog'
-
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 
-function AlertDialog(props: AlertDialogPrimitive.Root.Props) {
+const AlertDialog = memo(function AlertDialog(
+    props: AlertDialogPrimitive.Root.Props
+) {
     return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
-}
+})
 
-function AlertDialogTrigger(props: AlertDialogPrimitive.Trigger.Props) {
+const AlertDialogTrigger = memo(function AlertDialogTrigger({
+    asChild,
+    children,
+    ...props
+}: AlertDialogPrimitive.Trigger.Props & { asChild?: boolean }) {
+    const render =
+        asChild && children
+            ? (children as React.ReactElement<Record<string, unknown>>)
+            : undefined
+
     return (
         <AlertDialogPrimitive.Trigger
             data-slot="alert-dialog-trigger"
+            render={render}
             {...props}
-        />
+        >
+            {!render && children}
+        </AlertDialogPrimitive.Trigger>
     )
-}
+})
 
-function AlertDialogPortal(props: AlertDialogPrimitive.Portal.Props) {
-    return <AlertDialogPrimitive.Portal {...props} />
-}
+const AlertDialogPortal = memo(AlertDialogPrimitive.Portal)
 
-function AlertDialogBackdrop({
+const AlertDialogBackdrop = memo(function AlertDialogBackdrop({
     className,
     ...props
 }: AlertDialogPrimitive.Backdrop.Props) {
@@ -33,9 +46,9 @@ function AlertDialogBackdrop({
             {...props}
         />
     )
-}
+})
 
-function AlertDialogPopup({
+const AlertDialogPopup = memo(function AlertDialogPopup({
     className,
     ...props
 }: AlertDialogPrimitive.Popup.Props) {
@@ -57,9 +70,9 @@ function AlertDialogPopup({
             </div>
         </AlertDialogPortal>
     )
-}
+})
 
-function AlertDialogHeader({
+const AlertDialogHeader = memo(function AlertDialogHeader({
     className,
     ...props
 }: React.ComponentProps<'div'>) {
@@ -73,9 +86,9 @@ function AlertDialogHeader({
             {...props}
         />
     )
-}
+})
 
-function AlertDialogFooter({
+const AlertDialogFooter = memo(function AlertDialogFooter({
     className,
     ...props
 }: React.ComponentProps<'div'>) {
@@ -89,9 +102,9 @@ function AlertDialogFooter({
             {...props}
         />
     )
-}
+})
 
-function AlertDialogTitle({
+const AlertDialogTitle = memo(function AlertDialogTitle({
     className,
     ...props
 }: AlertDialogPrimitive.Title.Props) {
@@ -102,9 +115,9 @@ function AlertDialogTitle({
             {...props}
         />
     )
-}
+})
 
-function AlertDialogDescription({
+const AlertDialogDescription = memo(function AlertDialogDescription({
     className,
     ...props
 }: AlertDialogPrimitive.Description.Props) {
@@ -115,13 +128,105 @@ function AlertDialogDescription({
             {...props}
         />
     )
+})
+
+const AlertDialogClose = memo(function AlertDialogClose({
+    asChild,
+    children,
+    ...props
+}: AlertDialogPrimitive.Close.Props & { asChild?: boolean }) {
+    const render =
+        asChild && children
+            ? (children as React.ReactElement<Record<string, unknown>>)
+            : undefined
+
+    return (
+        <AlertDialogPrimitive.Close
+            data-slot="alert-dialog-close"
+            render={render}
+            {...props}
+        >
+            {!render && children}
+        </AlertDialogPrimitive.Close>
+    )
+})
+
+interface AlertDialogButtonProps extends AlertDialogPrimitive.Close.Props {
+    asChild?: boolean
+    variant?: React.ComponentProps<typeof Button>['variant']
+    size?: React.ComponentProps<typeof Button>['size']
+    render?: React.ReactElement<Record<string, unknown>>
 }
 
-function AlertDialogClose(props: AlertDialogPrimitive.Close.Props) {
+const AlertDialogCancel = memo(function AlertDialogCancel({
+    asChild,
+    children,
+    className,
+    variant = 'outline',
+    size,
+    render,
+    ...props
+}: AlertDialogButtonProps) {
+    const buttonRender =
+        asChild && children
+            ? (children as React.ReactElement<Record<string, unknown>>)
+            : render || (
+                  <Button
+                      variant={variant}
+                      size={size}
+                      className={
+                          typeof className === 'function'
+                              ? undefined
+                              : className
+                      }
+                  />
+              )
+
     return (
-        <AlertDialogPrimitive.Close data-slot="alert-dialog-close" {...props} />
+        <AlertDialogPrimitive.Close
+            data-slot="alert-dialog-cancel"
+            render={buttonRender}
+            {...props}
+        >
+            {!(asChild && children) && children}
+        </AlertDialogPrimitive.Close>
     )
-}
+})
+
+const AlertDialogAction = memo(function AlertDialogAction({
+    asChild,
+    children,
+    className,
+    variant = 'destructive',
+    size,
+    render,
+    ...props
+}: AlertDialogButtonProps) {
+    const buttonRender =
+        asChild && children
+            ? (children as React.ReactElement<Record<string, unknown>>)
+            : render || (
+                  <Button
+                      variant={variant}
+                      size={size}
+                      className={
+                          typeof className === 'function'
+                              ? undefined
+                              : className
+                      }
+                  />
+              )
+
+    return (
+        <AlertDialogPrimitive.Close
+            data-slot="alert-dialog-action"
+            render={buttonRender}
+            {...props}
+        >
+            {!(asChild && children) && children}
+        </AlertDialogPrimitive.Close>
+    )
+})
 
 export {
     AlertDialog,
@@ -136,6 +241,6 @@ export {
     AlertDialogTitle,
     AlertDialogDescription,
     AlertDialogClose,
-    AlertDialogClose as AlertDialogAction,
-    AlertDialogClose as AlertDialogCancel
+    AlertDialogAction,
+    AlertDialogCancel
 }
