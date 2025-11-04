@@ -34,14 +34,14 @@ export function SearchInput({
                 value={value}
                 onChange={(e) => onValueChange(e.target.value)}
                 placeholder={placeholder}
-                className={cn('px-5', className)}
+                className={cn('px-5.5', className)}
                 {...props}
             />
             {value !== '' && (
                 <button
                     onClick={handleClear}
                     type="button"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 size-7 inline-flex items-center justify-center rounded-md hover:bg-accent transition-colors"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 size-7 inline-flex items-center justify-center rounded-md hover:bg-accent transition-colors text-muted-foreground"
                 >
                     <X className="size-4" />
                 </button>
