@@ -21,6 +21,7 @@ interface DetailActionsMenuProps<T> {
     listPath: string
     onDelete: (id: string) => Promise<void>
     getDuplicateData: (item: T) => Record<string, unknown>
+    onEditClick?: () => void
 }
 
 export function DetailActionsMenu<T extends { id: string }>({
@@ -30,13 +31,18 @@ export function DetailActionsMenu<T extends { id: string }>({
     duplicatePath,
     listPath,
     onDelete,
-    getDuplicateData
+    getDuplicateData,
+    onEditClick
 }: DetailActionsMenuProps<T>) {
     const navigate = useNavigate()
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
     const handleEdit = () => {
-        navigate({ to: editPath })
+        if (onEditClick) {
+            onEditClick()
+        } else {
+            navigate({ to: editPath })
+        }
     }
 
     const handleDuplicate = () => {

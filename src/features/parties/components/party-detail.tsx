@@ -11,14 +11,16 @@ import {
     ListDetailContentHeaderInfoItem,
     ListDetailContentBody
 } from '@/components/ui/list-detail-layout'
+import { useNavigate } from '@tanstack/react-router'
 
 interface PartyDetailProps {
     party: Party
-    onEdit: () => void
+    onEdit?: () => void
     shopId: string
 }
 
-export function PartyDetail({ party, onEdit, shopId }: PartyDetailProps) {
+export function PartyDetail({ party, shopId }: PartyDetailProps) {
+    const navigate = useNavigate()
     const { deleteParty } = usePartyMutations(shopId)
     const isMobile = useIsMobile()
     const hasContactInfo = !!(
@@ -26,6 +28,13 @@ export function PartyDetail({ party, onEdit, shopId }: PartyDetailProps) {
         party.contactInfo.email ||
         party.contactInfo.address
     )
+
+    const handleEdit = () => {
+        navigate({
+            to: `/parties/${party.id}/edit`,
+            search: { fromDetail: true }
+        })
+    }
 
     return (
         <>
@@ -41,7 +50,7 @@ export function PartyDetail({ party, onEdit, shopId }: PartyDetailProps) {
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    onClick={onEdit}
+                                    onClick={handleEdit}
                                 >
                                     <SquarePen className="h-4 w-4 text-primary" />
                                 </Button>
@@ -52,6 +61,7 @@ export function PartyDetail({ party, onEdit, shopId }: PartyDetailProps) {
                                     duplicatePath="/parties/new"
                                     listPath="/parties"
                                     onDelete={deleteParty}
+                                    onEditClick={handleEdit}
                                     getDuplicateData={(p) => ({
                                         type: p.type,
                                         name: `${p.name} (Copy)`,

@@ -18,17 +18,29 @@ export function useTypedNavigate() {
             [navigate]
         ),
         toPartyEdit: useCallback(
-            (id: string) =>
-                navigate({ to: '/parties/$id/edit', params: { id } }),
+            (id: string, asModal = false) =>
+                navigate({
+                    to: '/parties/$id/edit',
+                    params: { id },
+                    search: asModal ? { fromDetail: true } : undefined
+                }),
             [navigate]
         ),
         toNewParty: useCallback(
-            () => navigate({ to: '/parties/new' }),
+            (asModal = false) =>
+                navigate({
+                    to: '/parties/new',
+                    search: asModal ? { fromParties: true } : undefined
+                }),
             [navigate]
         ),
         toItems: useCallback(() => navigate({ to: '/items' }), [navigate]),
         toCreateItem: useCallback(
-            () => navigate({ to: '/items/create' }),
+            (asModal = false) =>
+                navigate({
+                    to: '/items/create',
+                    search: asModal ? { fromItems: true } : undefined
+                }),
             [navigate]
         ),
         toProduct: useCallback(

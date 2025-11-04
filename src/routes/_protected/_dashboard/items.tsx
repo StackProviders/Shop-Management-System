@@ -22,7 +22,6 @@ import { useCategories } from '@/features/items/hooks/use-categories'
 import { useUnits } from '@/features/items/hooks/use-units'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Item, Category, Unit } from '@/features/items/types'
-import { useTypedNavigate } from '@/lib/router-utils'
 
 const TABS = [
     { value: 'products', label: 'PRODUCTS' },
@@ -44,7 +43,6 @@ function ItemsPage() {
         'products' | 'services' | 'category' | 'units'
     >('products')
     const [searchQuery, setSearchQuery] = useState('')
-    const { toCreateItem } = useTypedNavigate()
 
     const shopId = currentShop?.shopId || ''
     const { items, isLoading } = useItems(
@@ -120,7 +118,12 @@ function ItemsPage() {
                             />
 
                             <Button
-                                onClick={toCreateItem}
+                                onClick={() =>
+                                    navigate({
+                                        to: '/items/create',
+                                        search: { fromItems: true }
+                                    })
+                                }
                                 size="sm"
                                 className="w-full"
                             >

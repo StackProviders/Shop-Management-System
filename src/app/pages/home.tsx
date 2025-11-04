@@ -20,9 +20,10 @@ export default function HomePage() {
             )}
             <Link
                 className={cn(buttonVariants({ variant: 'outline' }))}
-                to="/shops"
+                to="/items/create"
+                search={{ fromItems: true }}
             >
-                Manage Shops
+                Create Item (Modal)
             </Link>
         </div>
     )

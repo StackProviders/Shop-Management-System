@@ -110,7 +110,7 @@ const PartiesLayout = memo(function PartiesLayout({
     )
 
     const handleCreateNew = useCallback(
-        () => navigate({ to: '/parties/new' }),
+        () => navigate({ to: '/parties/new', search: { fromParties: true } }),
         [navigate]
     )
 
