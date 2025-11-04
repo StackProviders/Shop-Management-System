@@ -1,19 +1,39 @@
 import { useState, ReactNode } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useShopContext } from '@/features/shop'
-import { useItems, useCategories, useUnits } from '@/features/items'
+import { useItems, useCategories } from '@/features/items'
 import { ListDetailPage } from '@/components/common'
+import { DetailActionsMenu } from '@/components/common/actions/detail-actions-menu'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
+import {
+    Item as ItemComponent,
+    ItemContent,
+    ItemTitle,
+    ItemDescription,
+    ItemActions
+} from '@/components/ui/item'
 import { Package } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import type { Item, Category, Unit } from '@/features/items/types'
+import { cn, formatCurrency } from '@/lib/utils'
+import type { Item, Category } from '@/features/items/types'
 
-type TabValue = 'products' | 'services' | 'category' | 'units'
+type TabValue = 'products' | 'services' | 'category'
 
 export default function ItemsPage({ children }: { children?: ReactNode }) {
     const navigate = useNavigate()
     const { currentShop } = useShopContext()
     const [activeTab, setActiveTab] = useState<TabValue>('products')
+    const [sortBy, setSortBy] = useState<'name' | 'stock'>('name')
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+
+    const toggleSort = (field: 'name' | 'stock') => {
+        if (sortBy === field) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+        } else {
+            setSortBy(field)
+            setSortOrder('asc')
+        }
+    }
 
     const shopId = currentShop?.shopId || ''
     const { items } = useItems(
@@ -25,72 +45,144 @@ export default function ItemsPage({ children }: { children?: ReactNode }) {
               : undefined
     )
     const { categories } = useCategories(shopId)
-    const { units } = useUnits(shopId)
 
-    const displayItems: (Item | Category | Unit)[] =
-        activeTab === 'category'
-            ? categories
-            : activeTab === 'units'
-              ? units
-              : items
+    const displayItems: (Item | Category)[] =
+        activeTab === 'category' ? categories : items
 
-    // Cast to satisfy generic constraint (double cast for type safety)
-    const listItems = displayItems as unknown as Array<
+    const sortedItems = [...displayItems].sort((a, b) => {
+        if (sortBy === 'name') {
+            const nameA = a.name.toLowerCase()
+            const nameB = b.name.toLowerCase()
+            return sortOrder === 'asc'
+                ? nameA.localeCompare(nameB)
+                : nameB.localeCompare(nameA)
+        }
+        if (sortBy === 'stock' && 'currentStock' in a && 'currentStock' in b) {
+            return sortOrder === 'asc'
+                ? (a as Item).currentStock - (b as Item).currentStock
+                : (b as Item).currentStock - (a as Item).currentStock
+        }
+        return 0
+    })
+
+    const listItems = sortedItems as unknown as Array<
         Record<string, unknown> & { id: string }
     >
 
     return (
         <ListDetailPage
-            title="Items"
-            icon={<Package className="size-5 text-primary" />}
+            title=""
             items={listItems}
             searchKeys={['name']}
             renderItem={(item, isSelected) => {
-                const typedItem = item as unknown as Item | Category | Unit
-                const isItem = 'currentStock' in typedItem
-                const isUnit = 'shortName' in typedItem
-                const displayName = isUnit
-                    ? (typedItem as Unit).fullName
-                    : (typedItem as Item | Category).name
+                const typedItem = item as unknown as Item | Category
+                const isCategory = activeTab === 'category'
+                const isProduct = activeTab === 'products'
 
                 return (
-                    <div
+                    <ItemComponent
+                        asChild
+                        size="sm"
                         className={cn(
-                            'p-3 hover:bg-accent cursor-pointer transition-colors',
+                            'w-full cursor-pointer hover:bg-accent border-b last:border-b-0',
                             isSelected && 'bg-accent'
                         )}
                     >
-                        <div className="flex items-center justify-between">
-                            <span className="font-medium">{displayName}</span>
-                            {(activeTab === 'products' ||
-                                activeTab === 'services') &&
-                                isItem && (
+                        <div className="w-full">
+                            <ItemContent className="flex-1 min-w-0">
+                                <ItemTitle className="min-w-0 w-full">
+                                    <span className="truncate min-w-0 flex-1 text-start">
+                                        {(typedItem as Item | Category).name}
+                                    </span>
+                                    {isCategory && (
+                                        <Badge
+                                            variant="secondary"
+                                            size="xs"
+                                            className="shrink-0"
+                                        >
+                                            0 items
+                                        </Badge>
+                                    )}
+                                </ItemTitle>
+                                {!isCategory &&
+                                    (typedItem as Item).salePrice > 0 && (
+                                        <ItemDescription>
+                                            {formatCurrency(
+                                                (typedItem as Item).salePrice
+                                            )}
+                                        </ItemDescription>
+                                    )}
+                            </ItemContent>
+                            <ItemActions className="shrink-0 gap-2">
+                                {isProduct && (
                                     <span
                                         className={cn(
-                                            'text-sm font-semibold',
+                                            'font-semibold text-xs sm:text-sm whitespace-nowrap tabular-nums',
                                             (typedItem as Item).currentStock <
                                                 (typedItem as Item)
                                                     .minStockAlert
                                                 ? 'text-destructive'
-                                                : 'text-green-600'
+                                                : 'text-success'
                                         )}
                                     >
                                         {(typedItem as Item).currentStock || 0}
                                     </span>
                                 )}
-                            {activeTab === 'units' && isUnit && (
-                                <span className="text-xs text-muted-foreground">
-                                    {(typedItem as Unit).shortName}
-                                </span>
-                            )}
+                                <div onClick={(e) => e.stopPropagation()}>
+                                    <DetailActionsMenu
+                                        item={typedItem}
+                                        itemName={
+                                            (typedItem as Item | Category).name
+                                        }
+                                        compact
+                                        onEditClick={() =>
+                                            navigate({
+                                                to: `/items/${activeTab}/${item.id}/edit`
+                                            })
+                                        }
+                                        onDeleteClick={() => {
+                                            // Delete handler
+                                        }}
+                                    />
+                                </div>
+                            </ItemActions>
                         </div>
-                    </div>
+                    </ItemComponent>
                 )
             }}
-            onItemClick={(item) =>
+            onItemClick={(item) => {
                 navigate({ to: `/items/${activeTab}/${item.id}` })
+            }}
+            createPath="/items/create?fromItems=true"
+            listHeader={
+                activeTab !== 'category' ? (
+                    <div className="flex items-center gap-3 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium text-muted-foreground border-b bg-muted/30">
+                        <button
+                            onClick={() => toggleSort('name')}
+                            className="flex-1 text-left hover:text-foreground transition-colors"
+                        >
+                            Item Name{' '}
+                            {sortBy === 'name' &&
+                                (sortOrder === 'asc' ? '↑' : '↓')}
+                        </button>
+                        {activeTab === 'products' && (
+                            <button
+                                onClick={() => toggleSort('stock')}
+                                className="text-right hover:text-foreground transition-colors"
+                            >
+                                Stock{' '}
+                                {sortBy === 'stock' &&
+                                    (sortOrder === 'asc' ? '↑' : '↓')}
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-3 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium text-muted-foreground border-b bg-muted/30">
+                        <div className="flex-1 text-left">Category Name</div>
+                        <div className="text-right">Items</div>
+                    </div>
+                )
             }
-            createPath="/items/create"
             headerActions={
                 <Tabs
                     value={activeTab}
@@ -100,7 +192,6 @@ export default function ItemsPage({ children }: { children?: ReactNode }) {
                         <TabsTrigger value="products">Products</TabsTrigger>
                         <TabsTrigger value="services">Services</TabsTrigger>
                         <TabsTrigger value="category">Categories</TabsTrigger>
-                        <TabsTrigger value="units">Units</TabsTrigger>
                     </TabsList>
                 </Tabs>
             }

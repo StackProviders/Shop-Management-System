@@ -16,12 +16,14 @@ import { toast } from 'sonner'
 interface DetailActionsMenuProps<T> {
     item: T
     itemName: string
-    editPath: string
-    duplicatePath: string
-    listPath: string
-    onDelete: (id: string) => Promise<void>
-    getDuplicateData: (item: T) => Record<string, unknown>
+    editPath?: string
+    duplicatePath?: string
+    listPath?: string
+    onDelete?: (id: string) => Promise<void>
+    getDuplicateData?: (item: T) => Record<string, unknown>
     onEditClick?: () => void
+    onDeleteClick?: () => void
+    compact?: boolean
 }
 
 export function DetailActionsMenu<T extends { id: string }>({
@@ -32,7 +34,9 @@ export function DetailActionsMenu<T extends { id: string }>({
     listPath,
     onDelete,
     getDuplicateData,
-    onEditClick
+    onEditClick,
+    onDeleteClick,
+    compact = false
 }: DetailActionsMenuProps<T>) {
     const navigate = useNavigate()
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
@@ -40,24 +44,36 @@ export function DetailActionsMenu<T extends { id: string }>({
     const handleEdit = () => {
         if (onEditClick) {
             onEditClick()
-        } else {
+        } else if (editPath) {
             navigate({ to: editPath })
         }
     }
 
     const handleDuplicate = () => {
-        const duplicateData = getDuplicateData(item)
-        navigate({ to: duplicatePath, state: duplicateData })
-        toast.success(`${itemName} data copied for duplication`)
+        if (getDuplicateData && duplicatePath) {
+            const duplicateData = getDuplicateData(item)
+            navigate({ to: duplicatePath, state: duplicateData })
+            toast.success(`${itemName} data copied for duplication`)
+        }
     }
 
     const handleDelete = async () => {
         try {
-            await onDelete(item.id)
-            setDeleteConfirmOpen(false)
-            navigate({ to: listPath })
+            if (onDelete) {
+                await onDelete(item.id)
+                setDeleteConfirmOpen(false)
+                if (listPath) navigate({ to: listPath })
+            }
         } catch {
             // Error handled in mutation hook
+        }
+    }
+
+    const handleDeleteClick = () => {
+        if (onDeleteClick) {
+            onDeleteClick()
+        } else {
+            setDeleteConfirmOpen(true)
         }
     }
 
@@ -65,7 +81,11 @@ export function DetailActionsMenu<T extends { id: string }>({
         <>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button size="icon" variant="ghost">
+                    <Button
+                        size={compact ? 'sm' : 'icon'}
+                        variant="ghost"
+                        className={compact ? 'h-8 w-8 p-0' : ''}
+                    >
                         <MoreVertical className="size-4" />
                     </Button>
                 </DropdownMenuTrigger>
@@ -73,34 +93,44 @@ export function DetailActionsMenu<T extends { id: string }>({
                     <DropdownMenuItem onClick={handleEdit}>
                         <Pen />
                         Edit
-                        <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
+                        {!compact && (
+                            <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
+                        )}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleDuplicate}>
-                        <Copy />
-                        Duplicate
-                        <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
-                    </DropdownMenuItem>
+                    {getDuplicateData && duplicatePath && (
+                        <DropdownMenuItem onClick={handleDuplicate}>
+                            <Copy />
+                            Duplicate
+                            {!compact && (
+                                <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
+                            )}
+                        </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                         variant="destructive"
-                        onClick={() => setDeleteConfirmOpen(true)}
+                        onClick={handleDeleteClick}
                     >
                         <Trash2 />
                         Delete
-                        <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+                        {!compact && (
+                            <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+                        )}
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            <ConfirmationDialog
-                open={deleteConfirmOpen}
-                onOpenChange={setDeleteConfirmOpen}
-                onConfirm={handleDelete}
-                title="Delete Item"
-                description={`This will permanently delete ${itemName}. This action cannot be undone.`}
-                confirmText="Delete"
-                variant="destructive"
-            />
+            {onDelete && (
+                <ConfirmationDialog
+                    open={deleteConfirmOpen}
+                    onOpenChange={setDeleteConfirmOpen}
+                    onConfirm={handleDelete}
+                    title="Delete Item"
+                    description={`This will permanently delete ${itemName}. This action cannot be undone.`}
+                    confirmText="Delete"
+                    variant="destructive"
+                />
+            )}
         </>
     )
 }

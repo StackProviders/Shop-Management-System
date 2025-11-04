@@ -5,7 +5,6 @@ import {
     ListDetailHeader,
     ListDetailHeaderContent,
     ListDetailHeaderTitle,
-    ListDetailHeaderActions,
     ListDetailBody,
     ListDetailList,
     ListDetailListHeader,
@@ -22,11 +21,12 @@ import {
     EmptyMedia
 } from '@/components/ui/empty'
 import { Plus } from 'lucide-react'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 interface ListDetailPageProps<
     T extends Record<string, unknown> & { id: string }
 > {
-    title: string
+    title?: string
     icon?: ReactNode
     items: T[]
     searchKeys: string[]
@@ -34,6 +34,7 @@ interface ListDetailPageProps<
     onItemClick: (item: T) => void
     createPath: string
     headerActions?: ReactNode
+    listHeader?: ReactNode
     filters?: ReactNode
     stats?: Array<{ label: string; value: number }>
     emptyIcon?: ReactNode
@@ -53,6 +54,7 @@ export function ListDetailPage<
     onItemClick,
     createPath,
     headerActions,
+    listHeader,
     filters,
     stats,
     emptyIcon,
@@ -64,6 +66,7 @@ export function ListDetailPage<
     const { id } = useParams({ strict: false })
     const { pathname } = useLocation()
     const [search, setSearch] = useState('')
+    const isMobile = useIsMobile()
 
     const isRouteActive = useMemo(
         () => !!id || pathname.includes('/new') || pathname.includes('/edit'),
@@ -87,17 +90,24 @@ export function ListDetailPage<
         <ListDetailRoot>
             <ListDetailHeader isRouteActive={isRouteActive}>
                 <ListDetailHeaderContent>
-                    <div className="flex items-center gap-2">
-                        {icon}
-                        <ListDetailHeaderTitle>{title}</ListDetailHeaderTitle>
-                    </div>
-                    <ListDetailHeaderActions>
-                        {headerActions}
-                        <Button onClick={handleCreate} size="sm">
-                            <Plus className="size-4 mr-1" />
-                            Add New
-                        </Button>
-                    </ListDetailHeaderActions>
+                    {(title || icon) && (
+                        <div className="flex items-center gap-2">
+                            {icon}
+                            {title && (
+                                <ListDetailHeaderTitle>
+                                    {title}
+                                </ListDetailHeaderTitle>
+                            )}
+                        </div>
+                    )}
+                    {headerActions}
+                    <Button
+                        onClick={handleCreate}
+                        size={isMobile ? 'sm' : 'default'}
+                    >
+                        <Plus className="size-4" />
+                        {!isMobile && <span className="ml-1">Add Item</span>}
+                    </Button>
                 </ListDetailHeaderContent>
                 {stats && (
                     <div className="flex gap-4 px-4 pb-3">
@@ -121,7 +131,7 @@ export function ListDetailPage<
                         <SearchInput
                             value={search}
                             onValueChange={setSearch}
-                            placeholder={`Search ${title.toLowerCase()}...`}
+                            placeholder={`Search ${title?.toLowerCase() || 'items'}...`}
                         />
                         {filters}
                     </ListDetailListHeader>
@@ -142,14 +152,17 @@ export function ListDetailPage<
                                 </Empty>
                             </div>
                         ) : (
-                            filtered.map((item) => (
-                                <div
-                                    key={item.id}
-                                    onClick={() => onItemClick(item)}
-                                >
-                                    {renderItem(item, id === item.id)}
-                                </div>
-                            ))
+                            <>
+                                {listHeader}
+                                {filtered.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        onClick={() => onItemClick(item)}
+                                    >
+                                        {renderItem(item, id === item.id)}
+                                    </div>
+                                ))}
+                            </>
                         )}
                     </ListDetailListContent>
                 </ListDetailList>
