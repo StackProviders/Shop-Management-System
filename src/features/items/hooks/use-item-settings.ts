@@ -34,7 +34,9 @@ function getDefaultSettings(shopId: string): ItemSettings {
             expDate: true,
             size: true,
             brand: true,
-            warranty: false
+            warranty: false,
+            brandPrintInInvoice: false,
+            warrantyPrintInInvoice: false
         },
         warrantyPeriods: ['1-year', '2-years'],
         customWarrantyPeriods: [],

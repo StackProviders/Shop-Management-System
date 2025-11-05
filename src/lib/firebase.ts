@@ -1,3 +1,5 @@
+import { initializeApp } from 'firebase/app'
+
 export const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
@@ -12,3 +14,5 @@ if (!firebaseConfig.projectId) {
         'Firebase projectId is missing. Please configure .env file with VITE_FIREBASE_PROJECT_ID'
     )
 }
+
+export const app = initializeApp(firebaseConfig)

@@ -103,17 +103,21 @@ export function ResponsiveModal({
         return (
             <Drawer open={open} onOpenChange={onOpenChange}>
                 <DrawerContent className={cn('flex flex-col', className)}>
-                    {showHeader &&
-                        (header || (
-                            <DrawerHeader className="flex-shrink-0">
-                                {title && <DrawerTitle>{title}</DrawerTitle>}
-                                {description && (
-                                    <DrawerDescription>
-                                        {description}
-                                    </DrawerDescription>
-                                )}
-                            </DrawerHeader>
-                        ))}
+                    <DrawerHeader className="flex-shrink-0">
+                        {showHeader &&
+                            (header || (
+                                <>
+                                    {title && (
+                                        <DrawerTitle>{title}</DrawerTitle>
+                                    )}
+                                    {description && (
+                                        <DrawerDescription>
+                                            {description}
+                                        </DrawerDescription>
+                                    )}
+                                </>
+                            ))}
+                    </DrawerHeader>
                     <ScrollArea className="flex-1 overflow-y-auto">
                         <div className={cn('px-4 pb-4', contentClassName)}>
                             {children}

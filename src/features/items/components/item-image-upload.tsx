@@ -1,10 +1,9 @@
-import { useState, useMemo, useEffect, memo, useCallback } from 'react'
+import { useState, useMemo, memo, useCallback } from 'react'
 import { ImagePlus, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 import { Image } from '@/components/ui/image'
-import { useDraftItem } from '../hooks/use-draft-item'
 import { useUpload } from '@/hooks/use-upload'
 import { ResponsiveModal } from '@/components/responsive/responsive-modal'
 import { CircularProgress } from '@/components/upload/circular-progress'
@@ -12,7 +11,6 @@ import { CircularProgress } from '@/components/upload/circular-progress'
 interface ItemImageUploadProps {
     images?: string[]
     onChange?: (images: string[]) => void
-    itemId?: string
 }
 
 const ImageThumbnail = memo(function ImageThumbnail({
@@ -116,36 +114,19 @@ const ImagePreviewActions = memo(function ImagePreviewActions({
 
 export function ItemImageUpload({
     images = [],
-    onChange,
-    itemId
+    onChange
 }: ItemImageUploadProps) {
     const [showDialog, setShowDialog] = useState(false)
     const [selectedIndex, setSelectedIndex] = useState<number>(0)
-    const { draftImages, saveDraftImages } = useDraftItem(itemId)
     const upload = useUpload({
         path: 'items',
         accept: 'image/png, image/jpeg',
         onSuccess: (url) => {
-            const newImages = [...mergedImages, url]
-            onChange?.(newImages)
-            saveDraftImages(newImages)
+            onChange?.([...images, url])
         }
     })
 
-    const mergedImages = useMemo(() => {
-        return images.length > 0 ? images : draftImages
-    }, [images, draftImages])
-
-    useEffect(() => {
-        if (mergedImages.length > 0 && images.length === 0) {
-            onChange?.(mergedImages)
-        }
-    }, [mergedImages, images, onChange])
-
-    const validImages = useMemo(
-        () => mergedImages.filter(Boolean),
-        [mergedImages]
-    )
+    const validImages = useMemo(() => images.filter(Boolean), [images])
     const canAddMore = validImages.length < 5
 
     const handleImageClick = useCallback((imageIndex: number) => {
@@ -168,15 +149,14 @@ export function ItemImageUpload({
     }, [upload])
 
     const handleRemoveImage = useCallback(() => {
-        const actualIndex = mergedImages.indexOf(validImages[selectedIndex])
+        const actualIndex = images.indexOf(validImages[selectedIndex])
         if (actualIndex !== -1) {
-            const newImages = [...mergedImages]
+            const newImages = [...images]
             newImages.splice(actualIndex, 1)
             onChange?.(newImages)
-            saveDraftImages(newImages)
             setShowDialog(false)
         }
-    }, [mergedImages, validImages, selectedIndex, onChange, saveDraftImages])
+    }, [images, validImages, selectedIndex, onChange])
 
     const handleEditImage = useCallback(() => {
         // TODO: Implement edit functionality

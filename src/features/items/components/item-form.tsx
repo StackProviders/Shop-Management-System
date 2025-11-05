@@ -1,11 +1,9 @@
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Settings, X, Plus, Trash2 } from 'lucide-react'
 import { FormInput, FormTextarea, FormCombobox } from '@/components/common'
 import { Input } from '@/components/ui/input'
 import {
@@ -17,51 +15,53 @@ import {
 } from '@/components/ui/form'
 import { itemSchema, type ItemFormData } from '../validations/item.validation'
 import type { ItemType, Category } from '../types'
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { CategoryForm } from './category-form'
 import { BrandForm } from './brand-form'
 import { useShopContext } from '@/features/shop'
 import { UNITS } from '@/config/units'
-import { ItemSettingsSheet } from './item-settings-sheet'
 import { useItemSettings } from '../hooks/use-item-settings'
 import { useBrands } from '../hooks/use-brands'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useDraftItem } from '../hooks/use-draft-item'
+
 import { WarrantyInput } from './warranty-input'
 import { ItemImageUpload } from './item-image-upload'
-import { Checkbox } from '@/components/ui/checkbox'
 
 interface ItemFormProps {
     type?: ItemType
     categories: Category[]
     onSubmit: (data: ItemFormData) => Promise<void>
-    onCancel: () => void
+    onFormStateChange?: (state: {
+        formId: string
+        isDirty: boolean
+        isSubmitting: boolean
+    }) => void
+    isEdit?: boolean
+    defaultValues?: ItemFormData
 }
 
 export function ItemForm({
     type: initialType = 'product',
     categories,
     onSubmit,
-    onCancel
+    onFormStateChange,
+    isEdit = false,
+    defaultValues
 }: ItemFormProps) {
     const [showWholesalePrice, setShowWholesalePrice] = useState(false)
-    const [images, setImages] = useState<string[]>([])
+    const [images, setImages] = useState<string[]>(defaultValues?.images || [])
+    const [initialImages] = useState<string[]>(defaultValues?.images || [])
     const [showCategoryModal, setShowCategoryModal] = useState(false)
     const [showBrandModal, setShowBrandModal] = useState(false)
-    const [showSettings, setShowSettings] = useState(false)
-    const [customFields, setCustomFields] = useState<
-        Array<{ name: string; value: string; printInInvoice: boolean }>
-    >([])
     const { currentShop } = useShopContext()
     const shopId = currentShop?.shopId || 'default'
 
     const { settings, isLoading: settingsLoading } = useItemSettings(shopId)
     const { brands } = useBrands(shopId)
-    const { clearDraft } = useDraftItem()
 
-    const form = useForm({
+    const form = useForm<ItemFormData>({
         resolver: zodResolver(itemSchema),
-        defaultValues: {
+        mode: 'onChange',
+        defaultValues: defaultValues || {
             name: '',
             type: initialType as 'product' | 'service',
             salePrice: 0,
@@ -76,71 +76,90 @@ export function ItemForm({
         }
     })
 
-    const handleFormSubmit = async (data: ItemFormData) => {
-        await onSubmit({ ...data, images, customFields, status: 'active' })
-        clearDraft()
-    }
-
+    const formId = useMemo(() => `${initialType}-form`, [initialType])
+    const imagesChanged =
+        JSON.stringify(images) !== JSON.stringify(initialImages)
+    const isDirty = form.formState.isDirty || imagesChanged
+    const isSubmitting = form.formState.isSubmitting
     const itemType = form.watch('type')
 
-    const generateItemCode = () => {
+    const categoryOptions = useMemo(
+        () => categories.map((cat) => ({ value: cat.id, label: cat.name })),
+        [categories]
+    )
+    const unitOptions = useMemo(
+        () =>
+            UNITS.map((unit) => ({
+                value: unit.id,
+                label: `${unit.fullName} (${unit.shortName})`
+            })),
+        []
+    )
+    const brandOptions = useMemo(
+        () => brands.map((brand) => ({ value: brand.id, label: brand.name })),
+        [brands]
+    )
+
+    const handleCategoryModal = useCallback(
+        () => setShowCategoryModal(true),
+        []
+    )
+    const handleBrandModal = useCallback(() => setShowBrandModal(true), [])
+    const handleWholesalePrice = useCallback(
+        () => setShowWholesalePrice(true),
+        []
+    )
+
+    useEffect(() => {
+        form.setValue('type', initialType as 'product' | 'service', {
+            shouldDirty: false
+        })
+    }, [initialType, form])
+
+    useEffect(() => {
+        onFormStateChange?.({ formId, isDirty, isSubmitting })
+    }, [formId, isDirty, isSubmitting, onFormStateChange])
+
+    const handleFormSubmit = useCallback(
+        async (data: ItemFormData) => {
+            await onSubmit({ ...data, images, status: 'active' })
+        },
+        [onSubmit, images]
+    )
+
+    const cleanupUnusedImages = useCallback(async () => {
+        if (isEdit) return
+        const { deleteUnusedImages } = await import('@/lib/storage')
+        await deleteUnusedImages(images, initialImages)
+    }, [images, initialImages, isEdit])
+
+    useEffect(() => {
+        return () => {
+            if (!isEdit && imagesChanged) {
+                cleanupUnusedImages()
+            }
+        }
+    }, [cleanupUnusedImages, imagesChanged, isEdit])
+
+    const generateItemCode = useCallback(() => {
         const shopName = currentShop?.shopName || ''
         const words = shopName.trim().split(/\s+/)
         const prefix =
             words.length === 1
                 ? shopName.charAt(0).toUpperCase()
                 : words.map((w) => w.charAt(0).toUpperCase()).join('')
-        const uniqueNum = Date.now().toString().slice(-10)
-        const code = `${prefix}-${uniqueNum}`
+        const code = `${prefix}-${Date.now().toString().slice(-10)}`
         form.setValue('itemCode', code)
-    }
+    }, [currentShop?.shopName, form])
 
     return (
         <FormProvider {...form}>
-            <Card className="h-full flex flex-col">
-                <CardHeader className="flex items-center justify-between border-b">
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-lg font-semibold">Add Item</h1>
-                        <div className="flex items-center gap-2">
-                            <Label
-                                htmlFor="type-toggle"
-                                className="text-sm font-medium"
-                            >
-                                Product
-                            </Label>
-                            <Switch
-                                id="type-toggle"
-                                checked={form.watch('type') === 'service'}
-                                onCheckedChange={(checked) =>
-                                    form.setValue(
-                                        'type',
-                                        checked ? 'service' : 'product'
-                                    )
-                                }
-                            />
-                            <Label
-                                htmlFor="type-toggle"
-                                className="text-sm font-medium"
-                            >
-                                Service
-                            </Label>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setShowSettings(true)}
-                        >
-                            <Settings className="size-5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={onCancel}>
-                            <X className="size-5" />
-                        </Button>
-                    </div>
-                </CardHeader>
-
-                <CardContent className="flex-1 overflow-y-auto">
+            <form
+                id={formId}
+                onSubmit={form.handleSubmit(handleFormSubmit)}
+                className="h-full flex flex-col"
+            >
+                <div className="flex-1 overflow-y-auto px-4 pb-4 md:pb-0">
                     {settingsLoading ? (
                         <div className="space-y-6">
                             <Skeleton className="h-10 w-full" />
@@ -161,7 +180,11 @@ export function ItemForm({
                                         {/* Row 1: Item Name */}
                                         <FormInput
                                             name="name"
-                                            label="Item Name"
+                                            label={
+                                                itemType === 'service'
+                                                    ? 'Service Name'
+                                                    : 'Item Name'
+                                            }
                                             placeholder="Enter name"
                                             required
                                         />
@@ -171,16 +194,9 @@ export function ItemForm({
                                                 label="Category"
                                                 placeholder="Select category"
                                                 searchPlaceholder="Search categories..."
-                                                options={categories.map(
-                                                    (cat) => ({
-                                                        value: cat.id,
-                                                        label: cat.name
-                                                    })
-                                                )}
+                                                options={categoryOptions}
                                                 multiple
-                                                onAddNew={() =>
-                                                    setShowCategoryModal(true)
-                                                }
+                                                onAddNew={handleCategoryModal}
                                                 addNewLabel="Add New Category"
                                             />
                                         )}
@@ -193,10 +209,7 @@ export function ItemForm({
                                             label="Unit"
                                             placeholder="Select unit"
                                             searchPlaceholder="Search units..."
-                                            options={UNITS.map((unit) => ({
-                                                value: unit.id,
-                                                label: `${unit.fullName} (${unit.shortName})`
-                                            }))}
+                                            options={unitOptions}
                                         />
 
                                         <FormField
@@ -242,225 +255,47 @@ export function ItemForm({
                                     )}
 
                                     {/* Custom Fields */}
-                                    {settings.customFields && (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
-                                            {settings.customFieldSettings
-                                                .colour && (
-                                                <FormInput
-                                                    name="colour"
-                                                    label="Colour"
-                                                    placeholder="Colour"
-                                                />
-                                            )}
-                                            {settings.customFieldSettings
-                                                .material && (
-                                                <FormInput
-                                                    name="material"
-                                                    label="Material"
-                                                    placeholder="Material"
-                                                />
-                                            )}
-                                            {settings.customFieldSettings
-                                                .mfgDate && (
-                                                <FormInput
-                                                    name="mfgDate"
-                                                    label="Mfg. Date"
-                                                    placeholder="Mfg. Date"
-                                                />
-                                            )}
-                                            {settings.customFieldSettings
-                                                .expDate && (
-                                                <FormInput
-                                                    name="expDate"
-                                                    label="Exp. Date"
-                                                    placeholder="Exp. Date"
-                                                />
-                                            )}
-                                            {settings.customFieldSettings
-                                                .size && (
-                                                <FormInput
-                                                    name="size"
-                                                    label="Size"
-                                                    placeholder="Size"
-                                                />
-                                            )}
-                                            {settings.customFieldSettings
-                                                .brand && (
-                                                <FormCombobox
-                                                    name="brand"
-                                                    label="Brand"
-                                                    placeholder="Select brand"
-                                                    searchPlaceholder="Search brands..."
-                                                    options={brands.map(
-                                                        (brand) => ({
-                                                            value: brand.id,
-                                                            label: brand.name
-                                                        })
-                                                    )}
-                                                    onAddNew={() =>
-                                                        setShowBrandModal(true)
-                                                    }
-                                                    addNewLabel="Add New Brand"
-                                                />
-                                            )}
-                                            {settings.customFieldSettings
-                                                .warranty && (
-                                                <WarrantyInput
-                                                    availablePeriods={
-                                                        settings.warrantyPeriods
-                                                    }
-                                                    customPeriods={
-                                                        settings.customWarrantyPeriods
-                                                    }
-                                                />
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Dynamic Custom Fields */}
                                     {settings.customFieldNames &&
                                         settings.customFieldNames.length >
                                             0 && (
-                                            <div className="space-y-3 mt-4">
-                                                <Label className="text-sm font-medium">
-                                                    Additional Fields
-                                                </Label>
-                                                {customFields.map(
-                                                    (field, index) => (
-                                                        <div
-                                                            key={index}
-                                                            className="flex items-start gap-2"
-                                                        >
-                                                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                                                <Input
-                                                                    value={
-                                                                        field.name
-                                                                    }
-                                                                    onChange={(
-                                                                        e
-                                                                    ) => {
-                                                                        const updated =
-                                                                            [
-                                                                                ...customFields
-                                                                            ]
-                                                                        updated[
-                                                                            index
-                                                                        ] = {
-                                                                            ...updated[
-                                                                                index
-                                                                            ],
-                                                                            name: e
-                                                                                .target
-                                                                                .value
-                                                                        }
-                                                                        setCustomFields(
-                                                                            updated
-                                                                        )
-                                                                    }}
-                                                                    placeholder="Field name"
-                                                                />
-                                                                <Input
-                                                                    value={
-                                                                        field.value
-                                                                    }
-                                                                    onChange={(
-                                                                        e
-                                                                    ) => {
-                                                                        const updated =
-                                                                            [
-                                                                                ...customFields
-                                                                            ]
-                                                                        updated[
-                                                                            index
-                                                                        ] = {
-                                                                            ...updated[
-                                                                                index
-                                                                            ],
-                                                                            value: e
-                                                                                .target
-                                                                                .value
-                                                                        }
-                                                                        setCustomFields(
-                                                                            updated
-                                                                        )
-                                                                    }}
-                                                                    placeholder="Value"
-                                                                />
-                                                            </div>
-                                                            <div className="flex items-center gap-2 pt-2">
-                                                                <Checkbox
-                                                                    id={`custom-print-${index}`}
-                                                                    checked={
-                                                                        field.printInInvoice
-                                                                    }
-                                                                    onCheckedChange={(
-                                                                        checked
-                                                                    ) => {
-                                                                        const updated =
-                                                                            [
-                                                                                ...customFields
-                                                                            ]
-                                                                        updated[
-                                                                            index
-                                                                        ] = {
-                                                                            ...updated[
-                                                                                index
-                                                                            ],
-                                                                            printInInvoice:
-                                                                                !!checked
-                                                                        }
-                                                                        setCustomFields(
-                                                                            updated
-                                                                        )
-                                                                    }}
-                                                                />
-                                                                <Label
-                                                                    htmlFor={`custom-print-${index}`}
-                                                                    className="text-xs cursor-pointer whitespace-nowrap"
-                                                                >
-                                                                    Print
-                                                                </Label>
-                                                            </div>
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() => {
-                                                                    setCustomFields(
-                                                                        customFields.filter(
-                                                                            (
-                                                                                _,
-                                                                                i
-                                                                            ) =>
-                                                                                i !==
-                                                                                index
-                                                                        )
-                                                                    )
-                                                                }}
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </Button>
-                                                        </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+                                                {settings.customFieldNames.map(
+                                                    (field) => (
+                                                        <FormInput
+                                                            key={field.name}
+                                                            name={field.name}
+                                                            label={field.name}
+                                                            placeholder={
+                                                                field.name
+                                                            }
+                                                        />
                                                     )
                                                 )}
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => {
-                                                        setCustomFields([
-                                                            ...customFields,
-                                                            {
-                                                                name: '',
-                                                                value: '',
-                                                                printInInvoice: false
-                                                            }
-                                                        ])
-                                                    }}
-                                                >
-                                                    <Plus className="h-4 w-4 mr-2" />
-                                                    Add Field
-                                                </Button>
+                                                {settings.customFieldSettings
+                                                    .brand && (
+                                                    <FormCombobox
+                                                        name="brand"
+                                                        label="Brand"
+                                                        placeholder="Select brand"
+                                                        searchPlaceholder="Search brands..."
+                                                        options={brandOptions}
+                                                        onAddNew={
+                                                            handleBrandModal
+                                                        }
+                                                        addNewLabel="Add New Brand"
+                                                    />
+                                                )}
+                                                {settings.customFieldSettings
+                                                    .warranty && (
+                                                    <WarrantyInput
+                                                        availablePeriods={
+                                                            settings.warrantyPeriods
+                                                        }
+                                                        customPeriods={
+                                                            settings.customWarrantyPeriods
+                                                        }
+                                                    />
+                                                )}
                                             </div>
                                         )}
                                 </div>
@@ -478,7 +313,11 @@ export function ItemForm({
                             </div>
 
                             {/* Tabs Section */}
-                            <Tabs defaultValue="pricing" className="w-full">
+                            <Tabs
+                                key={itemType}
+                                defaultValue="pricing"
+                                className="w-full"
+                            >
                                 <TabsList variant="line">
                                     <TabsTrigger value="pricing">
                                         Pricing
@@ -502,43 +341,44 @@ export function ItemForm({
                                             placeholder="0.00"
                                             required
                                         />
-                                        {settings.mrpPrice && (
-                                            <FormInput
-                                                name="mrp"
-                                                label="MRP"
-                                                type="number"
-                                                placeholder="0.00"
-                                            />
-                                        )}
+                                        {settings.mrpPrice &&
+                                            itemType === 'product' && (
+                                                <FormInput
+                                                    name="mrp"
+                                                    label="MRP"
+                                                    type="number"
+                                                    placeholder="0.00"
+                                                />
+                                            )}
                                     </div>
 
-                                    {(showWholesalePrice ||
-                                        settings.wholesalePrice) && (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
-                                            <FormInput
-                                                name="wholesalePrice"
-                                                label="Wholesale Price"
-                                                type="number"
-                                                placeholder="0.00"
-                                            />
-                                            <FormInput
-                                                name="minWholesaleQty"
-                                                label="Minimum Wholesale Qty"
-                                                type="number"
-                                                placeholder="0"
-                                            />
-                                        </div>
-                                    )}
+                                    {itemType === 'product' &&
+                                        (showWholesalePrice ||
+                                            settings.wholesalePrice) && (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+                                                <FormInput
+                                                    name="wholesalePrice"
+                                                    label="Wholesale Price"
+                                                    type="number"
+                                                    placeholder="0.00"
+                                                />
+                                                <FormInput
+                                                    name="minWholesaleQty"
+                                                    label="Minimum Wholesale Qty"
+                                                    type="number"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                        )}
 
-                                    {!showWholesalePrice &&
+                                    {itemType === 'product' &&
+                                        !showWholesalePrice &&
                                         !settings.wholesalePrice && (
                                             <Button
                                                 type="button"
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={() =>
-                                                    setShowWholesalePrice(true)
-                                                }
+                                                onClick={handleWholesalePrice}
                                                 className="px-0 text-primary h-auto"
                                             >
                                                 + Add Wholesale Price
@@ -583,27 +423,8 @@ export function ItemForm({
                             </Tabs>
                         </div>
                     )}
-                </CardContent>
-                {/* Footer Actions */}
-                <CardFooter className="flex flex-col-reverse sm:flex-row justify-end gap-3 border-t">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={onCancel}
-                        className="w-full sm:w-auto"
-                    >
-                        Delete
-                    </Button>
-                    <Button
-                        type="button"
-                        onClick={form.handleSubmit(handleFormSubmit)}
-                        disabled={form.formState.isSubmitting}
-                        className="w-full sm:w-auto min-w-[120px]"
-                    >
-                        {form.formState.isSubmitting ? 'Updating...' : 'Update'}
-                    </Button>
-                </CardFooter>
-            </Card>
+                </div>
+            </form>
 
             <CategoryForm
                 open={showCategoryModal}
@@ -611,14 +432,6 @@ export function ItemForm({
             />
 
             <BrandForm open={showBrandModal} onOpenChange={setShowBrandModal} />
-
-            {currentShop?.shopId && (
-                <ItemSettingsSheet
-                    open={showSettings}
-                    onOpenChange={setShowSettings}
-                    shopId={currentShop.shopId}
-                />
-            )}
         </FormProvider>
     )
 }

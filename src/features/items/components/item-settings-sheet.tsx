@@ -64,7 +64,7 @@ export function ItemSettingsSheet({
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="flex flex-col">
+            <SheetContent className="flex flex-col w-76 md:w-96">
                 <SheetHeader>
                     <SheetTitle>Item Settings</SheetTitle>
                 </SheetHeader>
@@ -100,126 +100,17 @@ export function ItemSettingsSheet({
 
                     <div>
                         <div className="flex items-center justify-between">
-                            <Label>Item Custom Fields</Label>
-                            <Switch
-                                checked={localSettings.customFields}
-                                onCheckedChange={(checked) =>
-                                    setLocalSettings({
-                                        ...localSettings,
-                                        customFields: checked
-                                    })
-                                }
-                            />
-                        </div>
-                        {localSettings.customFields && (
-                            <div className="ml-4 mt-3 space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <Label className="text-sm text-muted-foreground">
-                                        Colour
-                                    </Label>
-                                    <Switch
+                            <Label>Brand</Label>
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-1.5">
+                                    <Checkbox
+                                        id="brand-print"
                                         checked={
                                             localSettings.customFieldSettings
-                                                .colour
+                                                .brandPrintInInvoice
                                         }
-                                        onCheckedChange={(checked) =>
-                                            setLocalSettings({
-                                                ...localSettings,
-                                                customFieldSettings: {
-                                                    ...localSettings.customFieldSettings,
-                                                    colour: checked
-                                                }
-                                            })
-                                        }
-                                    />
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <Label className="text-sm text-muted-foreground">
-                                        Material
-                                    </Label>
-                                    <Switch
-                                        checked={
-                                            localSettings.customFieldSettings
-                                                .material
-                                        }
-                                        onCheckedChange={(checked) =>
-                                            setLocalSettings({
-                                                ...localSettings,
-                                                customFieldSettings: {
-                                                    ...localSettings.customFieldSettings,
-                                                    material: checked
-                                                }
-                                            })
-                                        }
-                                    />
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <Label className="text-sm text-muted-foreground">
-                                        Mfg. Date
-                                    </Label>
-                                    <Switch
-                                        checked={
-                                            localSettings.customFieldSettings
-                                                .mfgDate
-                                        }
-                                        onCheckedChange={(checked) =>
-                                            setLocalSettings({
-                                                ...localSettings,
-                                                customFieldSettings: {
-                                                    ...localSettings.customFieldSettings,
-                                                    mfgDate: checked
-                                                }
-                                            })
-                                        }
-                                    />
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <Label className="text-sm text-muted-foreground">
-                                        Exp. Date
-                                    </Label>
-                                    <Switch
-                                        checked={
-                                            localSettings.customFieldSettings
-                                                .expDate
-                                        }
-                                        onCheckedChange={(checked) =>
-                                            setLocalSettings({
-                                                ...localSettings,
-                                                customFieldSettings: {
-                                                    ...localSettings.customFieldSettings,
-                                                    expDate: checked
-                                                }
-                                            })
-                                        }
-                                    />
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <Label className="text-sm text-muted-foreground">
-                                        Size
-                                    </Label>
-                                    <Switch
-                                        checked={
-                                            localSettings.customFieldSettings
-                                                .size
-                                        }
-                                        onCheckedChange={(checked) =>
-                                            setLocalSettings({
-                                                ...localSettings,
-                                                customFieldSettings: {
-                                                    ...localSettings.customFieldSettings,
-                                                    size: checked
-                                                }
-                                            })
-                                        }
-                                    />
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <Label className="text-sm text-muted-foreground">
-                                        Brand
-                                    </Label>
-                                    <Switch
-                                        checked={
-                                            localSettings.customFieldSettings
+                                        disabled={
+                                            !localSettings.customFieldSettings
                                                 .brand
                                         }
                                         onCheckedChange={(checked) =>
@@ -227,41 +118,105 @@ export function ItemSettingsSheet({
                                                 ...localSettings,
                                                 customFieldSettings: {
                                                     ...localSettings.customFieldSettings,
-                                                    brand: checked
+                                                    brandPrintInInvoice:
+                                                        !!checked
                                                 }
                                             })
                                         }
                                     />
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <Label className="text-sm text-muted-foreground">
-                                        Warranty
+                                    <Label
+                                        htmlFor="brand-print"
+                                        className="text-xs cursor-pointer text-muted-foreground"
+                                    >
+                                        Print
                                     </Label>
-                                    <Switch
+                                </div>
+                                <Switch
+                                    checked={
+                                        localSettings.customFieldSettings.brand
+                                    }
+                                    onCheckedChange={(checked) =>
+                                        setLocalSettings({
+                                            ...localSettings,
+                                            customFieldSettings: {
+                                                ...localSettings.customFieldSettings,
+                                                brand: checked,
+                                                brandPrintInInvoice: checked
+                                                    ? localSettings
+                                                          .customFieldSettings
+                                                          .brandPrintInInvoice
+                                                    : false
+                                            }
+                                        })
+                                    }
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <Separator />
+
+                    <div>
+                        <div className="flex items-center justify-between">
+                            <Label>Warranty</Label>
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-1.5">
+                                    <Checkbox
+                                        id="warranty-print"
                                         checked={
                                             localSettings.customFieldSettings
+                                                .warrantyPrintInInvoice
+                                        }
+                                        disabled={
+                                            !localSettings.customFieldSettings
                                                 .warranty
                                         }
-                                        onCheckedChange={(checked) => {
-                                            const allPeriods =
-                                                WARRANTY_PERIODS.filter(
-                                                    (p) => p.value !== 'custom'
-                                                ).map((p) => p.value)
+                                        onCheckedChange={(checked) =>
                                             setLocalSettings({
                                                 ...localSettings,
                                                 customFieldSettings: {
                                                     ...localSettings.customFieldSettings,
-                                                    warranty: checked
-                                                },
-                                                warrantyPeriods: checked
-                                                    ? allPeriods
-                                                    : []
+                                                    warrantyPrintInInvoice:
+                                                        !!checked
+                                                }
                                             })
-                                        }}
+                                        }
                                     />
+                                    <Label
+                                        htmlFor="warranty-print"
+                                        className="text-xs cursor-pointer text-muted-foreground"
+                                    >
+                                        Print
+                                    </Label>
                                 </div>
+                                <Switch
+                                    checked={
+                                        localSettings.customFieldSettings
+                                            .warranty
+                                    }
+                                    onCheckedChange={(checked) => {
+                                        const allPeriods =
+                                            WARRANTY_PERIODS.filter(
+                                                (p) => p.value !== 'custom'
+                                            ).map((p) => p.value)
+                                        setLocalSettings({
+                                            ...localSettings,
+                                            customFieldSettings: {
+                                                ...localSettings.customFieldSettings,
+                                                warranty: checked,
+                                                warrantyPrintInInvoice: checked
+                                                    ? localSettings
+                                                          .customFieldSettings
+                                                          .warrantyPrintInInvoice
+                                                    : false
+                                            },
+                                            warrantyPeriods: checked
+                                                ? allPeriods
+                                                : []
+                                        })
+                                    }}
+                                />
                             </div>
-                        )}
+                        </div>
                     </div>
                     <Separator />
 
@@ -322,80 +277,97 @@ export function ItemSettingsSheet({
                     <Separator />
 
                     <div>
-                        <Label className="mb-3 block">Custom Fields</Label>
+                        <div className="flex items-center justify-between mb-3">
+                            <Label>Custom Fields</Label>
+                            <span className="text-xs text-muted-foreground">
+                                {localSettings.customFieldNames?.length || 0}/8
+                            </span>
+                        </div>
                         <div className="space-y-3">
                             {localSettings.customFieldNames?.map(
                                 (field, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center gap-2 p-2 border rounded-md"
-                                    >
-                                        <div className="flex-1">
-                                            <Input
-                                                value={field.name}
-                                                onChange={(e) => {
-                                                    const updated = [
-                                                        ...(localSettings.customFieldNames ||
-                                                            [])
-                                                    ]
-                                                    updated[index] = {
-                                                        ...updated[index],
-                                                        name: e.target.value
-                                                    }
-                                                    setLocalSettings({
-                                                        ...localSettings,
-                                                        customFieldNames:
-                                                            updated
-                                                    })
-                                                }}
-                                                placeholder="Field name (e.g., Colour, Size)"
-                                            />
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Checkbox
-                                                id={`print-${index}`}
-                                                checked={field.printInInvoice}
-                                                onCheckedChange={(checked) => {
-                                                    const updated = [
-                                                        ...(localSettings.customFieldNames ||
-                                                            [])
-                                                    ]
-                                                    updated[index] = {
-                                                        ...updated[index],
-                                                        printInInvoice:
-                                                            !!checked
-                                                    }
-                                                    setLocalSettings({
-                                                        ...localSettings,
-                                                        customFieldNames:
-                                                            updated
-                                                    })
-                                                }}
-                                            />
-                                            <Label
-                                                htmlFor={`print-${index}`}
-                                                className="text-xs cursor-pointer whitespace-nowrap"
-                                            >
-                                                Print
+                                    <div key={index} className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <Label className="text-sm">
+                                                {field.name || 'New Field'}
                                             </Label>
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Checkbox
+                                                        id={`print-${index}`}
+                                                        checked={
+                                                            field.printInInvoice
+                                                        }
+                                                        onCheckedChange={(
+                                                            checked
+                                                        ) => {
+                                                            const updated = [
+                                                                ...(localSettings.customFieldNames ||
+                                                                    [])
+                                                            ]
+                                                            updated[index] = {
+                                                                ...updated[
+                                                                    index
+                                                                ],
+                                                                printInInvoice:
+                                                                    !!checked
+                                                            }
+                                                            setLocalSettings({
+                                                                ...localSettings,
+                                                                customFieldNames:
+                                                                    updated
+                                                            })
+                                                        }}
+                                                    />
+                                                    <Label
+                                                        htmlFor={`print-${index}`}
+                                                        className="text-xs cursor-pointer"
+                                                    >
+                                                        Print
+                                                    </Label>
+                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7"
+                                                    onClick={() => {
+                                                        const updated = (
+                                                            localSettings.customFieldNames ||
+                                                            []
+                                                        ).filter(
+                                                            (_, i) =>
+                                                                i !== index
+                                                        )
+                                                        setLocalSettings({
+                                                            ...localSettings,
+                                                            customFieldNames:
+                                                                updated
+                                                        })
+                                                    }}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </div>
                                         </div>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => {
-                                                const updated = (
-                                                    localSettings.customFieldNames ||
-                                                    []
-                                                ).filter((_, i) => i !== index)
+                                        <Input
+                                            value={field.name}
+                                            onChange={(e) => {
+                                                const updated = [
+                                                    ...(localSettings.customFieldNames ||
+                                                        [])
+                                                ]
+                                                updated[index] = {
+                                                    ...updated[index],
+                                                    name: e.target.value
+                                                }
                                                 setLocalSettings({
                                                     ...localSettings,
                                                     customFieldNames: updated
                                                 })
                                             }}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                            placeholder="Field name (e.g., Colour, Size, Material)"
+                                        />
                                     </div>
                                 )
                             )}
@@ -403,11 +375,18 @@ export function ItemSettingsSheet({
                                 type="button"
                                 variant="outline"
                                 size="sm"
+                                disabled={
+                                    (localSettings.customFieldNames?.length ||
+                                        0) >= 8
+                                }
                                 onClick={() => {
                                     const updated = [
                                         ...(localSettings.customFieldNames ||
                                             []),
-                                        { name: '', printInInvoice: false }
+                                        {
+                                            name: 'New Field',
+                                            printInInvoice: false
+                                        }
                                     ]
                                     setLocalSettings({
                                         ...localSettings,

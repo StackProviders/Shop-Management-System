@@ -26,6 +26,8 @@ interface FormModalProps {
     contentClassName?: string
     showHeader?: boolean
     header?: ReactNode
+    footer?: ReactNode
+    showCloseButton?: boolean
     isSubmitting?: boolean
     isDirty?: boolean
     confirmTitle?: string
@@ -46,6 +48,8 @@ export const FormModal = memo(function FormModal({
     contentClassName,
     showHeader,
     header,
+    footer,
+    showCloseButton = true,
     isSubmitting = false,
     isDirty = false,
     confirmTitle = 'Discard changes?',
@@ -53,12 +57,17 @@ export const FormModal = memo(function FormModal({
 }: FormModalProps) {
     const [confirmOpen, setConfirmOpen] = useState(false)
 
+    console.log({ isDirty })
+
     const handleOpenChange = (newOpen: boolean) => {
-        if (!newOpen && isDirty) {
-            setConfirmOpen(true)
-        } else {
-            onOpenChange(newOpen)
+        if (!newOpen) {
+            if (isDirty) {
+                setConfirmOpen(true)
+                return
+            }
+            onCancel?.()
         }
+        onOpenChange(newOpen)
     }
 
     const handleDiscard = () => {
@@ -78,11 +87,12 @@ export const FormModal = memo(function FormModal({
                 contentClassName={contentClassName}
                 showHeader={showHeader}
                 header={header}
-                showCloseButton={!isDirty}
+                showCloseButton={showCloseButton}
                 formId={formId}
                 isSubmitting={isSubmitting}
                 submitLabel={submitLabel}
                 cancelLabel={cancelLabel}
+                footer={footer}
             >
                 {children}
             </ResponsiveModal>

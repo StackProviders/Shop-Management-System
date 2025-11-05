@@ -26,6 +26,8 @@ export interface ItemSettings {
         size: boolean
         brand: boolean
         warranty: boolean
+        brandPrintInInvoice: boolean
+        warrantyPrintInInvoice: boolean
     }
     warrantyPeriods: string[]
     customWarrantyPeriods: CustomWarrantyPeriod[]
@@ -50,6 +52,8 @@ export interface UpdateItemSettingsData {
         size?: boolean
         brand?: boolean
         warranty?: boolean
+        brandPrintInInvoice?: boolean
+        warrantyPrintInInvoice?: boolean
     }
     warrantyPeriods?: string[]
     customWarrantyPeriods?: CustomWarrantyPeriod[]

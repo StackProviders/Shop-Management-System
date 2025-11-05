@@ -15,9 +15,13 @@ interface InterceptingRouteProps {
         formId?: string
         isDirty?: boolean
         submitLabel?: string
+        isSubmitting?: boolean
         className?: string
         showHeader?: boolean
         contentClassName?: string
+        showCloseButton?: boolean
+        header?: ReactNode
+        footer?: ReactNode
     }
 }
 
@@ -31,6 +35,8 @@ export function InterceptingRoute({
 }: InterceptingRouteProps) {
     const { handleClose } = useInterceptingRoute(isIntercepting, fallbackPath)
 
+    console.log({ isDirty: modalProps.isDirty })
+
     if (!isIntercepting) {
         return <div className={fullPageClassName}>{children}</div>
     }
@@ -43,6 +49,12 @@ export function InterceptingRoute({
                 showHeader={modalProps.showHeader ?? false}
                 className={modalProps.className}
                 contentClassName={modalProps.contentClassName}
+                showCloseButton={modalProps.showCloseButton}
+                header={modalProps.header}
+                footer={modalProps.footer}
+                formId={modalProps.formId}
+                submitLabel={modalProps.submitLabel}
+                isSubmitting={modalProps.isSubmitting}
             >
                 {children}
             </ResponsiveModal>
@@ -59,6 +71,12 @@ export function InterceptingRoute({
             isDirty={modalProps.isDirty}
             submitLabel={modalProps.submitLabel}
             className={modalProps.className}
+            header={modalProps.header}
+            showCloseButton={modalProps.showCloseButton ?? true}
+            footer={modalProps.footer}
+            contentClassName={modalProps.contentClassName}
+            showHeader={modalProps.showHeader ?? false}
+            isSubmitting={modalProps.isSubmitting}
         >
             {children}
         </FormModal>
