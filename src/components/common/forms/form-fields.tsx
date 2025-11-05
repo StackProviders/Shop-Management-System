@@ -468,3 +468,5 @@ export const FormCombobox = memo(function FormCombobox<T extends FieldValues>({
         />
     )
 }) as <T extends FieldValues>(props: FormComboboxProps<T>) => React.ReactElement
+
+export { FormImageUpload } from './form-image-upload'

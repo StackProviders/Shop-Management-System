@@ -35,8 +35,6 @@ export function InterceptingRoute({
 }: InterceptingRouteProps) {
     const { handleClose } = useInterceptingRoute(isIntercepting, fallbackPath)
 
-    console.log({ isDirty: modalProps.isDirty })
-
     if (!isIntercepting) {
         return <div className={fullPageClassName}>{children}</div>
     }

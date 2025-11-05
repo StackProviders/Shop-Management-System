@@ -57,8 +57,6 @@ export const FormModal = memo(function FormModal({
 }: FormModalProps) {
     const [confirmOpen, setConfirmOpen] = useState(false)
 
-    console.log({ isDirty })
-
     const handleOpenChange = (newOpen: boolean) => {
         if (!newOpen) {
             if (isDirty) {

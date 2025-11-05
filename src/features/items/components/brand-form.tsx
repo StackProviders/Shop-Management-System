@@ -1,67 +1,115 @@
-import { useState } from 'react'
+import { useEffect, useRef, useCallback, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { ResponsiveModal } from '@/components/responsive/responsive-modal'
+import { Form } from '@/components/ui/form'
 import {
-    Form,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormControl,
-    FormMessage
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { ImageUpload } from '@/components/upload/image-upload'
-import { Button } from '@/components/ui/button'
-import { Image as ImageIcon, X } from 'lucide-react'
+    FormInput,
+    FormImageUpload
+} from '@/components/common/forms/form-fields'
 import { useBrandMutations } from '../hooks/use-brand-mutations'
 import { useShopContext } from '@/features/shop'
-import { cn } from '@/lib/utils'
-
-const brandSchema = z.object({
-    name: z.string().min(1, 'Brand name is required'),
-    logoUrl: z.string().url().optional().or(z.literal(''))
-})
-
-type BrandFormData = z.infer<typeof brandSchema>
+import { deleteImage } from '@/lib/storage'
+import { brandSchema, type BrandFormData } from '../validations'
+import type { Brand } from '../types/brand'
 
 interface BrandFormProps {
     open: boolean
     onOpenChange: (open: boolean) => void
+    brand?: Brand
 }
 
-export function BrandForm({ open, onOpenChange }: BrandFormProps) {
+export function BrandForm({ open, onOpenChange, brand }: BrandFormProps) {
     const { currentShop } = useShopContext()
-    const { createBrand } = useBrandMutations(currentShop?.shopId || '')
-    const [showUpload, setShowUpload] = useState(false)
+    const { createBrand, updateBrand } = useBrandMutations(
+        currentShop?.shopId || ''
+    )
+    const initialLogoRef = useRef('')
+    const uploadedLogosRef = useRef<Set<string>>(new Set())
 
     const form = useForm<BrandFormData>({
         resolver: zodResolver(brandSchema),
         defaultValues: { name: '', logoUrl: '' }
     })
 
-    const logoUrl = form.watch('logoUrl')
+    const uploadPath = useMemo(
+        () => `brands/${currentShop?.shopId}`,
+        [currentShop?.shopId]
+    )
 
-    const handleUploadComplete = (url: string) => {
-        form.setValue('logoUrl', url)
-        setShowUpload(false)
-    }
+    useEffect(() => {
+        if (open) {
+            const defaultValues = brand
+                ? { name: brand.name, logoUrl: brand.logoUrl || '' }
+                : { name: '', logoUrl: '' }
+            form.reset(defaultValues)
+            initialLogoRef.current = brand?.logoUrl || ''
+            uploadedLogosRef.current.clear()
+        }
+    }, [open, brand, form])
 
-    const onSubmit = async (data: BrandFormData) => {
-        await createBrand(data)
-        form.reset()
-        setShowUpload(false)
-        onOpenChange(false)
-    }
+    useEffect(() => {
+        const subscription = form.watch((value) => {
+            const currentLogo = value.logoUrl || ''
+            if (currentLogo && currentLogo !== initialLogoRef.current) {
+                uploadedLogosRef.current.add(currentLogo)
+            }
+        })
+        return () => subscription.unsubscribe()
+    }, [form])
+
+    const cleanupUnusedImages = useCallback(async (excludeUrl?: string) => {
+        const promises = Array.from(uploadedLogosRef.current)
+            .filter((url) => url !== excludeUrl)
+            .map((url) => deleteImage(url).catch(() => {}))
+        await Promise.all(promises)
+        uploadedLogosRef.current.clear()
+    }, [])
+
+    const handleClose = useCallback(
+        async (isOpen: boolean) => {
+            if (!isOpen) {
+                await cleanupUnusedImages()
+            }
+            onOpenChange(isOpen)
+        },
+        [onOpenChange, cleanupUnusedImages]
+    )
+
+    const onSubmit = useCallback(
+        async (data: BrandFormData) => {
+            if (brand) {
+                await updateBrand(brand.id, data)
+                if (
+                    initialLogoRef.current &&
+                    initialLogoRef.current !== data.logoUrl
+                ) {
+                    deleteImage(initialLogoRef.current).catch(() => {})
+                }
+            } else {
+                await createBrand(data)
+            }
+            await cleanupUnusedImages(data.logoUrl)
+            form.reset()
+            onOpenChange(false)
+        },
+        [
+            brand,
+            createBrand,
+            updateBrand,
+            cleanupUnusedImages,
+            form,
+            onOpenChange
+        ]
+    )
 
     return (
         <ResponsiveModal
             open={open}
-            onOpenChange={onOpenChange}
-            title="Add New Brand"
+            onOpenChange={handleClose}
+            title={brand ? 'Edit Brand' : 'Add New Brand'}
             formId="brand-form"
-            submitLabel="Create"
+            submitLabel={brand ? 'Update' : 'Create'}
             isSubmitting={form.formState.isSubmitting}
         >
             <Form {...form}>
@@ -70,91 +118,17 @@ export function BrandForm({ open, onOpenChange }: BrandFormProps) {
                     onSubmit={form.handleSubmit(onSubmit)}
                     className="space-y-4"
                 >
-                    <FormField
-                        control={form.control}
+                    <FormInput<BrandFormData>
                         name="name"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Brand Name</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        {...field}
-                                        placeholder="Enter brand name"
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                        label="Brand Name"
+                        placeholder="Enter brand name"
+                        required
                     />
 
-                    <FormField
-                        control={form.control}
+                    <FormImageUpload<BrandFormData>
                         name="logoUrl"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Brand Logo</FormLabel>
-                                <FormControl>
-                                    <div className="space-y-2">
-                                        {logoUrl && !showUpload ? (
-                                            <div className="relative border rounded-lg p-3 bg-muted/30">
-                                                <div className="flex items-center gap-3">
-                                                    <img
-                                                        src={logoUrl}
-                                                        alt="Brand logo"
-                                                        className="size-12 object-cover rounded"
-                                                    />
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-medium truncate">
-                                                            {field.value}
-                                                        </p>
-                                                    </div>
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() =>
-                                                            form.setValue(
-                                                                'logoUrl',
-                                                                ''
-                                                            )
-                                                        }
-                                                    >
-                                                        <X className="size-4" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        ) : showUpload ? (
-                                            <ImageUpload
-                                                path={`brands/${currentShop?.shopId}`}
-                                                onUploadComplete={
-                                                    handleUploadComplete
-                                                }
-                                                onCancel={() =>
-                                                    setShowUpload(false)
-                                                }
-                                            />
-                                        ) : (
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                className={cn(
-                                                    'w-full',
-                                                    !field.value &&
-                                                        'border-dashed'
-                                                )}
-                                                onClick={() =>
-                                                    setShowUpload(true)
-                                                }
-                                            >
-                                                <ImageIcon className="size-4" />
-                                                Upload Logo
-                                            </Button>
-                                        )}
-                                    </div>
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                        label="Brand Logo"
+                        uploadPath={uploadPath}
                     />
                 </form>
             </Form>
