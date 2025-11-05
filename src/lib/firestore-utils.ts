@@ -24,8 +24,13 @@ export async function setDocWithTimeout(
     options?: SetOptions
 ): Promise<void> {
     const { setDoc } = await import('firebase/firestore')
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([, v]) => v !== undefined)
+    )
     return withTimeout(
-        options ? setDoc(reference, data, options) : setDoc(reference, data),
+        options
+            ? setDoc(reference, cleanData, options)
+            : setDoc(reference, cleanData),
         FIRESTORE_TIMEOUT
     )
 }
@@ -35,7 +40,10 @@ export async function updateDocWithTimeout(
     data: UpdateData<DocumentData>
 ): Promise<void> {
     const { updateDoc } = await import('firebase/firestore')
-    return withTimeout(updateDoc(reference, data), FIRESTORE_TIMEOUT)
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([, v]) => v !== undefined)
+    )
+    return withTimeout(updateDoc(reference, cleanData), FIRESTORE_TIMEOUT)
 }
 
 export async function deleteDocWithTimeout(

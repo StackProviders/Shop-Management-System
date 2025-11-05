@@ -1,25 +1,33 @@
-import { useNavigate, useSearch } from '@tanstack/react-router'
-import { ItemForm, useCategories, useItemActions } from '@/features/items'
-import type { ItemType } from '@/features/items'
-import type { ItemFormData } from '@/features/items/validations/item.validation'
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
+import {
+    ItemForm,
+    useCategories,
+    useItemActions,
+    useItem
+} from '@/features/items'
+import type { CreateItemData, ItemType } from '@/features/items'
 import { useShopContext } from '@/features/shop'
 import { InterceptingRoute } from '@/components/intercepting'
 import { useInterceptingRoute } from '@/lib/intercepting-routes'
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { ItemSettingsSheet } from '@/features/items/components/item-settings-sheet'
 import { ItemFormHeader } from '@/features/items/components/item-form-header'
+import { Skeleton } from '@/components/ui/skeleton'
 
-export default function CreateItemPage() {
+export default function EditItemPage() {
     const navigate = useNavigate()
-    const search = useSearch({ from: '/_protected/_dashboard/items/create' })
+    const { id } = useParams({ from: '/_protected/_dashboard/items/$id/edit' })
+    const search = useSearch({ from: '/_protected/_dashboard/items/$id/edit' })
     const { currentShop } = useShopContext()
     const shopId = currentShop?.shopId || ''
-    const { createItem } = useItemActions(shopId)
+    const { updateItem } = useItemActions(shopId)
     const { categories } = useCategories(shopId)
+    const { item, isLoading } = useItem(id)
     const { isIntercepting } = useInterceptingRoute(
         search.fromItems === true,
         '/items'
     )
+
     const [itemType, setItemType] = useState<ItemType>('product')
     const [showSettings, setShowSettings] = useState(false)
     const [formState, setFormState] = useState({
@@ -28,29 +36,19 @@ export default function CreateItemPage() {
         isSubmitting: false
     })
 
-    const handleAddItem = useCallback(
-        async (data: ItemFormData) => {
-            await createItem({
-                name: data.name,
-                itemCode: data.itemCode || `ITEM-${Date.now()}`,
-                type: data.type,
-                salePrice: data.salePrice,
-                purchasePrice: data.purchasePrice,
-                mrp: data.mrp,
-                categories: data.categories || [],
-                unit: data.unit || '',
-                images: data.images || [],
-                stockManagement: data.type === 'product',
-                currentStock: data.openingStock || 0,
-                openingStock: data.openingStock || 0,
-                minStockAlert: data.minStockAlert || 0,
-                description: data.description,
-                barcode: data.barcode,
-                status: data.status || 'active'
-            })
+    useEffect(() => {
+        if (item) {
+            setItemType(item.type)
+            setFormState((prev) => ({ ...prev, formId: `${item.type}-form` }))
+        }
+    }, [item])
+
+    const handleUpdateItem = useCallback(
+        async (data: CreateItemData) => {
+            await updateItem(id, data)
             navigate({ to: '/items', replace: isIntercepting })
         },
-        [createItem, navigate, isIntercepting]
+        [updateItem, id, navigate, isIntercepting]
     )
 
     const handleTypeChange = useCallback((checked: boolean) => {
@@ -68,6 +66,20 @@ export default function CreateItemPage() {
         []
     )
 
+    if (isLoading) {
+        return (
+            <div className="p-6 space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-40 w-full" />
+            </div>
+        )
+    }
+
+    if (!item) {
+        return <div className="p-6">Item not found</div>
+    }
+
     return (
         <>
             <InterceptingRoute
@@ -83,7 +95,7 @@ export default function CreateItemPage() {
                     header: useMemo(
                         () => (
                             <ItemFormHeader
-                                title="Add Item"
+                                title="Edit Item"
                                 itemType={itemType}
                                 onTypeChange={handleTypeChange}
                                 onSettingsClick={handleSettingsToggle}
@@ -92,16 +104,34 @@ export default function CreateItemPage() {
                         [itemType, handleTypeChange, handleSettingsToggle]
                     ),
                     formId: formState.formId,
-                    submitLabel: 'Add Item',
+                    submitLabel: 'Update Item',
                     isSubmitting: formState.isSubmitting
                 }}
             >
                 <ItemForm
                     type={itemType}
                     categories={categories}
-                    onSubmit={handleAddItem}
+                    onSubmit={handleUpdateItem}
                     onFormStateChange={setFormState}
-                    isEdit={false}
+                    isEdit={true}
+                    defaultValues={useMemo(
+                        () => ({
+                            name: item.name,
+                            type: item.type,
+                            salePrice: item.salePrice,
+                            purchasePrice: item.purchasePrice,
+                            unit: item.unit,
+                            categories: item.categories,
+                            description: item.description || '',
+                            itemCode: item.itemCode,
+                            openingStock: item.openingStock,
+                            minStockAlert: item.minStockAlert,
+                            mrp: item.mrp,
+                            images: item.images,
+                            status: item.status || 'active'
+                        }),
+                        [item]
+                    )}
                 />
             </InterceptingRoute>
 

@@ -137,7 +137,7 @@ export default function ItemsPage({ children }: { children?: ReactNode }) {
                                         compact
                                         onEditClick={() =>
                                             navigate({
-                                                to: `/items/${activeTab}/${item.id}/edit`
+                                                to: `/items/${item.id}/edit?fromItems=true`
                                             })
                                         }
                                         onDeleteClick={() => {
