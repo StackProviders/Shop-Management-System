@@ -128,10 +128,14 @@ export function ItemForm({
     )
 
     const cleanupUnusedImages = useCallback(async () => {
-        if (isEdit) return
         const { deleteUnusedImages } = await import('@/lib/storage')
-        await deleteUnusedImages(images, initialImages)
-    }, [images, initialImages, isEdit])
+        const removedImages = initialImages.filter(
+            (img) => !images.includes(img)
+        )
+        if (removedImages.length > 0) {
+            await deleteUnusedImages(removedImages, [])
+        }
+    }, [images, initialImages])
 
     useEffect(() => {
         return () => {
@@ -255,49 +259,47 @@ export function ItemForm({
                                     )}
 
                                     {/* Custom Fields */}
-                                    {settings.customFieldNames &&
-                                        settings.customFieldNames.length >
-                                            0 && (
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
-                                                {settings.customFieldNames.map(
-                                                    (field) => (
-                                                        <FormInput
-                                                            key={field.name}
-                                                            name={field.name}
-                                                            label={field.name}
-                                                            placeholder={
-                                                                field.name
-                                                            }
-                                                        />
-                                                    )
-                                                )}
-                                                {settings.customFieldSettings
-                                                    .brand && (
-                                                    <FormCombobox
-                                                        name="brand"
-                                                        label="Brand"
-                                                        placeholder="Select brand"
-                                                        searchPlaceholder="Search brands..."
-                                                        options={brandOptions}
-                                                        onAddNew={
-                                                            handleBrandModal
-                                                        }
-                                                        addNewLabel="Add New Brand"
+                                    {((settings.customFieldNames?.length ?? 0) >
+                                        0 ||
+                                        settings.customFieldSettings.brand ||
+                                        settings.customFieldSettings
+                                            .warranty) && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+                                            {settings.customFieldNames?.map(
+                                                (field) => (
+                                                    <FormInput
+                                                        key={field.name}
+                                                        name={field.name}
+                                                        label={field.name}
+                                                        placeholder={field.name}
                                                     />
-                                                )}
-                                                {settings.customFieldSettings
-                                                    .warranty && (
-                                                    <WarrantyInput
-                                                        availablePeriods={
-                                                            settings.warrantyPeriods
-                                                        }
-                                                        customPeriods={
-                                                            settings.customWarrantyPeriods
-                                                        }
-                                                    />
-                                                )}
-                                            </div>
-                                        )}
+                                                )
+                                            )}
+                                            {settings.customFieldSettings
+                                                .brand && (
+                                                <FormCombobox
+                                                    name="brand"
+                                                    label="Brand"
+                                                    placeholder="Select brand"
+                                                    searchPlaceholder="Search brands..."
+                                                    options={brandOptions}
+                                                    onAddNew={handleBrandModal}
+                                                    addNewLabel="Add New Brand"
+                                                />
+                                            )}
+                                            {settings.customFieldSettings
+                                                .warranty && (
+                                                <WarrantyInput
+                                                    availablePeriods={
+                                                        settings.warrantyPeriods
+                                                    }
+                                                    customPeriods={
+                                                        settings.customWarrantyPeriods
+                                                    }
+                                                />
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Right Column - Image Upload */}
@@ -379,7 +381,6 @@ export function ItemForm({
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={handleWholesalePrice}
-                                                className="px-0 text-primary h-auto"
                                             >
                                                 + Add Wholesale Price
                                             </Button>

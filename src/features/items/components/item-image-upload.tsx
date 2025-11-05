@@ -1,5 +1,5 @@
 import { useState, useMemo, memo, useCallback } from 'react'
-import { ImagePlus, Pencil, Trash2 } from 'lucide-react'
+import { ImagePlus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
@@ -7,6 +7,9 @@ import { Image } from '@/components/ui/image'
 import { useUpload } from '@/hooks/use-upload'
 import { ResponsiveModal } from '@/components/responsive/responsive-modal'
 import { CircularProgress } from '@/components/upload/circular-progress'
+import { ConfirmationDialog } from '@/components/common'
+import { deleteImage } from '@/lib/storage'
+import { toast } from 'sonner'
 
 interface ItemImageUploadProps {
     images?: string[]
@@ -60,7 +63,7 @@ const AddImageButton = memo(function AddImageButton({
             className={cn(
                 sizeClasses,
                 'rounded-md hover:border-primary transition-colors flex items-center justify-center bg-muted/30 flex-shrink-0 border-dashed relative',
-                size === 'lg' && 'border-2'
+                size === 'lg' && 'border'
             )}
             variant="outline"
             disabled={isUploading}
@@ -78,35 +81,22 @@ const AddImageButton = memo(function AddImageButton({
 })
 
 const ImagePreviewActions = memo(function ImagePreviewActions({
-    onRemove,
-    onEdit
+    onRemove
 }: {
     onRemove: () => void
-    onEdit: () => void
 }) {
     return (
-        <div className="border-t p-3 md:p-4 flex justify-center gap-2 md:gap-3 flex-shrink-0">
+        <div className="border-t p-3 md:p-4 flex justify-center flex-shrink-0">
             <Button
                 type="button"
-                variant="outline"
+                variant="destructive"
                 onClick={onRemove}
-                className="gap-2 flex-1 md:flex-none"
+                className="gap-2"
                 size="sm"
             >
                 <Trash2 className="size-4" />
                 <span className="hidden sm:inline">Remove Image</span>
                 <span className="sm:hidden">Remove</span>
-            </Button>
-            <Button
-                type="button"
-                variant="outline"
-                onClick={onEdit}
-                className="gap-2 flex-1 md:flex-none"
-                size="sm"
-            >
-                <Pencil className="size-4" />
-                <span className="hidden sm:inline">Edit Image</span>
-                <span className="sm:hidden">Edit</span>
             </Button>
         </div>
     )
@@ -118,6 +108,8 @@ export function ItemImageUpload({
 }: ItemImageUploadProps) {
     const [showDialog, setShowDialog] = useState(false)
     const [selectedIndex, setSelectedIndex] = useState<number>(0)
+    const [showConfirmDelete, setShowConfirmDelete] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
     const upload = useUpload({
         path: 'items',
         accept: 'image/png, image/jpeg',
@@ -148,19 +140,31 @@ export function ItemImageUpload({
         input.click()
     }, [upload])
 
-    const handleRemoveImage = useCallback(() => {
-        const actualIndex = images.indexOf(validImages[selectedIndex])
-        if (actualIndex !== -1) {
-            const newImages = [...images]
-            newImages.splice(actualIndex, 1)
-            onChange?.(newImages)
-            setShowDialog(false)
+    const handleRemoveClick = useCallback(() => {
+        setShowConfirmDelete(true)
+    }, [])
+
+    const handleConfirmRemove = useCallback(async () => {
+        setIsDeleting(true)
+        try {
+            const imageUrl = validImages[selectedIndex]
+            const actualIndex = images.indexOf(imageUrl)
+
+            if (actualIndex !== -1) {
+                await deleteImage(imageUrl)
+                const newImages = [...images]
+                newImages.splice(actualIndex, 1)
+                onChange?.(newImages)
+                toast.success('Image removed successfully')
+                setShowDialog(false)
+            }
+        } catch {
+            toast.error('Failed to remove image')
+        } finally {
+            setIsDeleting(false)
+            setShowConfirmDelete(false)
         }
     }, [images, validImages, selectedIndex, onChange])
-
-    const handleEditImage = useCallback(() => {
-        // TODO: Implement edit functionality
-    }, [])
 
     return (
         <>
@@ -191,7 +195,7 @@ export function ItemImageUpload({
                         ? 'Preview Image'
                         : 'Upload Image'
                 }
-                className="max-w-5xl"
+                className="!max-w-5xl"
                 contentClassName="p-0"
             >
                 <Tabs
@@ -199,7 +203,7 @@ export function ItemImageUpload({
                     onValueChange={(val) =>
                         setSelectedIndex(Number(val.split('-')[1]))
                     }
-                    className="flex flex-col md:flex-row min-h-[400px] md:min-h-[500px]"
+                    className="flex flex-col md:flex-row h-[400px] md:h-[500px]"
                 >
                     <TabsList className="flex md:flex-col w-full md:w-[100px] md:h-full border-b md:border-b-0 md:border-r p-2 gap-2 bg-transparent flex-shrink-0 overflow-x-auto md:overflow-y-auto scrollbar-hide touch-pan-x md:touch-pan-y">
                         {validImages.map((image, i) => (
@@ -207,7 +211,7 @@ export function ItemImageUpload({
                                 key={i}
                                 value={`image-${i}`}
                                 className={cn(
-                                    'w-[60px] h-[60px] md:w-full md:h-[80px] border-2 rounded-md p-0 overflow-hidden flex-shrink-0',
+                                    'w-[60px] h-[60px] md:w-full md:h-[80px] border rounded-md p-0 overflow-hidden flex-shrink-0',
                                     'data-[state=active]:border-primary data-[state=inactive]:border-border'
                                 )}
                             >
@@ -234,27 +238,34 @@ export function ItemImageUpload({
                             <TabsContent
                                 key={i}
                                 value={`image-${i}`}
-                                className="flex-1 m-0 data-[state=active]:flex flex-col h-full"
+                                className="m-0 data-[state=active]:flex flex-col h-full"
                             >
                                 <div className="flex-1 p-4 md:p-6 flex items-center justify-center bg-muted/30 overflow-hidden">
-                                    <div className="w-full h-full max-w-2xl max-h-[300px] md:max-h-[500px] min-h-[250px] md:min-h-[400px] flex items-center justify-center">
-                                        <Image
-                                            src={image}
-                                            alt="Preview"
-                                            className="w-full h-full object-contain rounded-md"
-                                        />
-                                    </div>
+                                    <Image
+                                        src={image}
+                                        alt="Preview"
+                                        className="max-w-full max-h-full object-contain rounded-md"
+                                    />
                                 </div>
 
                                 <ImagePreviewActions
-                                    onRemove={handleRemoveImage}
-                                    onEdit={handleEditImage}
+                                    onRemove={handleRemoveClick}
                                 />
                             </TabsContent>
                         ))}
                     </div>
                 </Tabs>
             </ResponsiveModal>
+
+            <ConfirmationDialog
+                open={showConfirmDelete}
+                onOpenChange={setShowConfirmDelete}
+                onConfirm={handleConfirmRemove}
+                title="Remove Image"
+                description="Are you sure you want to remove this image? This action cannot be undone and the image will be permanently deleted from storage."
+                confirmText={isDeleting ? 'Removing...' : 'Remove'}
+                variant="destructive"
+            />
         </>
     )
 }
