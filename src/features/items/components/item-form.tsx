@@ -122,6 +122,7 @@ export function ItemForm({
 
     const handleFormSubmit = useCallback(
         async (data: ItemFormData) => {
+            console.log('Form data before submit:', data)
             await onSubmit({ ...data, images, status: 'active' })
         },
         [onSubmit, images]

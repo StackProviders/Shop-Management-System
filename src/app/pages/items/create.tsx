@@ -30,13 +30,10 @@ export default function CreateItemPage() {
 
     const handleAddItem = useCallback(
         async (data: ItemFormData) => {
+            const { status, ...restData } = data
             await createItem({
-                name: data.name,
-                itemCode: data.itemCode || `ITEM-${Date.now()}`,
-                type: data.type,
-                salePrice: data.salePrice,
-                purchasePrice: data.purchasePrice,
-                mrp: data.mrp,
+                ...restData,
+                itemCode: data.itemCode || '',
                 categories: data.categories || [],
                 unit: data.unit || '',
                 images: data.images || [],
@@ -44,9 +41,7 @@ export default function CreateItemPage() {
                 currentStock: data.openingStock || 0,
                 openingStock: data.openingStock || 0,
                 minStockAlert: data.minStockAlert || 0,
-                description: data.description,
-                barcode: data.barcode,
-                status: data.status || 'active'
+                status: status || 'active'
             })
             navigate({ to: '/items', replace: isIntercepting })
         },

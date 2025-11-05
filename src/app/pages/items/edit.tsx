@@ -5,7 +5,12 @@ import {
     useItemActions,
     useItem
 } from '@/features/items'
-import type { CreateItemData, ItemType } from '@/features/items'
+import type {
+    CreateItemData,
+    ItemType,
+    Item,
+    CustomField
+} from '@/features/items'
 import { useShopContext } from '@/features/shop'
 import { InterceptingRoute } from '@/components/intercepting'
 import { useInterceptingRoute } from '@/lib/intercepting-routes'
@@ -13,6 +18,15 @@ import { useState, useCallback, useMemo, useEffect } from 'react'
 import { ItemSettingsSheet } from '@/features/items/components/item-settings-sheet'
 import { ItemFormHeader } from '@/features/items/components/item-form-header'
 import { Skeleton } from '@/components/ui/skeleton'
+
+interface ExtendedItem extends Item {
+    wholesalePrice?: number
+    minWholesaleQty?: number
+    brand?: string
+    warranty?: { label: string; days: number }
+    customFields?: CustomField[]
+    [key: string]: unknown
+}
 
 export default function EditItemPage() {
     const navigate = useNavigate()
@@ -114,12 +128,15 @@ export default function EditItemPage() {
                     onSubmit={handleUpdateItem}
                     onFormStateChange={setFormState}
                     isEdit={true}
-                    defaultValues={useMemo(
-                        () => ({
+                    defaultValues={useMemo(() => {
+                        const extendedItem = item as ExtendedItem
+                        const baseValues = {
                             name: item.name,
                             type: item.type,
                             salePrice: item.salePrice,
                             purchasePrice: item.purchasePrice,
+                            wholesalePrice: extendedItem.wholesalePrice,
+                            minWholesaleQty: extendedItem.minWholesaleQty,
                             unit: item.unit,
                             categories: item.categories,
                             description: item.description || '',
@@ -127,11 +144,54 @@ export default function EditItemPage() {
                             openingStock: item.openingStock,
                             minStockAlert: item.minStockAlert,
                             mrp: item.mrp,
+                            brand: extendedItem.brand || '',
+                            warranty: extendedItem.warranty,
                             images: item.images,
                             status: item.status || 'active'
-                        }),
-                        [item]
-                    )}
+                        }
+
+                        // Add custom fields stored as direct properties
+                        const knownFields = new Set([
+                            'id',
+                            'shopId',
+                            'name',
+                            'itemCode',
+                            'type',
+                            'salePrice',
+                            'purchasePrice',
+                            'mrp',
+                            'categories',
+                            'unit',
+                            'images',
+                            'stockManagement',
+                            'currentStock',
+                            'openingStock',
+                            'minStockAlert',
+                            'barcode',
+                            'description',
+                            'taxRate',
+                            'customFields',
+                            'status',
+                            'createdAt',
+                            'updatedAt',
+                            'wholesalePrice',
+                            'minWholesaleQty',
+                            'brand',
+                            'warranty'
+                        ])
+
+                        const customFields: Record<string, unknown> = {}
+                        Object.keys(extendedItem).forEach((key) => {
+                            if (
+                                !knownFields.has(key) &&
+                                extendedItem[key] !== undefined
+                            ) {
+                                customFields[key] = extendedItem[key]
+                            }
+                        })
+
+                        return { ...baseValues, ...customFields }
+                    }, [item])}
                 />
             </InterceptingRoute>
 
