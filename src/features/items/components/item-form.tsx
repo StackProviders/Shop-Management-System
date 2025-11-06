@@ -22,9 +22,11 @@ import { UNITS } from '@/config/units'
 import { useItemSettings } from '../hooks/use-item-settings'
 import { useBrands } from '../hooks/use-brands'
 import { Skeleton } from '@/components/ui/skeleton'
-
 import { WarrantyInput } from './warranty-input'
 import { ItemImageUpload } from './item-image-upload'
+import { deleteUnusedImages } from '@/lib/storage'
+import { SerialNumberButton } from './serial-number-button'
+import { useSerialNumbers } from '../hooks/use-serial-numbers'
 
 interface ItemFormProps {
     type?: ItemType
@@ -52,8 +54,11 @@ export function ItemForm({
     const [initialImages] = useState<string[]>(defaultValues?.images || [])
     const [showCategoryModal, setShowCategoryModal] = useState(false)
     const [showBrandModal, setShowBrandModal] = useState(false)
+    const [serialNumbers, setSerialNumbers] = useState<string[]>([])
     const { currentShop } = useShopContext()
     const shopId = currentShop?.shopId || 'default'
+    const itemId = defaultValues?.id || ''
+    const { serialNumbers: existingSerials } = useSerialNumbers(shopId, itemId)
 
     const { settings, isLoading: settingsLoading } = useItemSettings(shopId)
     const { brands } = useBrands(shopId)
@@ -81,6 +86,18 @@ export function ItemForm({
             form.reset(defaultValues, { keepDefaultValues: false })
         }
     }, [])
+
+    useEffect(() => {
+        if (isEdit && itemId && existingSerials.length > 0) {
+            const serials = existingSerials.map((s) => s.serialNo)
+            setSerialNumbers(serials)
+            setTimeout(() => {
+                form.setValue('openingStock', serials.length, {
+                    shouldDirty: false
+                })
+            }, 0)
+        }
+    }, [isEdit, itemId, existingSerials.length, form])
 
     const formId = useMemo(() => `${initialType}-form`, [initialType])
     const imagesChanged =
@@ -130,13 +147,12 @@ export function ItemForm({
 
     const handleFormSubmit = useCallback(
         async (data: ItemFormData) => {
-            await onSubmit({ ...data, images, status: 'active' })
+            await onSubmit({ ...data, images, serialNumbers, status: 'active' })
         },
-        [onSubmit, images]
+        [onSubmit, images, serialNumbers]
     )
 
     const cleanupUnusedImages = useCallback(async () => {
-        const { deleteUnusedImages } = await import('@/lib/storage')
         const removedImages = initialImages.filter(
             (img) => !images.includes(img)
         )
@@ -413,12 +429,24 @@ export function ItemForm({
                                         className="space-y-4 mt-4"
                                     >
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
-                                            <FormInput
-                                                name="openingStock"
-                                                label="Opening Stock"
-                                                type="number"
-                                                placeholder="0"
-                                            />
+                                            <div className="space-y-2">
+                                                <FormInput
+                                                    name="openingStock"
+                                                    label="Opening Stock"
+                                                    type="number"
+                                                    placeholder="0"
+                                                />
+                                                {settings.serialNoTracking && (
+                                                    <SerialNumberButton
+                                                        serialNumbers={
+                                                            serialNumbers
+                                                        }
+                                                        onSave={
+                                                            setSerialNumbers
+                                                        }
+                                                    />
+                                                )}
+                                            </div>
 
                                             <FormInput
                                                 name="minStockAlert"

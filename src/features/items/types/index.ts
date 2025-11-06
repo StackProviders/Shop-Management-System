@@ -6,6 +6,8 @@ export interface CustomField {
     printInInvoice: boolean
 }
 
+export * from './serial-number'
+
 export interface Item {
     id: string
     shopId: string

@@ -1,106 +1,50 @@
-import { useState } from 'react';
-import { scan, cancel as cancelScan, Format, checkPermissions, requestPermissions } from '@tauri-apps/plugin-barcode-scanner';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Camera, QrCode, Package, AlertCircle, CheckCircle } from 'lucide-react';
+import { useState } from 'react'
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle
+} from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Camera, QrCode, Package, CheckCircle } from 'lucide-react'
+import { BarcodeScanButton } from './components'
+
+export { BarcodeScanButton, BarcodeScanInput } from './components'
 
 interface ScanResult {
-    data: string;
-    format: string;
-    timestamp: Date;
+    data: string
+    format: string
+    timestamp: Date
 }
 
 export function BarcodeScanner() {
-    const [isScanning, setIsScanning] = useState(false);
-    const [scanResult, setScanResult] = useState<ScanResult | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [scanHistory, setScanHistory] = useState<ScanResult[]>([]);
+    const [scanResult, setScanResult] = useState<ScanResult | null>(null)
+    const [scanHistory, setScanHistory] = useState<ScanResult[]>([])
 
-    const ensureCameraPermission = async (): Promise<boolean> => {
-        try {
-            const state = await checkPermissions();
-            if (state === 'granted') return true;
-            const next = await requestPermissions();
-            return next === 'granted';
-        } catch (err) {
-            console.error('Permission check/request failed:', err);
-            return false;
+    const handleScan = (data: string, format: string) => {
+        const newResult: ScanResult = {
+            data,
+            format,
+            timestamp: new Date()
         }
-    };
-
-    const handleScan = async () => {
-        try {
-            setIsScanning(true);
-            setError(null);
-
-            const hasPermission = await ensureCameraPermission();
-            if (!hasPermission) {
-                setError('Camera permission is required. Enable it in settings if previously denied.');
-                return;
-            }
-
-            const result = await scan({
-                windowed: false, // open full-screen camera
-                formats: [Format.QRCode, Format.EAN13, Format.EAN8, Format.Code128, Format.Code39]
-            });
-
-            const newResult: ScanResult = {
-                data: result.content,
-                format: result.format,
-                timestamp: new Date()
-            };
-
-            setScanResult(newResult);
-            setScanHistory(prev => [newResult, ...prev.slice(0, 9)]); // Keep last 10 scans
-            // Ensure camera is stopped after a successful scan
-            try { await cancelScan(); } catch (err) {
-                // Suppress error but log for debugging
-                console.error('Failed to cancel scan:', err);
-            }
-        } catch (err) {
-            console.error('Failed to scan barcode:', err);
-            const message = err instanceof Error
-                ? err.message
-                : typeof err === 'string'
-                    ? err
-                    : (() => {
-                        try {
-                            return JSON.stringify(err);
-                        } catch {
-                            return String(err);
-                        }
-                    })();
-            setError(message);
-        } finally {
-            // Ensure camera is stopped on any exit path.
-            // But do not call cancelScan twice if we already called it after a successful scan.
-            // To fix: move cancellation logic so it is only done in finally, not both after a successful scan and in finally.
-
-            setIsScanning(false);
-            try {
-                await cancelScan();
-            } catch (err) {
-                // Suppress error but log for debugging
-                console.error('Failed to cancel scan:', err);
-            }
-        }
-    };
+        setScanResult(newResult)
+        setScanHistory((prev) => [newResult, ...prev.slice(0, 9)])
+    }
 
     const clearHistory = () => {
-        setScanHistory([]);
-        setScanResult(null);
-        setError(null);
-    };
+        setScanHistory([])
+        setScanResult(null)
+    }
 
     const copyToClipboard = async (text: string) => {
         try {
-            await navigator.clipboard.writeText(text);
+            await navigator.clipboard.writeText(text)
         } catch (err) {
-            console.error('Failed to copy to clipboard:', err);
+            console.error('Failed to copy to clipboard:', err)
         }
-    };
+    }
 
     return (
         <div className="container mx-auto p-6 max-w-4xl">
@@ -124,35 +68,17 @@ export function BarcodeScanner() {
                             Scanner
                         </CardTitle>
                         <CardDescription>
-                            Click the button below to start scanning barcodes and QR codes
+                            Click the button below to start scanning barcodes
+                            and QR codes
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <Button
-                            onClick={handleScan}
-                            disabled={isScanning}
+                    <CardContent>
+                        <BarcodeScanButton
+                            onScan={handleScan}
+                            variant="default"
                             size="lg"
                             className="w-full"
-                        >
-                            {isScanning ? (
-                                <>
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                                    Scanning...
-                                </>
-                            ) : (
-                                <>
-                                    <Camera className="h-4 w-4 mr-2" />
-                                    Start Scanning
-                                </>
-                            )}
-                        </Button>
-
-                        {error && (
-                            <Alert variant="destructive">
-                                <AlertCircle className="h-4 w-4" />
-                                <AlertDescription>{error}</AlertDescription>
-                            </Alert>
-                        )}
+                        />
                     </CardContent>
                 </Card>
 
@@ -167,13 +93,17 @@ export function BarcodeScanner() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex items-center gap-2">
-                                <Badge variant="secondary">{scanResult.format}</Badge>
+                                <Badge variant="secondary">
+                                    {scanResult.format}
+                                </Badge>
                                 <span className="text-sm text-muted-foreground">
                                     {scanResult.timestamp.toLocaleString()}
                                 </span>
                             </div>
                             <div className="p-4 bg-muted rounded-lg">
-                                <code className="text-sm break-all">{scanResult.data}</code>
+                                <code className="text-sm break-all">
+                                    {scanResult.data}
+                                </code>
                             </div>
                             <Button
                                 variant="outline"
@@ -199,7 +129,11 @@ export function BarcodeScanner() {
                                     Recent scans ({scanHistory.length})
                                 </CardDescription>
                             </div>
-                            <Button variant="outline" size="sm" onClick={clearHistory}>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={clearHistory}
+                            >
                                 Clear History
                             </Button>
                         </CardHeader>
@@ -211,12 +145,16 @@ export function BarcodeScanner() {
                                         className="p-3 border rounded-lg hover:bg-muted/50 transition-colors"
                                     >
                                         <div className="flex items-center justify-between mb-2">
-                                            <Badge variant="outline">{result.format}</Badge>
+                                            <Badge variant="outline">
+                                                {result.format}
+                                            </Badge>
                                             <span className="text-xs text-muted-foreground">
                                                 {result.timestamp.toLocaleString()}
                                             </span>
                                         </div>
-                                        <code className="text-sm break-all">{result.data}</code>
+                                        <code className="text-sm break-all">
+                                            {result.data}
+                                        </code>
                                     </div>
                                 ))}
                             </div>
@@ -230,14 +168,23 @@ export function BarcodeScanner() {
                         <CardTitle>How to Use</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm text-muted-foreground">
-                        <p>• Click &quot;Start Scanning&quot; to open the camera</p>
+                        <p>• Click the scan button to open the camera</p>
                         <p>• Point your camera at a QR code or barcode</p>
-                        <p>• The scanner will automatically detect and decode the code</p>
-                        <p>• Scanned results will appear below and be saved to history</p>
-                        <p>• Supported formats: QR Code, EAN-13, EAN-8, Code 128, Code 39</p>
+                        <p>
+                            • The scanner will automatically detect and decode
+                            the code
+                        </p>
+                        <p>
+                            • Scanned results will appear below and be saved to
+                            history
+                        </p>
+                        <p>
+                            • Supported formats: QR Code, EAN-13, EAN-8, Code
+                            128, Code 39
+                        </p>
                     </CardContent>
                 </Card>
             </div>
         </div>
-    );
+    )
 }
