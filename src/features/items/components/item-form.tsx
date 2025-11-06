@@ -328,7 +328,7 @@ export function ItemForm({
                                 defaultValue="pricing"
                                 className="w-full"
                             >
-                                <TabsList variant="line">
+                                <TabsList variant="underline">
                                     <TabsTrigger value="pricing">
                                         Pricing
                                     </TabsTrigger>

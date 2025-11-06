@@ -188,7 +188,7 @@ export default function ItemsPage({ children }: { children?: ReactNode }) {
                     value={activeTab}
                     onValueChange={(v) => setActiveTab(v as TabValue)}
                 >
-                    <TabsList variant="line">
+                    <TabsList variant="underline">
                         <TabsTrigger value="products">Products</TabsTrigger>
                         <TabsTrigger value="services">Services</TabsTrigger>
                         <TabsTrigger value="category">Categories</TabsTrigger>

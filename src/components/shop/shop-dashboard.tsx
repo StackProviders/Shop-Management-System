@@ -111,7 +111,7 @@ export default function ShopDashboard() {
                     >
                         <div className="flex items-end justify-between border-b">
                             <TabsList
-                                variant="line"
+                                variant="underline"
                                 className="border-none gap-4 sm:gap-6"
                             >
                                 <TabsTrigger value="shared_shop">

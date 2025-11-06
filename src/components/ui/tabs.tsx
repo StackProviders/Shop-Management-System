@@ -1,246 +1,88 @@
-'use client'
+import { Tabs as TabsPrimitive } from '@base-ui-components/react/tabs'
 
-import * as React from 'react'
 import { cn } from '@/lib/utils'
-import { cva, type VariantProps } from 'class-variance-authority'
-import { Tabs as TabsPrimitive } from 'radix-ui'
 
-// Variants for TabsList
-const tabsListVariants = cva('flex items-center shrink-0', {
-    variants: {
-        variant: {
-            default: 'bg-accent p-1',
-            button: '',
-            line: 'border-b border-border'
-        },
-        shape: {
-            default: '',
-            pill: ''
-        },
-        size: {
-            lg: 'gap-2.5',
-            md: 'gap-2',
-            sm: 'gap-1.5',
-            xs: 'gap-1'
-        }
-    },
-    compoundVariants: [
-        { variant: 'default', size: 'lg', className: 'p-1.5 gap-2.5' },
-        { variant: 'default', size: 'md', className: 'p-1 gap-2' },
-        { variant: 'default', size: 'sm', className: 'p-1 gap-1.5' },
-        { variant: 'default', size: 'xs', className: 'p-1 gap-1' },
+type TabsVariant = 'default' | 'underline'
 
-        {
-            variant: 'default',
-            shape: 'default',
-            size: 'lg',
-            className: 'rounded-lg'
-        },
-        {
-            variant: 'default',
-            shape: 'default',
-            size: 'md',
-            className: 'rounded-lg'
-        },
-        {
-            variant: 'default',
-            shape: 'default',
-            size: 'sm',
-            className: 'rounded-md'
-        },
-        {
-            variant: 'default',
-            shape: 'default',
-            size: 'xs',
-            className: 'rounded-md'
-        },
-
-        { variant: 'line', size: 'lg', className: 'gap-9' },
-        { variant: 'line', size: 'md', className: 'gap-8' },
-        { variant: 'line', size: 'sm', className: 'gap-4' },
-        { variant: 'line', size: 'xs', className: 'gap-4' },
-
-        {
-            variant: 'default',
-            shape: 'pill',
-            className: 'rounded-full [&_[role=tab]]:rounded-full'
-        },
-        {
-            variant: 'button',
-            shape: 'pill',
-            className: 'rounded-full [&_[role=tab]]:rounded-full'
-        }
-    ],
-    defaultVariants: {
-        variant: 'default',
-        size: 'md'
-    }
-})
-
-// Variants for TabsTrigger
-const tabsTriggerVariants = cva(
-    'shrink-0 cursor-pointer whitespace-nowrap inline-flex justify-center items-center font-medium ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:shrink-0 [&_svg]:text-muted-foreground [&:hover_svg]:text-primary [&[data-state=active]_svg]:text-primary',
-    {
-        variants: {
-            variant: {
-                default:
-                    'text-muted-foreground data-[state=active]:bg-background hover:text-foreground data-[state=active]:text-foreground data-[state=active]:shadow-xs data-[state=active]:shadow-black/5',
-                button: 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg text-accent-foreground hover:text-foreground data-[state=active]:bg-accent data-[state=active]:text-foreground',
-                line: 'border-b-2 text-muted-foreground border-transparent data-[state=active]:border-primary hover:text-primary data-[state=active]:text-primary data-[state=active]:border-primary data-[state=active]:text-primary'
-            },
-            size: {
-                lg: 'gap-2.5 [&_svg]:size-5 text-sm',
-                md: 'gap-2 [&_svg]:size-4 text-sm',
-                sm: 'gap-1.5 [&_svg]:size-3.5 text-xs',
-                xs: 'gap-1 [&_svg]:size-3.5 text-xs'
-            }
-        },
-        compoundVariants: [
-            {
-                variant: 'default',
-                size: 'lg',
-                className: 'py-2.5 px-4 rounded-md'
-            },
-            {
-                variant: 'default',
-                size: 'md',
-                className: 'py-1.5 px-3 rounded-md'
-            },
-            {
-                variant: 'default',
-                size: 'sm',
-                className: 'py-1.5 px-2.5 rounded-sm'
-            },
-            {
-                variant: 'default',
-                size: 'xs',
-                className: 'py-1 px-2 rounded-sm'
-            },
-
-            {
-                variant: 'button',
-                size: 'lg',
-                className: 'py-3 px-4 rounded-lg'
-            },
-            {
-                variant: 'button',
-                size: 'md',
-                className: 'py-2.5 px-3 rounded-lg'
-            },
-            {
-                variant: 'button',
-                size: 'sm',
-                className: 'py-2 px-2.5 rounded-md'
-            },
-            {
-                variant: 'button',
-                size: 'xs',
-                className: 'py-1.5 px-2 rounded-md'
-            },
-
-            { variant: 'line', size: 'lg', className: 'py-3' },
-            { variant: 'line', size: 'md', className: 'py-2.5' },
-            { variant: 'line', size: 'sm', className: 'py-2' },
-            { variant: 'line', size: 'xs', className: 'py-1.5' }
-        ],
-        defaultVariants: {
-            variant: 'default',
-            size: 'md'
-        }
-    }
-)
-
-// Variants for TabsContent
-const tabsContentVariants = cva(
-    'mt-2.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-    {
-        variants: {
-            variant: {
-                default: ''
-            }
-        },
-        defaultVariants: {
-            variant: 'default'
-        }
-    }
-)
-
-// Context
-type TabsContextType = {
-    variant?: 'default' | 'button' | 'line'
-    size?: 'lg' | 'sm' | 'xs' | 'md'
-}
-const TabsContext = React.createContext<TabsContextType>({
-    variant: 'default',
-    size: 'md'
-})
-
-// Components
-function Tabs({
-    className,
-    ...props
-}: React.ComponentProps<typeof TabsPrimitive.Root>) {
+function Tabs({ className, ...props }: TabsPrimitive.Root.Props) {
     return (
         <TabsPrimitive.Root
             data-slot="tabs"
-            className={cn('', className)}
+            className={cn(
+                'flex flex-col gap-2 data-[orientation=vertical]:flex-row',
+                className
+            )}
             {...props}
         />
     )
 }
 
 function TabsList({
-    className,
     variant = 'default',
-    shape = 'default',
-    size = 'md',
+    className,
+    children,
     ...props
-}: React.ComponentProps<typeof TabsPrimitive.List> &
-    VariantProps<typeof tabsListVariants>) {
+}: TabsPrimitive.List.Props & {
+    variant?: TabsVariant
+}) {
     return (
-        <TabsContext.Provider
-            value={{ variant: variant || 'default', size: size || 'md' }}
+        <TabsPrimitive.List
+            data-slot="tabs-list"
+            className={cn(
+                'relative z-0 flex w-fit items-center justify-center gap-x-0.5 text-muted-foreground',
+                'data-[orientation=vertical]:flex-col',
+                variant === 'default'
+                    ? 'rounded-lg bg-muted p-0.5 text-muted-foreground/64'
+                    : 'data-[orientation=horizontal]:py-1 data-[orientation=vertical]:px-1 *:data-[slot=tabs-trigger]:hover:bg-accent',
+                className
+            )}
+            {...props}
         >
-            <TabsPrimitive.List
-                data-slot="tabs-list"
+            {children}
+            <TabsPrimitive.Indicator
+                data-slot="tab-indicator"
                 className={cn(
-                    tabsListVariants({ variant, shape, size }),
-                    className
+                    'absolute bottom-0 left-0 h-(--active-tab-height) w-(--active-tab-width) translate-x-(--active-tab-left) -translate-y-(--active-tab-bottom) transition-[width,translate] duration-200 ease-in-out',
+                    variant === 'underline'
+                        ? 'z-10 bg-primary data-[orientation=horizontal]:h-0.5 data-[orientation=horizontal]:translate-y-px data-[orientation=vertical]:w-0.5 data-[orientation=vertical]:-translate-x-px'
+                        : '-z-1 rounded-md bg-background shadow-sm dark:bg-accent'
                 )}
-                {...props}
             />
-        </TabsContext.Provider>
+        </TabsPrimitive.List>
     )
 }
 
-function TabsTrigger({
-    className,
-    ...props
-}: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
-    const { variant, size } = React.useContext(TabsContext)
-
+function TabsTab({ className, ...props }: TabsPrimitive.Tab.Props) {
     return (
-        <TabsPrimitive.Trigger
+        <TabsPrimitive.Tab
             data-slot="tabs-trigger"
-            className={cn(tabsTriggerVariants({ variant, size }), className)}
+            className={cn(
+                "flex flex-1 shrink-0 cursor-pointer items-center justify-center rounded-md border border-transparent text-sm font-medium whitespace-nowrap transition-[color,background-color,box-shadow] outline-none focus-visible:ring-2 focus-visible:ring-ring data-disabled:pointer-events-none data-disabled:opacity-64 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+                'hover:text-muted-foreground data-selected:text-foreground',
+                'gap-1.5 px-[calc(--spacing(2.5)-1px)] py-[calc(--spacing(1.5)-1px)]',
+                'data-[orientation=vertical]:w-full data-[orientation=vertical]:justify-start',
+                className
+            )}
             {...props}
         />
     )
 }
 
-function TabsContent({
-    className,
-    variant,
-    ...props
-}: React.ComponentProps<typeof TabsPrimitive.Content> &
-    VariantProps<typeof tabsContentVariants>) {
+function TabsPanel({ className, ...props }: TabsPrimitive.Panel.Props) {
     return (
-        <TabsPrimitive.Content
+        <TabsPrimitive.Panel
             data-slot="tabs-content"
-            className={cn(tabsContentVariants({ variant }), className)}
+            className={cn('flex-1 outline-none', className)}
             {...props}
         />
     )
 }
 
-export { Tabs, TabsContent, TabsList, TabsTrigger }
+export {
+    Tabs,
+    TabsList,
+    TabsTab,
+    TabsTab as TabsTrigger,
+    TabsPanel,
+    TabsPanel as TabsContent
+}
