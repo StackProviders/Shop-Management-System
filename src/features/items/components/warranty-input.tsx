@@ -73,15 +73,10 @@ export function WarrantyInput({
                                                 key={period.label}
                                                 value={period.label}
                                                 onSelect={() => {
-                                                    const warrantyData = {
+                                                    field.onChange({
                                                         label: period.label,
                                                         days: period.days
-                                                    }
-                                                    console.log(
-                                                        'Setting warranty:',
-                                                        warrantyData
-                                                    )
-                                                    field.onChange(warrantyData)
+                                                    })
                                                     setOpen(false)
                                                 }}
                                             >

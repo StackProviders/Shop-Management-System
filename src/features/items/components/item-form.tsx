@@ -76,6 +76,12 @@ export function ItemForm({
         }
     })
 
+    useEffect(() => {
+        if (isEdit && defaultValues) {
+            form.reset(defaultValues, { keepDefaultValues: false })
+        }
+    }, [])
+
     const formId = useMemo(() => `${initialType}-form`, [initialType])
     const imagesChanged =
         JSON.stringify(images) !== JSON.stringify(initialImages)
@@ -111,10 +117,12 @@ export function ItemForm({
     )
 
     useEffect(() => {
-        form.setValue('type', initialType as 'product' | 'service', {
-            shouldDirty: false
-        })
-    }, [initialType, form])
+        if (!isEdit) {
+            form.setValue('type', initialType as 'product' | 'service', {
+                shouldDirty: false
+            })
+        }
+    }, [initialType, form, isEdit])
 
     useEffect(() => {
         onFormStateChange?.({ formId, isDirty, isSubmitting })
@@ -122,7 +130,6 @@ export function ItemForm({
 
     const handleFormSubmit = useCallback(
         async (data: ItemFormData) => {
-            console.log('Form data before submit:', data)
             await onSubmit({ ...data, images, status: 'active' })
         },
         [onSubmit, images]
