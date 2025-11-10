@@ -131,6 +131,8 @@ export default function EditItemPage() {
                     defaultValues={useMemo(() => {
                         const extendedItem = item as ExtendedItem
                         const baseValues = {
+                            id: item.id,
+                            shopId: item.shopId,
                             name: item.name,
                             type: item.type,
                             salePrice: item.salePrice,

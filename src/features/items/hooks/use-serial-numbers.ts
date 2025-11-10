@@ -7,7 +7,8 @@ export function useSerialNumbers(shopId: string, itemId: string) {
     const q = query(
         collection(firestore, 'serialNumbers'),
         where('shopId', '==', shopId),
-        where('itemId', '==', itemId || '__none__')
+        where('itemId', '==', itemId || '__none__'),
+        where('isSold', '==', false)
     )
     const { status, data } = useFirestoreCollectionData(q, { idField: 'id' })
 
