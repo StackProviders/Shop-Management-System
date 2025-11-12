@@ -2,6 +2,7 @@
 export * from './hooks/use-items'
 export * from './hooks/use-item'
 export * from './hooks/use-categories'
+export * from './hooks/use-category'
 export * from './hooks/use-units'
 export * from './hooks/use-brands'
 export * from './hooks/use-draft-item'
