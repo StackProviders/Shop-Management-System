@@ -1,3 +1,6 @@
+import { useParams, useNavigate } from '@tanstack/react-router'
+import { useShopContext } from '@/features/shop'
+import { useItem } from '@/features/items'
 import {
     ListDetailContentHeader,
     ListDetailContentHeaderTitle,
@@ -16,9 +19,10 @@ import {
     TableRow
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import { MoreVertical, Calendar } from 'lucide-react'
-import { useState } from 'react'
-import { cn } from '@/lib/utils'
+import { useState, useMemo } from 'react'
+import { cn, formatCurrency } from '@/lib/utils'
 
 const MOCK_TRANSACTIONS = [
     {
@@ -44,32 +48,57 @@ const MOCK_TRANSACTIONS = [
 ]
 
 export default function ProductDetailPage() {
+    const { id } = useParams({
+        from: '/_protected/_dashboard/items/products/$id'
+    })
+    const navigate = useNavigate()
+    const { item, isLoading } = useItem(id)
     const [searchQuery, setSearchQuery] = useState('')
+
+    const stockValue = useMemo(
+        () => (item ? (item.currentStock || 0) * (item.purchasePrice || 0) : 0),
+        [item]
+    )
+
+    if (isLoading) {
+        return (
+            <div className="p-6 space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-20 w-full" />
+            </div>
+        )
+    }
+
+    if (!item) {
+        return <div className="p-6">Item not found</div>
+    }
 
     return (
         <>
             <ListDetailContentHeader>
                 <ListDetailContentHeaderTitle>
-                    <h2 className="text-lg font-semibold">NETIS ROUTER</h2>
+                    <h2 className="text-lg font-semibold">
+                        {item.name.toUpperCase()}
+                    </h2>
                     <Button size="sm">ADJUST ITEM</Button>
                 </ListDetailContentHeaderTitle>
 
                 <ListDetailContentHeaderInfo>
                     <ListDetailContentHeaderInfoItem
                         label="SALE PRICE"
-                        value="1,500.00 ৳"
+                        value={formatCurrency(item.salePrice)}
                     />
                     <ListDetailContentHeaderInfoItem
                         label="PURCHASE PRICE"
-                        value="1,350.00 ৳"
+                        value={formatCurrency(item.purchasePrice)}
                     />
                     <ListDetailContentHeaderInfoItem
                         label="STOCK QUANTITY"
-                        value="15"
+                        value={(item.currentStock || 0).toString()}
                     />
                     <ListDetailContentHeaderInfoItem
                         label="STOCK VALUE"
-                        value="20,250.00 ৳"
+                        value={formatCurrency(stockValue)}
                     />
                 </ListDetailContentHeaderInfo>
             </ListDetailContentHeader>
