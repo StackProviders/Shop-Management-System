@@ -1,4 +1,4 @@
-import { useState, ReactNode } from 'react'
+import { useState, useMemo, ReactNode } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useShopContext } from '@/features/shop'
 import { useItems, useCategories } from '@/features/items'
@@ -44,7 +44,18 @@ export default function ItemsPage({ children }: { children?: ReactNode }) {
               ? 'service'
               : undefined
     )
+    const { items: allItems } = useItems(shopId)
     const { categories } = useCategories(shopId)
+
+    const categoryItemCounts = useMemo(() => {
+        const counts: Record<string, number> = {}
+        allItems.forEach((item) => {
+            item.categories?.forEach((catId) => {
+                counts[catId] = (counts[catId] || 0) + 1
+            })
+        })
+        return counts
+    }, [allItems])
 
     const displayItems: (Item | Category)[] =
         activeTab === 'category' ? categories : items
@@ -100,7 +111,8 @@ export default function ItemsPage({ children }: { children?: ReactNode }) {
                                             size="xs"
                                             className="shrink-0"
                                         >
-                                            0 items
+                                            {categoryItemCounts[item.id] || 0}{' '}
+                                            items
                                         </Badge>
                                     )}
                                 </ItemTitle>
