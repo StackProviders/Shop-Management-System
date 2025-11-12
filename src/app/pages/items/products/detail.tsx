@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { useShopContext } from '@/features/shop'
-import { useItem } from '@/features/items'
+import { useItem, useStockTransactions } from '@/features/items'
 import {
     ListDetailContentHeader,
     ListDetailContentHeaderTitle,
@@ -23,42 +23,43 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { MoreVertical, Calendar } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { cn, formatCurrency } from '@/lib/utils'
-
-const MOCK_TRANSACTIONS = [
-    {
-        id: '1',
-        type: 'Purchase',
-        invoiceRef: '',
-        name: 'Md Minhaj',
-        date: '01/11/2025',
-        quantity: 2,
-        price: '1,350.00 ৳',
-        status: 'Unpaid'
-    },
-    {
-        id: '2',
-        type: 'Opening Stock',
-        invoiceRef: '',
-        name: 'Opening Stock',
-        date: '01/11/2025',
-        quantity: 5,
-        price: '1,600.00 ৳',
-        status: ''
-    }
-]
+import { format } from 'date-fns'
 
 export default function ProductDetailPage() {
     const { id } = useParams({
         from: '/_protected/_dashboard/items/products/$id'
     })
     const navigate = useNavigate()
+    const { currentShop } = useShopContext()
+    const shopId = currentShop?.shopId || ''
     const { item, isLoading } = useItem(id)
+    const { transactions, isLoading: transactionsLoading } =
+        useStockTransactions(shopId, id)
     const [searchQuery, setSearchQuery] = useState('')
 
     const stockValue = useMemo(
         () => (item ? (item.currentStock || 0) * (item.purchasePrice || 0) : 0),
         [item]
     )
+
+    const displayTransactions = useMemo(() => {
+        if (transactions.length > 0) return transactions
+        if (!item || !item.openingStock) return []
+        return [
+            {
+                id: 'opening-stock',
+                shopId: item.shopId,
+                itemId: item.id,
+                type: 'Opening Stock' as const,
+                quantity: item.openingStock,
+                pricePerUnit: item.purchasePrice,
+                invoiceRef: '',
+                partyName: 'Opening Stock',
+                status: undefined,
+                createdAt: item.createdAt
+            }
+        ]
+    }, [transactions, item])
 
     if (isLoading) {
         return (
@@ -140,58 +141,101 @@ export default function ProductDetailPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {MOCK_TRANSACTIONS.map((transaction) => (
-                                    <TableRow key={transaction.id}>
-                                        <TableCell>
-                                            <div
-                                                className={cn(
-                                                    'size-2 rounded-full',
-                                                    transaction.type ===
-                                                        'Purchase'
-                                                        ? 'bg-destructive'
-                                                        : 'bg-foreground'
-                                                )}
-                                            />
-                                        </TableCell>
-                                        <TableCell className="font-medium text-xs">
-                                            {transaction.type}
-                                        </TableCell>
-                                        <TableCell className="text-xs">
-                                            {transaction.invoiceRef || '-'}
-                                        </TableCell>
-                                        <TableCell className="text-xs">
-                                            {transaction.name || '-'}
-                                        </TableCell>
-                                        <TableCell className="text-xs">
-                                            {transaction.date}
-                                        </TableCell>
-                                        <TableCell className="text-right text-xs">
-                                            {transaction.quantity}
-                                        </TableCell>
-                                        <TableCell className="text-right text-xs">
-                                            {transaction.price}
-                                        </TableCell>
-                                        <TableCell>
-                                            {transaction.status && (
-                                                <Badge
-                                                    variant="destructive"
-                                                    className="text-xs"
-                                                >
-                                                    {transaction.status}
-                                                </Badge>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button
-                                                size="sm"
-                                                variant="ghost"
-                                                className="h-6 w-6 p-0"
-                                            >
-                                                <MoreVertical className="size-3" />
-                                            </Button>
+                                {transactionsLoading ? (
+                                    <TableRow>
+                                        <TableCell
+                                            colSpan={9}
+                                            className="text-center py-8"
+                                        >
+                                            Loading transactions...
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                ) : displayTransactions.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell
+                                            colSpan={9}
+                                            className="text-center py-8 text-muted-foreground"
+                                        >
+                                            No transactions found
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    displayTransactions.map((transaction) => (
+                                        <TableRow key={transaction.id}>
+                                            <TableCell>
+                                                <div
+                                                    className={cn(
+                                                        'size-2 rounded-full',
+                                                        transaction.type ===
+                                                            'Purchase'
+                                                            ? 'bg-destructive'
+                                                            : transaction.type ===
+                                                                'Sale'
+                                                              ? 'bg-success'
+                                                              : 'bg-foreground'
+                                                    )}
+                                                />
+                                            </TableCell>
+                                            <TableCell className="font-medium text-xs">
+                                                {transaction.type}
+                                            </TableCell>
+                                            <TableCell className="text-xs">
+                                                {transaction.invoiceRef || '-'}
+                                            </TableCell>
+                                            <TableCell className="text-xs">
+                                                {transaction.partyName || '-'}
+                                            </TableCell>
+                                            <TableCell className="text-xs">
+                                                {transaction.createdAt
+                                                    ? format(
+                                                          transaction.createdAt instanceof
+                                                              Date
+                                                              ? transaction.createdAt
+                                                              : new Date(
+                                                                    (
+                                                                        transaction.createdAt as any
+                                                                    ).seconds *
+                                                                        1000
+                                                                ),
+                                                          'dd/MM/yyyy'
+                                                      )
+                                                    : '-'}
+                                            </TableCell>
+                                            <TableCell className="text-right text-xs">
+                                                {transaction.quantity}
+                                            </TableCell>
+                                            <TableCell className="text-right text-xs">
+                                                {formatCurrency(
+                                                    transaction.pricePerUnit
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {transaction.status && (
+                                                    <Badge
+                                                        variant={
+                                                            transaction.status ===
+                                                            'Unpaid'
+                                                                ? 'destructive'
+                                                                : 'secondary'
+                                                        }
+                                                        className="text-xs"
+                                                    >
+                                                        {transaction.status}
+                                                    </Badge>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="h-6 w-6 p-0"
+                                                >
+                                                    <MoreVertical className="size-3" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
                             </TableBody>
                         </Table>
                     </div>

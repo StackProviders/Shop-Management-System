@@ -7,6 +7,7 @@ export * from './hooks/use-units'
 export * from './hooks/use-brands'
 export * from './hooks/use-draft-item'
 export * from './hooks/use-serial-numbers'
+export * from './hooks/use-stock-transactions'
 
 // Hooks - Mutations
 export * from './hooks/use-item-mutations'

@@ -7,6 +7,7 @@ export interface CustomField {
 }
 
 export * from './serial-number'
+export * from './stock-transaction'
 
 export interface Item {
     id: string

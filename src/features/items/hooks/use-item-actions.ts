@@ -4,6 +4,7 @@ import {
     createSerialNumbers,
     deleteSerialNumbersByItem
 } from '../api/serial-numbers.api'
+import { createStockTransaction } from '../api/stock-transactions-mutations.api'
 
 type ItemWithSerialNumbers = Omit<
     Item,
@@ -21,8 +22,20 @@ export function useItemActions(shopId: string) {
             itemData as Omit<Item, 'id' | 'shopId' | 'createdAt' | 'updatedAt'>
         )
 
-        if (serialNumbers && serialNumbers.length > 0 && itemId) {
-            await createSerialNumbers(shopId, itemId, serialNumbers)
+        if (itemId) {
+            if (serialNumbers && serialNumbers.length > 0) {
+                await createSerialNumbers(shopId, itemId, serialNumbers)
+            }
+
+            if (itemData.openingStock && itemData.openingStock > 0) {
+                await createStockTransaction(
+                    shopId,
+                    itemId,
+                    'Opening Stock',
+                    itemData.openingStock,
+                    itemData.purchasePrice
+                )
+            }
         }
 
         return itemId
