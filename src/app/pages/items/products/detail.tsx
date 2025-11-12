@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from '@tanstack/react-router'
+import { useParams } from '@tanstack/react-router'
 import { useShopContext } from '@/features/shop'
 import { useItem, useStockTransactions } from '@/features/items'
 import {
@@ -29,7 +29,6 @@ export default function ProductDetailPage() {
     const { id } = useParams({
         from: '/_protected/_dashboard/items/products/$id'
     })
-    const navigate = useNavigate()
     const { currentShop } = useShopContext()
     const shopId = currentShop?.shopId || ''
     const { item, isLoading } = useItem(id)
