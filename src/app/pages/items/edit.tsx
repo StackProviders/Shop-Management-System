@@ -59,7 +59,10 @@ export default function EditItemPage() {
 
     const handleUpdateItem = useCallback(
         async (data: CreateItemData) => {
-            await updateItem(id, data)
+            await updateItem(id, {
+                ...data,
+                currentStock: data.openingStock || 0
+            })
             navigate({ to: '/items', replace: isIntercepting })
         },
         [updateItem, id, navigate, isIntercepting]
