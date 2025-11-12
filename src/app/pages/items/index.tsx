@@ -1,7 +1,7 @@
 import { useState, useMemo, ReactNode } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useShopContext } from '@/features/shop'
-import { useItems, useCategories } from '@/features/items'
+import { useItems, useCategories, useItemActions } from '@/features/items'
 import { ListDetailPage } from '@/components/common'
 import { DetailActionsMenu } from '@/components/common/actions/detail-actions-menu'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -16,6 +16,7 @@ import {
 import { Package } from 'lucide-react'
 import { cn, formatCurrency } from '@/lib/utils'
 import type { Item, Category } from '@/features/items/types'
+import { categoriesApi } from '@/features/items/api/categories.api'
 
 type TabValue = 'products' | 'services' | 'category'
 
@@ -46,6 +47,15 @@ export default function ItemsPage({ children }: { children?: ReactNode }) {
     )
     const { items: allItems } = useItems(shopId)
     const { categories } = useCategories(shopId)
+    const { deleteItem } = useItemActions(shopId)
+
+    const handleDelete = async (id: string) => {
+        if (activeTab === 'category') {
+            await categoriesApi.delete(id)
+        } else {
+            await deleteItem(id)
+        }
+    }
 
     const categoryItemCounts = useMemo(() => {
         const counts: Record<string, number> = {}
@@ -152,9 +162,9 @@ export default function ItemsPage({ children }: { children?: ReactNode }) {
                                                 to: `/items/${item.id}/edit?fromItems=true`
                                             })
                                         }
-                                        onDeleteClick={() => {
-                                            // Delete handler
-                                        }}
+                                        onDeleteClick={() =>
+                                            handleDelete(item.id)
+                                        }
                                     />
                                 </div>
                             </ItemActions>
