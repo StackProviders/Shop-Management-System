@@ -30,8 +30,7 @@ import {
     FileText,
     Smartphone,
     TrendingUp,
-    Undo2,
-    Warehouse
+    Undo2
 } from 'lucide-react'
 import type { SidebarItem } from '@/components/sidebar/types'
 import { getSecurityCount } from '@/components/sidebar/badge-helpers'
@@ -64,12 +63,6 @@ export const sidebarItems: SidebarItem[] = [
             onClick: () => console.log('Add item'),
             label: 'Add Item'
         }
-    },
-    {
-        id: 'inventory',
-        label: 'Inventory',
-        icon: Warehouse,
-        route: '/inventory'
     },
     {
         id: 'sales',
