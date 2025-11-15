@@ -1,7 +1,7 @@
 import { useState, useMemo, ReactNode } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useShopContext } from '@/features/shop'
-import { useItems, useCategories, useItemActions } from '@/features/items'
+import { useItems, useCategories, useItemMutations } from '@/features/items'
 import { ListDetailPage } from '@/components/common'
 import { DetailActionsMenu } from '@/components/common/actions/detail-actions-menu'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -47,7 +47,7 @@ export default function ItemsPage({ children }: { children?: ReactNode }) {
     )
     const { items: allItems } = useItems(shopId)
     const { categories } = useCategories(shopId)
-    const { deleteItem } = useItemActions(shopId)
+    const { remove: deleteItem } = useItemMutations(shopId)
 
     const handleDelete = async (id: string) => {
         if (activeTab === 'category') {

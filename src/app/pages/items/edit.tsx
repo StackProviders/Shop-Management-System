@@ -2,7 +2,7 @@ import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import {
     ItemForm,
     useCategories,
-    useItemActions,
+    useItemMutations,
     useItem
 } from '@/features/items'
 import type {
@@ -34,7 +34,7 @@ export default function EditItemPage() {
     const search = useSearch({ from: '/_protected/_dashboard/items/$id/edit' })
     const { currentShop } = useShopContext()
     const shopId = currentShop?.shopId || ''
-    const { updateItem } = useItemActions(shopId)
+    const { update: updateItem } = useItemMutations(shopId)
     const { categories } = useCategories(shopId)
     const { item, isLoading } = useItem(id)
     const { isIntercepting } = useInterceptingRoute(

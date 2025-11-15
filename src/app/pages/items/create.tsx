@@ -1,5 +1,5 @@
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { ItemForm, useCategories, useItemActions } from '@/features/items'
+import { ItemForm, useCategories, useItemMutations } from '@/features/items'
 import type { ItemType } from '@/features/items'
 import type { ItemFormData } from '@/features/items/validations/item.validation'
 import { useShopContext } from '@/features/shop'
@@ -14,7 +14,7 @@ export default function CreateItemPage() {
     const search = useSearch({ from: '/_protected/_dashboard/items/create' })
     const { currentShop } = useShopContext()
     const shopId = currentShop?.shopId || ''
-    const { createItem } = useItemActions(shopId)
+    const { create: createItem } = useItemMutations(shopId)
     const { categories } = useCategories(shopId)
     const { isIntercepting } = useInterceptingRoute(
         search.fromItems === true,

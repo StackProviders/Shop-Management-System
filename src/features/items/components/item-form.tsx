@@ -4,7 +4,12 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { FormInput, FormTextarea, FormCombobox } from '@/components/common'
+import {
+    FormInput,
+    FormTextarea,
+    FormCombobox,
+    UnitCombobox
+} from '@/components/common'
 import { Input } from '@/components/ui/input'
 import {
     FormField,
@@ -18,7 +23,6 @@ import type { ItemType, Category } from '../types'
 import { CategoryForm } from './category-form'
 import { BrandForm } from './brand-form'
 import { useShopContext } from '@/features/shop'
-import { UNITS } from '@/config/units'
 import { useItemSettings } from '../hooks/use-item-settings'
 import { useBrands } from '../hooks/use-brands'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -110,14 +114,7 @@ export function ItemForm({
         () => categories.map((cat) => ({ value: cat.id, label: cat.name })),
         [categories]
     )
-    const unitOptions = useMemo(
-        () =>
-            UNITS.map((unit) => ({
-                value: unit.id,
-                label: `${unit.fullName} (${unit.shortName})`
-            })),
-        []
-    )
+
     const brandOptions = useMemo(
         () => brands.map((brand) => ({ value: brand.id, label: brand.name })),
         [brands]
@@ -232,13 +229,7 @@ export function ItemForm({
 
                                     {/* Row 3: Unit & Item Code */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <FormCombobox
-                                            name="unit"
-                                            label="Unit"
-                                            placeholder="Select unit"
-                                            searchPlaceholder="Search units..."
-                                            options={unitOptions}
-                                        />
+                                        <UnitCombobox name="unit" />
 
                                         <FormField
                                             control={form.control}
