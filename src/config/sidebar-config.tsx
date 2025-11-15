@@ -79,7 +79,7 @@ export const sidebarItems: SidebarItem[] = [
                 id: 'add-sale',
                 label: 'New Sale',
                 icon: IconPlus,
-                route: '/sales/add'
+                route: '/sales/create'
             },
             {
                 id: 'sale-return',
