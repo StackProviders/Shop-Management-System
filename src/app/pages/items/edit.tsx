@@ -18,6 +18,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react'
 import { ItemSettingsSheet } from '@/features/items/components/item-settings-sheet'
 import { ItemFormHeader } from '@/features/items/components/item-form-header'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useSerialNumberMutations } from '@/features/items/hooks/use-serial-number-mutations'
 
 interface ExtendedItem extends Item {
     wholesalePrice?: number
@@ -57,15 +58,23 @@ export default function EditItemPage() {
         }
     }, [item])
 
+    const { update: updateSerialNumbers } = useSerialNumberMutations(shopId, id)
+
     const handleUpdateItem = useCallback(
-        async (data: CreateItemData) => {
+        async (data: CreateItemData & { serialNumbers?: string[] }) => {
+            const { serialNumbers, ...itemData } = data
             await updateItem(id, {
-                ...data,
+                ...itemData,
                 currentStock: data.openingStock || 0
             })
+
+            if (serialNumbers) {
+                await updateSerialNumbers(serialNumbers)
+            }
+
             navigate({ to: '/items', replace: isIntercepting })
         },
-        [updateItem, id, navigate, isIntercepting]
+        [updateItem, id, navigate, isIntercepting, updateSerialNumbers]
     )
 
     const handleTypeChange = useCallback((checked: boolean) => {

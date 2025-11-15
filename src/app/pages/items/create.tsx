@@ -8,6 +8,7 @@ import { useInterceptingRoute } from '@/lib/intercepting-routes'
 import { useState, useCallback, useMemo } from 'react'
 import { ItemSettingsSheet } from '@/features/items/components/item-settings-sheet'
 import { ItemFormHeader } from '@/features/items/components/item-form-header'
+import { createSerialNumbers } from '@/features/items/api/serial-numbers.api'
 
 export default function CreateItemPage() {
     const navigate = useNavigate()
@@ -30,8 +31,9 @@ export default function CreateItemPage() {
 
     const handleAddItem = useCallback(
         async (data: ItemFormData) => {
-            const { status, ...restData } = data
-            await createItem({
+            const { status, serialNumbers, ...restData } =
+                data as ItemFormData & { serialNumbers?: string[] }
+            const newItemId = await createItem({
                 ...restData,
                 itemCode: data.itemCode || '',
                 categories: data.categories || [],
@@ -43,9 +45,14 @@ export default function CreateItemPage() {
                 minStockAlert: data.minStockAlert || 0,
                 status: status || 'active'
             })
+
+            if (serialNumbers && serialNumbers.length > 0 && newItemId) {
+                await createSerialNumbers(shopId, newItemId, serialNumbers)
+            }
+
             navigate({ to: '/items', replace: isIntercepting })
         },
-        [createItem, navigate, isIntercepting]
+        [createItem, navigate, isIntercepting, shopId]
     )
 
     const handleTypeChange = useCallback((checked: boolean) => {

@@ -1,15 +1,15 @@
 import {
     collection,
-    addDoc,
-    deleteDoc,
+    doc,
     query,
     where,
     getDocs,
-    serverTimestamp,
-    getFirestore
+    Timestamp
 } from 'firebase/firestore'
-import { app } from '@/lib/firebase'
+import { setDocWithTimeout, deleteDocWithTimeout } from '@/lib/firestore-utils'
 import type { SerialNumber } from '../types'
+import { getFirestore } from 'firebase/firestore'
+import { app } from '@/lib/firebase'
 
 export async function createSerialNumbers(
     shopId: string,
@@ -17,20 +17,21 @@ export async function createSerialNumbers(
     serialNumbers: string[]
 ): Promise<void> {
     const firestore = getFirestore(app)
-    const batch = serialNumbers.map((serialNo) =>
-        addDoc(collection(firestore, 'serialNumbers'), {
+    const batch = serialNumbers.map(async (serialNo) => {
+        const newDocRef = doc(collection(firestore, 'serialNumbers'))
+        await setDocWithTimeout(newDocRef, {
             shopId,
             itemId,
             serialNo,
             isSold: false,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now()
         })
-    )
+    })
     await Promise.all(batch)
 }
 
-export async function deleteSerialNumbersByItem(
+export async function removeSerialNumbersByItem(
     shopId: string,
     itemId: string
 ): Promise<void> {
@@ -41,7 +42,9 @@ export async function deleteSerialNumbersByItem(
         where('itemId', '==', itemId)
     )
     const snapshot = await getDocs(q)
-    const batch = snapshot.docs.map((doc) => deleteDoc(doc.ref))
+    const batch = snapshot.docs.map((docSnap) =>
+        deleteDocWithTimeout(docSnap.ref)
+    )
     await Promise.all(batch)
 }
 
@@ -56,8 +59,8 @@ export async function getSerialNumbersByItem(
         where('itemId', '==', itemId)
     )
     const snapshot = await getDocs(q)
-    return snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data()
+    return snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data()
     })) as SerialNumber[]
 }

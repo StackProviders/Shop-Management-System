@@ -1,5 +1,7 @@
 export * from './types'
 export * from './hooks/use-sale-mutations'
+export * from './hooks/use-item-selection'
+export * from './hooks/use-sale-table-columns'
 export * from './components/sale-form'
 export * from './components/sale-items-table'
 export * from './stores/sale-items-store'
