@@ -17,6 +17,12 @@ import { WARRANTY_PERIODS } from '@/config/warranty-periods'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Plus, X, Trash2 } from 'lucide-react'
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger
+} from '@/components/ui/accordion'
 
 interface ItemSettingsSheetProps {
     open: boolean
@@ -44,6 +50,10 @@ export function ItemSettingsSheet({
         await updateSettings(localSettings)
         onOpenChange(false)
     }
+
+    const printFieldCount = (localSettings.customFieldNames || []).filter(
+        (f) => f.printInInvoice
+    ).length
 
     if (isLoading) {
         return (
@@ -158,66 +168,268 @@ export function ItemSettingsSheet({
                     <div>
                         <div className="flex items-center justify-between">
                             <Label>Warranty</Label>
-                            <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-1.5">
-                                    <Checkbox
-                                        id="warranty-print"
-                                        checked={
-                                            localSettings.customFieldSettings
-                                                .warrantyPrintInInvoice
-                                        }
-                                        disabled={
-                                            !localSettings.customFieldSettings
-                                                .warranty
-                                        }
-                                        onCheckedChange={(checked) =>
-                                            setLocalSettings({
-                                                ...localSettings,
-                                                customFieldSettings: {
-                                                    ...localSettings.customFieldSettings,
-                                                    warrantyPrintInInvoice:
-                                                        !!checked
-                                                }
-                                            })
-                                        }
-                                    />
-                                    <Label
-                                        htmlFor="warranty-print"
-                                        className="text-xs cursor-pointer text-muted-foreground"
-                                    >
-                                        Print
-                                    </Label>
-                                </div>
-                                <Switch
-                                    checked={
-                                        localSettings.customFieldSettings
-                                            .warranty
-                                    }
-                                    onCheckedChange={(checked) => {
-                                        const allPeriods =
-                                            WARRANTY_PERIODS.filter(
-                                                (p) => p.value !== 'custom'
-                                            ).map((p) => p.value)
-                                        setLocalSettings({
-                                            ...localSettings,
-                                            customFieldSettings: {
-                                                ...localSettings.customFieldSettings,
-                                                warranty: checked,
-                                                warrantyPrintInInvoice: checked
-                                                    ? localSettings
-                                                          .customFieldSettings
-                                                          .warrantyPrintInInvoice
-                                                    : false
-                                            },
-                                            warrantyPeriods: checked
-                                                ? allPeriods
-                                                : []
-                                        })
-                                    }}
-                                />
-                            </div>
+                            <Switch
+                                checked={
+                                    localSettings.customFieldSettings.warranty
+                                }
+                                onCheckedChange={(checked) => {
+                                    const allPeriods = WARRANTY_PERIODS.filter(
+                                        (p) => p.value !== 'custom'
+                                    ).map((p) => p.value)
+                                    setLocalSettings({
+                                        ...localSettings,
+                                        customFieldSettings: {
+                                            ...localSettings.customFieldSettings,
+                                            warranty: checked,
+                                            warrantyPrintInInvoice: checked
+                                                ? localSettings
+                                                      .customFieldSettings
+                                                      .warrantyPrintInInvoice
+                                                : false
+                                        },
+                                        warrantyPeriods: checked
+                                            ? allPeriods
+                                            : []
+                                    })
+                                }}
+                            />
                         </div>
                     </div>
+
+                    {localSettings.customFieldSettings.warranty && (
+                        <Accordion type="single" collapsible>
+                            <AccordionItem value="warranty-settings">
+                                <AccordionTrigger>
+                                    Warranty Settings
+                                </AccordionTrigger>
+                                <AccordionContent className="space-y-4">
+                                    <div className="flex items-center gap-1.5">
+                                        <Checkbox
+                                            id="warranty-print"
+                                            checked={
+                                                localSettings
+                                                    .customFieldSettings
+                                                    .warrantyPrintInInvoice
+                                            }
+                                            onCheckedChange={(checked) =>
+                                                setLocalSettings({
+                                                    ...localSettings,
+                                                    customFieldSettings: {
+                                                        ...localSettings.customFieldSettings,
+                                                        warrantyPrintInInvoice:
+                                                            !!checked
+                                                    }
+                                                })
+                                            }
+                                        />
+                                        <Label
+                                            htmlFor="warranty-print"
+                                            className="text-sm cursor-pointer font-normal"
+                                        >
+                                            Print in Invoice
+                                        </Label>
+                                    </div>
+
+                                    <div>
+                                        <Label className="mb-2 block text-sm">
+                                            Warranty Periods
+                                        </Label>
+                                        <div className="space-y-2">
+                                            {WARRANTY_PERIODS.filter(
+                                                (p) => p.value !== 'custom'
+                                            ).map((period) => (
+                                                <div
+                                                    key={period.value}
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    <Checkbox
+                                                        id={period.value}
+                                                        checked={localSettings.warrantyPeriods?.includes(
+                                                            period.value
+                                                        )}
+                                                        onCheckedChange={(
+                                                            checked
+                                                        ) => {
+                                                            const periods =
+                                                                localSettings.warrantyPeriods ||
+                                                                []
+                                                            setLocalSettings({
+                                                                ...localSettings,
+                                                                warrantyPeriods:
+                                                                    checked
+                                                                        ? [
+                                                                              ...periods,
+                                                                              period.value
+                                                                          ]
+                                                                        : periods.filter(
+                                                                              (
+                                                                                  p
+                                                                              ) =>
+                                                                                  p !==
+                                                                                  period.value
+                                                                          )
+                                                            })
+                                                        }}
+                                                    />
+                                                    <Label
+                                                        htmlFor={period.value}
+                                                        className="text-sm font-normal cursor-pointer"
+                                                    >
+                                                        {period.label}
+                                                    </Label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <Label className="text-sm mb-2 block">
+                                            Custom Periods
+                                        </Label>
+                                        <div className="space-y-3">
+                                            {localSettings.customWarrantyPeriods?.map(
+                                                (period, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="flex items-end gap-2"
+                                                    >
+                                                        <div className="flex-1">
+                                                            <Label className="text-xs text-muted-foreground mb-1 block">
+                                                                Period Name
+                                                            </Label>
+                                                            <Input
+                                                                value={
+                                                                    period.label
+                                                                }
+                                                                onChange={(
+                                                                    e
+                                                                ) => {
+                                                                    const updated =
+                                                                        [
+                                                                            ...(localSettings.customWarrantyPeriods ||
+                                                                                [])
+                                                                        ]
+                                                                    updated[
+                                                                        index
+                                                                    ] = {
+                                                                        ...updated[
+                                                                            index
+                                                                        ],
+                                                                        label: e
+                                                                            .target
+                                                                            .value
+                                                                    }
+                                                                    setLocalSettings(
+                                                                        {
+                                                                            ...localSettings,
+                                                                            customWarrantyPeriods:
+                                                                                updated
+                                                                        }
+                                                                    )
+                                                                }}
+                                                                placeholder="e.g., 18 Months"
+                                                            />
+                                                        </div>
+                                                        <div className="w-20">
+                                                            <Label className="text-xs text-muted-foreground mb-1 block">
+                                                                Days
+                                                            </Label>
+                                                            <Input
+                                                                type="number"
+                                                                value={
+                                                                    period.days
+                                                                }
+                                                                onChange={(
+                                                                    e
+                                                                ) => {
+                                                                    const updated =
+                                                                        [
+                                                                            ...(localSettings.customWarrantyPeriods ||
+                                                                                [])
+                                                                        ]
+                                                                    updated[
+                                                                        index
+                                                                    ] = {
+                                                                        ...updated[
+                                                                            index
+                                                                        ],
+                                                                        days:
+                                                                            parseInt(
+                                                                                e
+                                                                                    .target
+                                                                                    .value
+                                                                            ) ||
+                                                                            0
+                                                                    }
+                                                                    setLocalSettings(
+                                                                        {
+                                                                            ...localSettings,
+                                                                            customWarrantyPeriods:
+                                                                                updated
+                                                                        }
+                                                                    )
+                                                                }}
+                                                                placeholder="0"
+                                                            />
+                                                        </div>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => {
+                                                                const updated =
+                                                                    (
+                                                                        localSettings.customWarrantyPeriods ||
+                                                                        []
+                                                                    ).filter(
+                                                                        (
+                                                                            _,
+                                                                            i
+                                                                        ) =>
+                                                                            i !==
+                                                                            index
+                                                                    )
+                                                                setLocalSettings(
+                                                                    {
+                                                                        ...localSettings,
+                                                                        customWarrantyPeriods:
+                                                                            updated
+                                                                    }
+                                                                )
+                                                            }}
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                )
+                                            )}
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    const updated = [
+                                                        ...(localSettings.customWarrantyPeriods ||
+                                                            []),
+                                                        { label: '', days: 0 }
+                                                    ]
+                                                    setLocalSettings({
+                                                        ...localSettings,
+                                                        customWarrantyPeriods:
+                                                            updated
+                                                    })
+                                                }}
+                                                className="w-full"
+                                            >
+                                                <Plus className="h-4 w-4 mr-2" />
+                                                Add Custom Period
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                    )}
                     <Separator />
 
                     <div className="flex items-center justify-between">
@@ -281,6 +493,7 @@ export function ItemSettingsSheet({
                             <Label>Custom Fields</Label>
                             <span className="text-xs text-muted-foreground">
                                 {localSettings.customFieldNames?.length || 0}/8
+                                (Print: {printFieldCount}/3)
                             </span>
                         </div>
                         <div className="space-y-3">
@@ -297,6 +510,10 @@ export function ItemSettingsSheet({
                                                         id={`print-${index}`}
                                                         checked={
                                                             field.printInInvoice
+                                                        }
+                                                        disabled={
+                                                            !field.printInInvoice &&
+                                                            printFieldCount >= 3
                                                         }
                                                         onCheckedChange={(
                                                             checked
@@ -400,186 +617,6 @@ export function ItemSettingsSheet({
                             </Button>
                         </div>
                     </div>
-
-                    {localSettings.customFieldSettings.warranty && (
-                        <>
-                            <Separator />
-                            <div>
-                                <Label className="mb-3 block">
-                                    Warranty Periods
-                                </Label>
-                                <div className="ml-4 space-y-2">
-                                    {WARRANTY_PERIODS.filter(
-                                        (p) => p.value !== 'custom'
-                                    ).map((period) => (
-                                        <div
-                                            key={period.value}
-                                            className="flex items-center gap-2"
-                                        >
-                                            <Checkbox
-                                                id={period.value}
-                                                checked={localSettings.warrantyPeriods?.includes(
-                                                    period.value
-                                                )}
-                                                onCheckedChange={(checked) => {
-                                                    const periods =
-                                                        localSettings.warrantyPeriods ||
-                                                        []
-                                                    setLocalSettings({
-                                                        ...localSettings,
-                                                        warrantyPeriods: checked
-                                                            ? [
-                                                                  ...periods,
-                                                                  period.value
-                                                              ]
-                                                            : periods.filter(
-                                                                  (p) =>
-                                                                      p !==
-                                                                      period.value
-                                                              )
-                                                    })
-                                                }}
-                                            />
-                                            <Label
-                                                htmlFor={period.value}
-                                                className="text-sm font-normal cursor-pointer"
-                                            >
-                                                {period.label}
-                                            </Label>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="mt-4">
-                                    <Label className="text-sm mb-2 block">
-                                        Custom Periods
-                                    </Label>
-                                    <div className="space-y-3">
-                                        {localSettings.customWarrantyPeriods?.map(
-                                            (period, index) => (
-                                                <div
-                                                    key={index}
-                                                    className="flex items-end gap-2"
-                                                >
-                                                    <div className="flex-1">
-                                                        <Label className="text-xs text-muted-foreground mb-1 block">
-                                                            Period Name
-                                                        </Label>
-                                                        <Input
-                                                            value={period.label}
-                                                            onChange={(e) => {
-                                                                const updated =
-                                                                    [
-                                                                        ...(localSettings.customWarrantyPeriods ||
-                                                                            [])
-                                                                    ]
-                                                                updated[index] =
-                                                                    {
-                                                                        ...updated[
-                                                                            index
-                                                                        ],
-                                                                        label: e
-                                                                            .target
-                                                                            .value
-                                                                    }
-                                                                setLocalSettings(
-                                                                    {
-                                                                        ...localSettings,
-                                                                        customWarrantyPeriods:
-                                                                            updated
-                                                                    }
-                                                                )
-                                                            }}
-                                                            placeholder="e.g., 18 Months"
-                                                        />
-                                                    </div>
-                                                    <div className="w-20">
-                                                        <Label className="text-xs text-muted-foreground mb-1 block">
-                                                            Days
-                                                        </Label>
-                                                        <Input
-                                                            type="number"
-                                                            value={period.days}
-                                                            onChange={(e) => {
-                                                                const updated =
-                                                                    [
-                                                                        ...(localSettings.customWarrantyPeriods ||
-                                                                            [])
-                                                                    ]
-                                                                updated[index] =
-                                                                    {
-                                                                        ...updated[
-                                                                            index
-                                                                        ],
-                                                                        days:
-                                                                            parseInt(
-                                                                                e
-                                                                                    .target
-                                                                                    .value
-                                                                            ) ||
-                                                                            0
-                                                                    }
-                                                                setLocalSettings(
-                                                                    {
-                                                                        ...localSettings,
-                                                                        customWarrantyPeriods:
-                                                                            updated
-                                                                    }
-                                                                )
-                                                            }}
-                                                            placeholder="0"
-                                                        />
-                                                    </div>
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => {
-                                                            const updated = (
-                                                                localSettings.customWarrantyPeriods ||
-                                                                []
-                                                            ).filter(
-                                                                (_, i) =>
-                                                                    i !== index
-                                                            )
-                                                            setLocalSettings({
-                                                                ...localSettings,
-                                                                customWarrantyPeriods:
-                                                                    updated
-                                                            })
-                                                        }}
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            )
-                                        )}
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => {
-                                                const updated = [
-                                                    ...(localSettings.customWarrantyPeriods ||
-                                                        []),
-                                                    { label: '', days: 0 }
-                                                ]
-                                                setLocalSettings({
-                                                    ...localSettings,
-                                                    customWarrantyPeriods:
-                                                        updated
-                                                })
-                                            }}
-                                            className="w-full"
-                                        >
-                                            <Plus className="h-4 w-4 mr-2" />
-                                            Add Custom Period
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </>
-                    )}
                 </div>
 
                 <SheetFooter className="border-t pt-4">

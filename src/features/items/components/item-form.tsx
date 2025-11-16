@@ -31,6 +31,7 @@ import { ItemImageUpload } from './item-image-upload'
 import { deleteUnusedImages } from '@/lib/storage'
 import { SerialNumberButton } from './serial-number-button'
 import { useSerialNumbers } from '../hooks/use-serial-numbers'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 interface ItemFormProps {
     type?: ItemType
@@ -81,6 +82,7 @@ export function ItemForm({
             itemCode: '',
             openingStock: 0,
             minStockAlert: 0,
+            serialNoTracking: false,
             status: 'draft'
         }
     })
@@ -99,9 +101,18 @@ export function ItemForm({
                 form.setValue('openingStock', serials.length, {
                     shouldDirty: false
                 })
+                form.setValue('serialNoTracking', true, {
+                    shouldDirty: false
+                })
             }, 0)
         }
     }, [isEdit, itemId, existingSerials.length, form])
+
+    useEffect(() => {
+        if (serialNumbers.length > 0) {
+            form.setValue('serialNoTracking', true, { shouldDirty: true })
+        }
+    }, [serialNumbers.length, form])
 
     const formId = useMemo(() => `${initialType}-form`, [initialType])
     const imagesChanged =
@@ -446,6 +457,63 @@ export function ItemForm({
                                                 placeholder="0"
                                             />
                                         </div>
+
+                                        {settings.serialNoTracking && (
+                                            <FormField
+                                                control={form.control}
+                                                name="serialNoTracking"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>
+                                                            Serial No. Tracking
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <RadioGroup
+                                                                value={
+                                                                    field.value
+                                                                        ? 'yes'
+                                                                        : 'no'
+                                                                }
+                                                                onValueChange={(
+                                                                    value
+                                                                ) =>
+                                                                    field.onChange(
+                                                                        value ===
+                                                                            'yes'
+                                                                    )
+                                                                }
+                                                            >
+                                                                <div className="flex items-center gap-2">
+                                                                    <RadioGroupItem
+                                                                        value="yes"
+                                                                        id="serial-yes"
+                                                                    />
+                                                                    <Label
+                                                                        htmlFor="serial-yes"
+                                                                        className="font-normal cursor-pointer"
+                                                                    >
+                                                                        Yes
+                                                                    </Label>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <RadioGroupItem
+                                                                        value="no"
+                                                                        id="serial-no"
+                                                                    />
+                                                                    <Label
+                                                                        htmlFor="serial-no"
+                                                                        className="font-normal cursor-pointer"
+                                                                    >
+                                                                        No
+                                                                    </Label>
+                                                                </div>
+                                                            </RadioGroup>
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        )}
                                     </TabsContent>
                                 )}
                             </Tabs>

@@ -18,6 +18,7 @@ export const itemSchema = z
         barcode: z.string().optional(),
         images: z.array(z.string()).optional(),
         brand: z.string().optional(),
+        serialNoTracking: z.boolean().optional(),
         warranty: z
             .object({
                 label: z.string(),

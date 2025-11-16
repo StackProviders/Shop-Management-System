@@ -29,6 +29,7 @@ export interface Item {
     description?: string
     taxRate?: number
     customFields?: CustomField[]
+    serialNoTracking?: boolean
     status?: 'draft' | 'active' | 'inactive'
     createdAt: Date
     updatedAt: Date
