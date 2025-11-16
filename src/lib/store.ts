@@ -3,6 +3,7 @@ import { LazyStore } from '@tauri-apps/plugin-store'
 // Global store instances
 export const authStore = new LazyStore('auth.json')
 export const shopStore = new LazyStore('shop-settings.json')
+export const saleStore = new LazyStore('sale-settings.json')
 export const appStore = new LazyStore('app-settings.json')
 
 // Store keys
@@ -17,6 +18,9 @@ export const STORE_KEYS = {
 
     // Shop keys
     CURRENT_SHOP_ID: 'currentShopId',
+
+    // Sale keys
+    SALE_COLUMN_VISIBILITY: 'saleColumnVisibility',
 
     // App settings keys
     THEME: 'theme',

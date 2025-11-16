@@ -8,6 +8,16 @@ export interface SaleItem {
     total: number
 }
 
+export interface SaleItemRow extends SaleItem {
+    id: string
+    serialNo?: string | string[]
+    colour?: string
+    material?: string
+    warranty?: { label: string; days: number }
+    unit?: string
+    [key: string]: unknown
+}
+
 export interface Sale {
     id: string
     shopId: string

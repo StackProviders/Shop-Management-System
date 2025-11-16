@@ -1,13 +1,6 @@
 import { create } from 'zustand'
-import type { SaleItem } from '../types'
+import type { SaleItemRow } from '../types'
 import { getSerialNumbersByItem } from '@/features/items/api/serial-numbers.api'
-
-interface SaleItemRow extends SaleItem {
-    serialNo?: string | string[]
-    colour?: string
-    material?: string
-    unit?: string
-}
 
 interface SaleItemsState {
     items: SaleItemRow[]
@@ -19,6 +12,8 @@ interface SaleItemsState {
         field: keyof SaleItemRow,
         value: SaleItemRow[keyof SaleItemRow]
     ) => void
+    updateItemBatch: (index: number, updates: Partial<SaleItemRow>) => void
+    reorderItems: (fromId: string, toId: string) => void
     clearItems: () => void
     fetchSerialNumbers: (shopId: string, itemId: string) => Promise<void>
     getSerialNumbers: (itemId: string) => string[]
@@ -32,6 +27,7 @@ export const useSaleItemsStore = create<SaleItemsState>((set, get) => ({
             items: [
                 ...state.items,
                 {
+                    id: `item-${Date.now()}-${Math.random()}`,
                     itemId: '',
                     itemName: '',
                     quantity: 1,
@@ -40,7 +36,8 @@ export const useSaleItemsStore = create<SaleItemsState>((set, get) => ({
                     serialNo: '',
                     colour: '',
                     material: '',
-                    unit: 'NONE'
+                    warranty: undefined,
+                    unit: 'none'
                 }
             ]
         })),
@@ -58,6 +55,28 @@ export const useSaleItemsStore = create<SaleItemsState>((set, get) => ({
                 item.total = item.quantity * item.price
             }
 
+            return { items }
+        }),
+    updateItemBatch: (index, updates) =>
+        set((state) => {
+            const items = [...state.items]
+            items[index] = { ...items[index], ...updates }
+
+            const item = items[index]
+            if ('quantity' in updates || 'price' in updates) {
+                item.total = item.quantity * item.price
+            }
+
+            return { items }
+        }),
+    reorderItems: (fromId, toId) =>
+        set((state) => {
+            const items = [...state.items]
+            const fromIndex = items.findIndex((item) => item.id === fromId)
+            const toIndex = items.findIndex((item) => item.id === toId)
+            if (fromIndex === -1 || toIndex === -1) return state
+            const [movedItem] = items.splice(fromIndex, 1)
+            items.splice(toIndex, 0, movedItem)
             return { items }
         }),
     clearItems: () => set({ items: [], serialNumbersCache: {} }),

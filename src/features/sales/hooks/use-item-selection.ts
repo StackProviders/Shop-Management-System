@@ -2,7 +2,7 @@ import { useSaleItemsStore } from '../stores/sale-items-store'
 import type { Item } from '@/features/items'
 
 export function useItemSelection(shopId: string) {
-    const { updateItem, fetchSerialNumbers } = useSaleItemsStore()
+    const { updateItemBatch, fetchSerialNumbers } = useSaleItemsStore()
 
     const handleItemSelect = async (
         index: number,
@@ -12,21 +12,54 @@ export function useItemSelection(shopId: string) {
         const selectedItem = items.find((i) => i.id === itemId)
         if (!selectedItem) return
 
-        updateItem(index, 'itemId', itemId)
-        updateItem(index, 'itemName', selectedItem.name)
-        updateItem(index, 'price', selectedItem.salePrice)
-        updateItem(index, 'unit', selectedItem.unit || 'NONE')
+        // Prepare batch updates with item defaults
+        const updates: Record<string, unknown> = {
+            itemId,
+            itemName: selectedItem.name,
+            price: selectedItem.salePrice ?? 0,
+            unit: selectedItem.unit || 'none',
+            quantity: 1
+        }
 
-        const colourField = selectedItem.customFields?.find(
-            (f) => f.name.toLowerCase() === 'colour'
-        )
-        const materialField = selectedItem.customFields?.find(
-            (f) => f.name.toLowerCase() === 'material'
-        )
+        // Set warranty from direct field or customFields
+        const directWarranty = (
+            selectedItem as Item & {
+                warranty?: { label: string; days: number }
+            }
+        ).warranty
+        if (directWarranty?.label && directWarranty?.days) {
+            updates.warranty = directWarranty
+        } else {
+            const warrantyField = selectedItem.customFields?.find(
+                (f) => f.name.toLowerCase() === 'warranty'
+            )
+            if (warrantyField?.value) {
+                try {
+                    const warranty =
+                        typeof warrantyField.value === 'string'
+                            ? JSON.parse(warrantyField.value)
+                            : warrantyField.value
+                    if (warranty?.label && warranty?.days) {
+                        updates.warranty = warranty
+                    }
+                } catch {
+                    // Invalid warranty format, skip
+                }
+            }
+        }
 
-        if (colourField) updateItem(index, 'colour', colourField.value)
-        if (materialField) updateItem(index, 'material', materialField.value)
+        // Set other custom fields
+        selectedItem.customFields?.forEach((field) => {
+            const fieldName = field.name.toLowerCase()
+            if (fieldName !== 'warranty' && field.value) {
+                updates[fieldName] = field.value
+            }
+        })
 
+        // Apply all updates in one batch
+        updateItemBatch(index, updates)
+
+        // Fetch serial numbers if needed
         await fetchSerialNumbers(shopId, itemId)
     }
 

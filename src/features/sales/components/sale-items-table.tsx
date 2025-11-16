@@ -12,192 +12,142 @@ import {
     TableHeader,
     TableRow
 } from '@/components/ui/table'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
+import { Plus, Settings2 } from 'lucide-react'
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger
+} from '@/components/ui/popover'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
 import { useSaleItemsStore } from '../stores/sale-items-store'
 import type { Item } from '@/features/items'
-import { useEffect, useState, useRef } from 'react'
-import { formatCurrency } from '@/features/shared'
+import type { SaleItemRow } from '../types'
+import { useEffect, useState, useCallback } from 'react'
 import { useShopContext } from '@/features/shop'
 import { FormProvider, useForm } from 'react-hook-form'
 import { useItemSelection } from '../hooks/use-item-selection'
 import { useSaleTableColumns } from '../hooks/use-sale-table-columns'
-
-interface SaleItemRow {
-    itemId: string
-    itemName: string
-    serialNo?: string | string[]
-    colour?: string
-    material?: string
-    quantity: number
-    unit?: string
-    price: number
-    total: number
-}
+import { ItemAutocomplete } from '@/components/common'
+import { SerialNumberModal } from '@/features/items/components/serial-number-modal'
+import { useColumnVisibility } from '../hooks/use-column-visibility'
+import { useItemSettings } from '@/features/items'
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    type DragEndEvent
+} from '@dnd-kit/core'
+import {
+    SortableContext,
+    verticalListSortingStrategy,
+    useSortable
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 interface SaleItemsTableProps {
     items: Item[]
 }
 
-function ItemAutocomplete({
-    row,
-    items,
-    onSelect
-}: {
-    row: Row<SaleItemRow>
-    items: Item[]
-    onSelect: (index: number, itemId: string) => void
-}) {
-    const [showSuggestions, setShowSuggestions] = useState(false)
-    const [search, setSearch] = useState(row.original.itemName || '')
-    const [position, setPosition] = useState({ top: 0, left: 0, width: 0 })
-    const inputRef = useRef<HTMLInputElement>(null)
+interface DraggableRowProps {
+    id: string
+    children: React.ReactNode
+}
 
-    const filteredItems = items.filter((item) =>
-        item.name.toLowerCase().includes(search.toLowerCase())
-    )
+function DraggableRow({ id, children }: DraggableRowProps) {
+    const { setNodeRef, transform, transition, isDragging } = useSortable({
+        id
+    })
 
-    const updatePosition = () => {
-        if (inputRef.current) {
-            const rect = inputRef.current.getBoundingClientRect()
-            setPosition({
-                top: rect.bottom + window.scrollY,
-                left: rect.left + window.scrollX,
-                width: rect.width
-            })
-        }
-    }
-
-    const handleFocus = () => {
-        updatePosition()
-        setShowSuggestions(true)
-    }
-
-    const handleSelect = (item: Item) => {
-        setSearch(item.name)
-        onSelect(row.index, item.id)
-        setShowSuggestions(false)
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1
     }
 
     return (
-        <>
-            <div ref={inputRef}>
-                <Input
-                    placeholder="Item Name"
-                    value={search}
-                    onChange={(e) => {
-                        setSearch(e.target.value)
-                        updatePosition()
-                        setShowSuggestions(true)
-                    }}
-                    onFocus={handleFocus}
-                    onBlur={() =>
-                        setTimeout(() => setShowSuggestions(false), 200)
-                    }
-                    className="border-0 focus-visible:ring-0"
-                />
-            </div>
-            {showSuggestions && (
-                <div
-                    className="fixed bg-background border border-border rounded-md shadow-lg z-[9999] w-[min(calc(100vw-2rem),700px)]"
-                    style={{
-                        top: `${position.top}px`,
-                        left: `${Math.max(8, Math.min(position.left, window.innerWidth - 716))}px`
-                    }}
-                >
-                    <div className="flex items-center gap-4 px-4 py-2.5 bg-muted/20 border-b text-xs font-medium text-muted-foreground uppercase">
-                        <div className="flex-1">Item Name</div>
-                        <div className="w-24 text-right">Sale Price</div>
-                        <div className="w-32 text-right">Purchase Price</div>
-                        <div className="w-20 text-right">Stock</div>
-                    </div>
-                    <div className="max-h-64 overflow-y-auto">
-                        {filteredItems.length > 0 ? (
-                            filteredItems.map((item) => (
-                                <button
-                                    key={item.id}
-                                    type="button"
-                                    onClick={() => handleSelect(item)}
-                                    className="w-full flex items-center gap-4 px-4 py-2.5 text-sm hover:bg-accent/30 transition-colors focus:outline-none focus:bg-accent/30 border-b border-border/50 last:border-b-0"
-                                >
-                                    <div className="flex-1 text-left font-medium text-foreground truncate">
-                                        {item.name}
-                                    </div>
-                                    <div className="w-24 text-right text-foreground">
-                                        {formatCurrency(
-                                            item.salePrice || 0,
-                                            'INR'
-                                        )}
-                                    </div>
-                                    <div className="w-32 text-right text-foreground">
-                                        {formatCurrency(
-                                            item.purchasePrice || 0,
-                                            'INR'
-                                        )}
-                                    </div>
-                                    <div
-                                        className="w-20 text-right font-medium"
-                                        style={{
-                                            color:
-                                                (item.currentStock ?? 0) === 0
-                                                    ? '#ef4444'
-                                                    : '#10b981'
-                                        }}
-                                    >
-                                        {item.currentStock ?? 0}
-                                    </div>
-                                </button>
-                            ))
-                        ) : (
-                            <div className="p-4 text-center text-muted-foreground text-sm">
-                                No items found
-                            </div>
-                        )}
-                    </div>
-                    <div className="border-t p-2">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                            onClick={() => {
-                                setShowSuggestions(false)
-                                window.open('/items/new', '_blank')
-                            }}
-                        >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Item
-                        </Button>
-                    </div>
-                </div>
-            )}
-        </>
+        <TableRow ref={setNodeRef} style={style} className="hover:bg-muted/30">
+            {children}
+        </TableRow>
     )
 }
 
 export function SaleItemsTable({ items }: SaleItemsTableProps) {
-    const { items: saleItems, addItem } = useSaleItemsStore()
+    const {
+        items: saleItems,
+        addItem,
+        updateItem,
+        getSerialNumbers,
+        reorderItems
+    } = useSaleItemsStore()
     const { currentShop } = useShopContext()
     const shopId = currentShop?.shopId || ''
     const form = useForm()
     const { handleItemSelect } = useItemSelection(shopId)
+    const [serialModalState, setSerialModalState] = useState<{
+        open: boolean
+        rowIndex: number
+        itemId: string
+    } | null>(null)
 
-    const ItemCell = ({ row }: { row: Row<SaleItemRow> }) => (
-        <ItemAutocomplete
-            row={row}
-            items={items}
-            onSelect={(index, itemId) => handleItemSelect(index, itemId, items)}
-        />
+    const { settings } = useItemSettings(shopId)
+    const { visibility, toggleColumn, availableColumns } = useColumnVisibility(
+        shopId,
+        settings
     )
 
-    const columns = useSaleTableColumns(shopId, ItemCell)
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8
+            }
+        })
+    )
+
+    const handleDragEnd = useCallback(
+        (event: DragEndEvent) => {
+            const { active, over } = event
+            if (over && active.id !== over.id) {
+                reorderItems(active.id as string, over.id as string)
+            }
+        },
+        [reorderItems]
+    )
+
+    const ItemCell = useCallback(
+        ({ row }: { row: Row<SaleItemRow> }) => (
+            <ItemAutocomplete
+                value={row.original.itemName}
+                items={items}
+                onSelect={(item) => handleItemSelect(row.index, item.id, items)}
+                onSelectCallback={(item) => {
+                    if (item.serialNoTracking) {
+                        setSerialModalState({
+                            open: true,
+                            rowIndex: row.index,
+                            itemId: item.id
+                        })
+                    }
+                }}
+                onManualInput={(name) =>
+                    updateItem(row.index, 'itemName', name)
+                }
+                className="border-0 focus-visible:ring-0"
+            />
+        ),
+        [items, handleItemSelect, updateItem]
+    )
+
+    const columns = useSaleTableColumns(shopId, ItemCell, visibility, settings)
 
     useEffect(() => {
         if (saleItems.length === 0) {
             addItem()
         }
-    }, [])
+    }, [saleItems.length, addItem])
 
     const table = useReactTable({
         data: saleItems,
@@ -209,7 +159,7 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
         <FormProvider {...form}>
             <div className="space-y-2">
                 <div className="border rounded-lg overflow-x-auto">
-                    <Table>
+                    <Table style={{ minWidth: '1200px' }}>
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <TableRow
@@ -228,28 +178,107 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
                                             )}
                                         </TableHead>
                                     ))}
+                                    <TableHead className="w-10">
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-6 w-6"
+                                                >
+                                                    <Settings2 className="h-4 w-4" />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent
+                                                className="w-64"
+                                                align="end"
+                                            >
+                                                <div className="space-y-4">
+                                                    <h4 className="font-medium text-sm">
+                                                        Show Columns
+                                                    </h4>
+                                                    <div className="space-y-3">
+                                                        {availableColumns.map(
+                                                            (column) => (
+                                                                <div
+                                                                    key={column}
+                                                                    className="flex items-center space-x-2"
+                                                                >
+                                                                    <Checkbox
+                                                                        id={
+                                                                            column
+                                                                        }
+                                                                        checked={
+                                                                            visibility[
+                                                                                column
+                                                                            ] ??
+                                                                            false
+                                                                        }
+                                                                        onCheckedChange={() =>
+                                                                            toggleColumn(
+                                                                                column
+                                                                            )
+                                                                        }
+                                                                    />
+                                                                    <Label
+                                                                        htmlFor={
+                                                                            column
+                                                                        }
+                                                                        className="text-sm font-normal capitalize cursor-pointer"
+                                                                    >
+                                                                        {column}
+                                                                    </Label>
+                                                                </div>
+                                                            )
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
+                                    </TableHead>
                                 </TableRow>
                             ))}
                         </TableHeader>
                         <TableBody>
-                            {table.getRowModel().rows.map((row) => (
-                                <TableRow
-                                    key={row.id}
-                                    className="hover:bg-muted/30"
+                            <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={handleDragEnd}
+                            >
+                                <SortableContext
+                                    items={saleItems.map((item) => item.id)}
+                                    strategy={verticalListSortingStrategy}
                                 >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell
-                                            key={cell.id}
-                                            className="p-2"
-                                        >
-                                            {flexRender(
-                                                cell.column.columnDef.cell,
-                                                cell.getContext()
-                                            )}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            ))}
+                                    {saleItems.map((item, idx) => {
+                                        const row =
+                                            table.getRowModel().rows[idx]
+                                        if (!row) return null
+                                        return (
+                                            <DraggableRow
+                                                key={item.id}
+                                                id={item.id}
+                                            >
+                                                {row
+                                                    .getVisibleCells()
+                                                    .map((cell) => (
+                                                        <TableCell
+                                                            key={cell.id}
+                                                            className="p-2"
+                                                        >
+                                                            {flexRender(
+                                                                cell.column
+                                                                    .columnDef
+                                                                    .cell,
+                                                                cell.getContext()
+                                                            )}
+                                                        </TableCell>
+                                                    ))}
+                                                <TableCell className="p-2" />
+                                            </DraggableRow>
+                                        )
+                                    })}
+                                </SortableContext>
+                            </DndContext>
                         </TableBody>
                     </Table>
                 </div>
@@ -264,6 +293,33 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
                     Add Item
                 </Button>
             </div>
+            {serialModalState && (
+                <SerialNumberModal
+                    open={serialModalState.open}
+                    onOpenChange={(open) => {
+                        if (!open) setSerialModalState(null)
+                    }}
+                    onSave={(serialNumbers) => {
+                        updateItem(
+                            serialModalState.rowIndex,
+                            'serialNo',
+                            serialNumbers
+                        )
+                        updateItem(
+                            serialModalState.rowIndex,
+                            'quantity',
+                            serialNumbers.length
+                        )
+                        setSerialModalState(null)
+                    }}
+                    initialSerialNumbers={[]}
+                    availableSerialNumbers={getSerialNumbers(
+                        serialModalState.itemId
+                    )}
+                    itemId={serialModalState.itemId}
+                    mode="select"
+                />
+            )}
         </FormProvider>
     )
 }

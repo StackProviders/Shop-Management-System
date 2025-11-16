@@ -34,7 +34,7 @@ export function WarrantyInput({
 
     const allPeriods = [
         ...WARRANTY_PERIODS.filter((p) => availablePeriods?.includes(p.value)),
-        ...customPeriods
+        ...(customPeriods || [])
     ]
 
     return (

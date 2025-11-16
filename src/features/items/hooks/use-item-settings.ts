@@ -4,6 +4,14 @@ import type { ItemSettings } from '../types/settings'
 
 export function useItemSettings(shopId: string) {
     const firestore = useFirestore()
+
+    if (!shopId) {
+        return {
+            settings: getDefaultSettings(''),
+            isLoading: false
+        }
+    }
+
     const settingsRef = doc(firestore, 'itemSettings', shopId)
 
     const { status, data } = useFirestoreDocData(settingsRef, {

@@ -2,7 +2,7 @@ import { useCrudOperations } from '@/features/shared'
 import type { Item } from '../types'
 import {
     createSerialNumbers,
-    deleteSerialNumbersByItem
+    removeSerialNumbersByItem
 } from '../api/serial-numbers.api'
 import { createStockTransaction } from '../api/stock-transactions-mutations.api'
 
@@ -49,7 +49,7 @@ export function useItemActions(shopId: string) {
         await update(id, itemData)
 
         if (serialNumbers !== undefined) {
-            await deleteSerialNumbersByItem(shopId, id)
+            await removeSerialNumbersByItem(shopId, id)
             if (serialNumbers.length > 0) {
                 await createSerialNumbers(shopId, id, serialNumbers)
             }
@@ -57,7 +57,7 @@ export function useItemActions(shopId: string) {
     }
 
     const deleteItem = async (id: string): Promise<void> => {
-        await deleteSerialNumbersByItem(shopId, id)
+        await removeSerialNumbersByItem(shopId, id)
         await remove(id)
     }
 

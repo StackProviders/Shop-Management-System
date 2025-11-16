@@ -5,39 +5,84 @@ import { Trash2, GripVertical } from 'lucide-react'
 import { SerialNumberSelector } from '@/features/items'
 import { StandaloneUnitCombobox } from '@/components/common'
 import { useSaleItemsStore } from '../stores/sale-items-store'
+import type { ColumnVisibility } from './use-column-visibility'
+import type { ItemSettings } from '@/features/items/types/settings'
+import { StandaloneWarrantyInput } from '../components/standalone-warranty-input'
+import { useSortable } from '@dnd-kit/sortable'
+import type { SaleItemRow } from '../types'
 
-interface SaleItemRow {
-    itemId: string
-    itemName: string
-    serialNo?: string | string[]
-    colour?: string
-    material?: string
-    quantity: number
-    unit?: string
-    price: number
-    total: number
+function DragHandle({ itemId }: { itemId: string }) {
+    const { attributes, listeners } = useSortable({ id: itemId })
+    return (
+        <div {...attributes} {...listeners} className="cursor-move">
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+    )
 }
 
 export function useSaleTableColumns(
     shopId: string,
-    ItemCell: React.ComponentType<{ row: Row<SaleItemRow> }>
+    ItemCell: React.ComponentType<{ row: Row<SaleItemRow> }>,
+    visibility: ColumnVisibility,
+    settings: ItemSettings
 ): ColumnDef<SaleItemRow>[] {
     const { updateItem, removeItem, getSerialNumbers } = useSaleItemsStore()
 
-    return [
-        {
-            id: 'drag',
-            header: '',
-            cell: () => (
-                <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
+    const customFieldColumns = (settings.customFieldNames || []).map(
+        (field) => ({
+            accessorKey: field.name.toLowerCase(),
+            header: field.name.toUpperCase(),
+            cell: ({ row }: { row: Row<SaleItemRow> }) => (
+                <Input
+                    value={
+                        (row.original[field.name.toLowerCase()] as string) || ''
+                    }
+                    onChange={(e) =>
+                        updateItem(
+                            row.index,
+                            field.name.toLowerCase(),
+                            e.target.value
+                        )
+                    }
+                    className="border-0 focus-visible:ring-0"
+                    placeholder="-"
+                />
             ),
-            size: 40
+            size: Math.max(120, field.name.length * 10 + 40)
+        })
+    )
+
+    const columns: ColumnDef<SaleItemRow>[] = [
+        {
+            id: 'actions',
+            header: '#',
+            cell: ({ row }) => (
+                <div className="flex items-center gap-1">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeItem(row.index)}
+                        className="h-7 w-7"
+                    >
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                    <DragHandle
+                        itemId={
+                            (row.original as SaleItemRow & { id: string }).id
+                        }
+                    />
+                    <span className="text-sm text-muted-foreground min-w-[20px]">
+                        {row.index + 1}
+                    </span>
+                </div>
+            ),
+            size: 90
         },
         {
             accessorKey: 'itemName',
             header: 'ITEM',
             cell: ({ row }) => <ItemCell row={row} />,
-            size: 200
+            size: 280
         },
         {
             accessorKey: 'serialNo',
@@ -69,36 +114,28 @@ export function useSaleTableColumns(
             },
             size: 150
         },
-        {
-            accessorKey: 'colour',
-            header: 'COLOUR',
-            cell: ({ row }) => (
-                <Input
-                    value={row.original.colour || ''}
-                    onChange={(e) =>
-                        updateItem(row.index, 'colour', e.target.value)
-                    }
-                    className="border-0 focus-visible:ring-0"
-                    placeholder="-"
-                />
-            ),
-            size: 120
-        },
-        {
-            accessorKey: 'material',
-            header: 'MATERIAL',
-            cell: ({ row }) => (
-                <Input
-                    value={row.original.material || ''}
-                    onChange={(e) =>
-                        updateItem(row.index, 'material', e.target.value)
-                    }
-                    className="border-0 focus-visible:ring-0"
-                    placeholder="-"
-                />
-            ),
-            size: 120
-        },
+        ...customFieldColumns.filter(
+            (col) => visibility[col.accessorKey as string]
+        ),
+        ...(visibility.warranty && settings.customFieldSettings.warranty
+            ? [
+                  {
+                      accessorKey: 'warranty',
+                      header: 'WARRANTY',
+                      cell: ({ row }: { row: Row<SaleItemRow> }) => (
+                          <StandaloneWarrantyInput
+                              value={row.original.warranty}
+                              onChange={(v) =>
+                                  updateItem(row.index, 'warranty', v)
+                              }
+                              availablePeriods={settings.warrantyPeriods}
+                              customPeriods={settings.customWarrantyPeriods}
+                          />
+                      ),
+                      size: 150
+                  }
+              ]
+            : []),
         {
             accessorKey: 'quantity',
             header: 'QTY',
@@ -157,22 +194,9 @@ export function useSaleTableColumns(
                     ₹{row.original.total.toFixed(2)}
                 </div>
             ),
-            size: 120
-        },
-        {
-            id: 'actions',
-            header: '',
-            cell: ({ row }) => (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeItem(row.index)}
-                    className="h-8 w-8"
-                >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-            ),
-            size: 60
+            size: 100
         }
     ]
+
+    return columns
 }

@@ -301,6 +301,7 @@ export interface SaleItem {
     quantity: number
     unit: string
     unitPrice: number
+    purchasePrice?: number
     discount: number
     discountType: DiscountType
     tax: number
