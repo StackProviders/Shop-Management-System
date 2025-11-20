@@ -5,7 +5,6 @@ import { initializeDesktop } from '@/lib/desktop'
 import { firebaseConfig } from '@/lib/firebase'
 import { FirebaseAppProvider } from 'reactfire'
 
-// Initialize desktop features once
 if (typeof window !== 'undefined' && '__TAURI__' in window) {
     let initialized = false
     const init = () => {
