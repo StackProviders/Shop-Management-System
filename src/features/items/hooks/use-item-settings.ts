@@ -5,18 +5,20 @@ import type { ItemSettings } from '../types/settings'
 export function useItemSettings(shopId: string) {
     const firestore = useFirestore()
 
+    // Use a dummy ref when shopId is missing to satisfy Rules of Hooks without crashing
+    const refId = shopId || 'fallback'
+    const settingsRef = doc(firestore, 'itemSettings', refId)
+
+    const { status, data } = useFirestoreDocData(settingsRef, {
+        idField: 'id'
+    })
+
     if (!shopId) {
         return {
             settings: getDefaultSettings(''),
             isLoading: false
         }
     }
-
-    const settingsRef = doc(firestore, 'itemSettings', shopId)
-
-    const { status, data } = useFirestoreDocData(settingsRef, {
-        idField: 'id'
-    })
 
     return {
         settings: (data as ItemSettings) || getDefaultSettings(shopId),
