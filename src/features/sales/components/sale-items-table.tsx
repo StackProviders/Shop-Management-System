@@ -24,15 +24,18 @@ import { Label } from '@/components/ui/label'
 import { useSaleItemsStore } from '../stores/sale-items-store'
 import type { Item } from '@/features/items'
 import type { SaleItemRow } from '../types'
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { useShopContext } from '@/features/shop'
-import { FormProvider, useForm } from 'react-hook-form'
+import { FormProvider, useFormContext } from 'react-hook-form'
 import { useItemSelection } from '../hooks/use-item-selection'
 import { useSaleTableColumns } from '../hooks/use-sale-table-columns'
 import { ItemAutocomplete } from '@/components/common'
 import { SerialNumberModal } from '@/features/items/components/serial-number-modal'
+import { GlobalSerialScanModal } from './global-serial-scan-modal'
+import { toast } from 'sonner'
 import { useColumnVisibility } from '../hooks/use-column-visibility'
 import { useItemSettings } from '@/features/items'
+import { useDebouncedCallback } from '@/hooks/use-debounced-callback'
 import {
     DndContext,
     closestCenter,
@@ -58,6 +61,7 @@ interface ItemCellProps {
     onItemSelect: (rowIndex: number, itemId: string, items: Item[]) => void
     onSerialModalOpen: (rowIndex: number, itemId: string) => void
     onUpdateItem: (index: number, field: keyof SaleItemRow, value: any) => void
+    selectedItemIds?: Set<string>
 }
 
 // Create a memoized component to prevent re-renders
@@ -67,7 +71,8 @@ const ItemCellComponent = React.memo(
         items,
         onItemSelect,
         onSerialModalOpen,
-        onUpdateItem
+        onUpdateItem,
+        selectedItemIds
     }: ItemCellProps) => {
         const [localValue, setLocalValue] = useState(row.original.itemName)
 
@@ -75,18 +80,31 @@ const ItemCellComponent = React.memo(
             setLocalValue(row.original.itemName)
         }, [row.original.itemName])
 
+        const debouncedUpdate = useDebouncedCallback((value: string) => {
+            onUpdateItem(row.index, 'itemName', value)
+        }, 300)
+
         const handleManualInput = useCallback(
             (name: string) => {
                 setLocalValue(name)
-                onUpdateItem(row.index, 'itemName', name)
+                debouncedUpdate(name)
             },
-            [row.index, onUpdateItem]
+            [debouncedUpdate]
         )
+
+        const filteredItems = useMemo(() => {
+            if (!selectedItemIds) return items
+            return items.filter(
+                (item) =>
+                    !selectedItemIds.has(item.id) ||
+                    item.id === row.original.itemId
+            )
+        }, [items, selectedItemIds, row.original.itemId])
 
         return (
             <ItemAutocomplete
                 value={localValue}
-                items={items}
+                items={filteredItems}
                 onSelect={(item) => onItemSelect(row.index, item.id, items)}
                 onSelectCallback={(item) => {
                     if (item.serialNoTracking) {
@@ -163,19 +181,22 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
     const {
         items: saleItems,
         addItem,
+        addItemWithDetails,
         updateItem,
         getSerialNumbers,
-        reorderItems
+        reorderItems,
+        fetchSerialNumbers
     } = useSaleItemsStore()
     const { currentShop } = useShopContext()
     const shopId = currentShop?.shopId || ''
-    const form = useForm()
+    const form = useFormContext() // Changed to useFormContext to access the form
     const { handleItemSelect } = useItemSelection(shopId)
     const [serialModalState, setSerialModalState] = useState<{
         open: boolean
         rowIndex: number
         itemId: string
     } | null>(null)
+    const [globalScanOpen, setGlobalScanOpen] = useState(false)
 
     const { settings } = useItemSettings(shopId)
     const { visibility, toggleColumn, availableColumns } = useColumnVisibility(
@@ -201,31 +222,123 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
         [reorderItems]
     )
 
+    const handleGlobalScan = useCallback(
+        (scannedItems: { item: Item; serial: string }[]) => {
+            let addedCount = 0
+            let updatedCount = 0
+
+            // Group scanned items by item ID
+            const groupedItems = scannedItems.reduce(
+                (acc, { item, serial }) => {
+                    if (!acc[item.id]) {
+                        acc[item.id] = { item, serials: [] }
+                    }
+                    acc[item.id].serials.push(serial)
+                    return acc
+                },
+                {} as Record<string, { item: Item; serials: string[] }>
+            )
+
+            Object.values(groupedItems).forEach(({ item, serials }) => {
+                // Ensure we have the serial numbers for this item
+                if (item.serialNoTracking) {
+                    fetchSerialNumbers(shopId, item.id)
+                }
+
+                // Check if item already exists in table
+                const existingItemIndex = saleItems.findIndex(
+                    (i) => i.itemId === item.id
+                )
+
+                if (existingItemIndex >= 0) {
+                    const existingItem = saleItems[existingItemIndex]
+                    const currentSerials = Array.isArray(existingItem.serialNo)
+                        ? existingItem.serialNo
+                        : []
+
+                    // Filter out serials that are already present
+                    const newSerialsToAdd = serials.filter(
+                        (s) => !currentSerials.includes(s)
+                    )
+
+                    if (newSerialsToAdd.length > 0) {
+                        const newSerials = [
+                            ...currentSerials,
+                            ...newSerialsToAdd
+                        ]
+                        updateItem(existingItemIndex, 'serialNo', newSerials)
+                        updateItem(
+                            existingItemIndex,
+                            'quantity',
+                            newSerials.length
+                        )
+                        updatedCount++
+                    }
+                } else {
+                    // Add new item
+                    const uniqueSerials = [...new Set(serials)]
+                    addItemWithDetails({
+                        itemId: item.id,
+                        itemName: item.name,
+                        price: item.salePrice,
+                        quantity: uniqueSerials.length,
+                        total: item.salePrice * uniqueSerials.length,
+                        serialNo: uniqueSerials,
+                        unit: item.unit
+                    })
+                    addedCount++
+                }
+            })
+
+            if (addedCount > 0 || updatedCount > 0) {
+                toast.success(`Processed ${addedCount + updatedCount} items`)
+            }
+        },
+        [saleItems, updateItem, addItemWithDetails, fetchSerialNumbers, shopId]
+    )
+
     const handleSerialModalOpen = useCallback(
         (rowIndex: number, itemId: string) => {
+            fetchSerialNumbers(shopId, itemId)
             setSerialModalState({
                 open: true,
                 rowIndex,
                 itemId
             })
         },
-        []
+        [shopId, fetchSerialNumbers]
+    )
+
+    const selectedItemIds = useMemo(
+        () => new Set(saleItems.map((i) => i.itemId).filter(Boolean)),
+        [saleItems]
     )
 
     const ItemCell = useCallback(
-        ({ row }: { row: Row<SaleItemRow> }) => (
+        ({ row, table }: { row: Row<SaleItemRow>; table: any }) => (
             <ItemCellComponent
                 row={row}
                 items={items}
                 onItemSelect={handleItemSelect}
                 onSerialModalOpen={handleSerialModalOpen}
                 onUpdateItem={updateItem}
+                selectedItemIds={(table.options.meta as any)?.selectedItemIds}
             />
         ),
         [items, handleItemSelect, handleSerialModalOpen, updateItem]
     )
 
-    const columns = useSaleTableColumns(shopId, ItemCell, visibility, settings)
+    const handleScanClick = useCallback(() => {
+        setGlobalScanOpen(true)
+    }, [])
+
+    const columns = useSaleTableColumns(
+        shopId,
+        ItemCell,
+        visibility,
+        settings,
+        handleScanClick
+    )
 
     useEffect(() => {
         if (saleItems.length === 0) {
@@ -236,7 +349,10 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
     const table = useReactTable({
         data: saleItems,
         columns,
-        getCoreRowModel: getCoreRowModel()
+        getCoreRowModel: getCoreRowModel(),
+        meta: {
+            selectedItemIds
+        } as any
     })
 
     return (
@@ -270,7 +386,7 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
                                                 )}
                                             </TableHead>
                                         ))}
-                                        <TableHead className="w-10">
+                                        <TableHead className="w-10 text-right">
                                             <Popover>
                                                 <PopoverTrigger asChild>
                                                     <Button
@@ -365,7 +481,6 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
                                                             )}
                                                         </TableCell>
                                                     ))}
-                                                <TableCell className="p-2" />
                                             </DraggableRow>
                                         )
                                     })}
@@ -403,7 +518,13 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
                         )
                         setSerialModalState(null)
                     }}
-                    initialSerialNumbers={[]}
+                    initialSerialNumbers={
+                        (Array.isArray(
+                            saleItems[serialModalState.rowIndex]?.serialNo
+                        )
+                            ? saleItems[serialModalState.rowIndex].serialNo
+                            : []) as string[]
+                    }
                     availableSerialNumbers={getSerialNumbers(
                         serialModalState.itemId
                     )}
@@ -411,6 +532,13 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
                     mode="select"
                 />
             )}
+            <GlobalSerialScanModal
+                open={globalScanOpen}
+                onOpenChange={setGlobalScanOpen}
+                onSave={handleGlobalScan}
+                items={items}
+                shopId={shopId}
+            />
         </FormProvider>
     )
 }

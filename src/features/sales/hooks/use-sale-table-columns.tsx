@@ -1,7 +1,7 @@
 import { type ColumnDef, type Row } from '@tanstack/react-table'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Trash2, GripVertical } from 'lucide-react'
+import { Trash2, GripVertical, ScanBarcode } from 'lucide-react'
 import { SerialNumberSelector } from '@/features/items'
 import { StandaloneUnitCombobox } from '@/components/common'
 import { useSaleItemsStore } from '../stores/sale-items-store'
@@ -34,9 +34,10 @@ function DragHandle() {
 
 export function useSaleTableColumns(
     shopId: string,
-    ItemCell: React.ComponentType<{ row: Row<SaleItemRow> }>,
+    ItemCell: React.ComponentType<{ row: Row<SaleItemRow>; table: any }>,
     visibility: ColumnVisibility,
-    settings: ItemSettings
+    settings: ItemSettings,
+    onScanClick: () => void
 ): ColumnDef<SaleItemRow>[] {
     const { updateItem, removeItem, getSerialNumbers } = useSaleItemsStore()
 
@@ -72,7 +73,17 @@ export function useSaleTableColumns(
         const cols: ColumnDef<SaleItemRow>[] = [
             {
                 id: 'actions',
-                header: '#',
+                header: () => (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={onScanClick}
+                        title="Scan Barcode"
+                    >
+                        <ScanBarcode className="h-4 w-4" />
+                    </Button>
+                ),
                 cell: ({ row }) => (
                     <div className="flex items-center gap-2">
                         <Button
@@ -94,7 +105,7 @@ export function useSaleTableColumns(
             {
                 accessorKey: 'itemName',
                 header: 'ITEM',
-                cell: ({ row }) => <ItemCell row={row} />,
+                cell: ({ row, table }) => <ItemCell row={row} table={table} />,
                 size: 280
             },
             {
@@ -127,7 +138,7 @@ export function useSaleTableColumns(
                         />
                     )
                 },
-                size: 100
+                size: 80
             },
             ...customFieldColumns.filter(
                 (col) => visibility[col.accessorKey as string]
@@ -234,7 +245,8 @@ export function useSaleTableColumns(
         settings.customFieldSettings.warranty,
         settings.warrantyPeriods,
         settings.customWarrantyPeriods,
-        shopId
+        shopId,
+        onScanClick
     ])
 
     return columns

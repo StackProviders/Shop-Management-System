@@ -1,14 +1,14 @@
+import * as React from 'react'
 import { Input as InputPrimitive } from '@base-ui-components/react/input'
 
 import { cn } from '@/lib/utils'
 
-function Input({
-    className,
-    size = 'default',
-    ...props
-}: Omit<InputPrimitive.Props, 'size'> & {
-    size?: 'sm' | 'default' | 'lg' | number
-}) {
+const Input = React.forwardRef<
+    HTMLInputElement,
+    Omit<InputPrimitive.Props, 'size'> & {
+        size?: 'sm' | 'default' | 'lg' | number
+    }
+>(({ className, size = 'default', ...props }, ref) => {
     return (
         <span
             data-slot="input-control"
@@ -18,6 +18,7 @@ function Input({
             )}
         >
             <InputPrimitive
+                ref={ref}
                 data-slot="input"
                 className={cn(
                     'w-full min-w-0 rounded-[inherit] px-[calc(--spacing(3)-1px)] py-[calc(--spacing(1.5)-1px)] outline-none placeholder:text-muted-foreground/64',
@@ -34,6 +35,7 @@ function Input({
             />
         </span>
     )
-}
+})
+Input.displayName = 'Input'
 
 export { Input }

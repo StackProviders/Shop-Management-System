@@ -54,7 +54,7 @@ export function SerialNumberSelector({
                 onClick={() => setOpen(true)}
                 className="h-9 w-full justify-start border-0 px-2"
             >
-                <Barcode className="h-4 w-4 mr-2" />
+                <Barcode className="size-4 mr-1" />
                 {displayText}
             </Button>
             <SerialNumberModal

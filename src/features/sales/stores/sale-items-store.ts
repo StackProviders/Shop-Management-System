@@ -6,6 +6,7 @@ interface SaleItemsState {
     items: SaleItemRow[]
     serialNumbersCache: Record<string, string[]>
     addItem: () => void
+    addItemWithDetails: (item: Partial<SaleItemRow>) => void
     removeItem: (index: number) => void
     updateItem: (
         index: number,
@@ -38,6 +39,26 @@ export const useSaleItemsStore = create<SaleItemsState>((set, get) => ({
                     material: '',
                     warranty: undefined,
                     unit: 'none'
+                }
+            ]
+        })),
+    addItemWithDetails: (item: Partial<SaleItemRow>) =>
+        set((state) => ({
+            items: [
+                ...state.items,
+                {
+                    id: `item-${Date.now()}-${Math.random()}`,
+                    itemId: '',
+                    itemName: '',
+                    quantity: 1,
+                    price: 0,
+                    total: 0,
+                    serialNo: '',
+                    colour: '',
+                    material: '',
+                    warranty: undefined,
+                    unit: 'none',
+                    ...item
                 }
             ]
         })),

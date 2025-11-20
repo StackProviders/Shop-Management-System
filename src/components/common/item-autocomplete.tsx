@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -33,9 +33,12 @@ export function ItemAutocomplete({
     const inputRef = useRef<HTMLInputElement>(null)
     const panelRef = useRef<HTMLDivElement>(null)
 
-    const filteredItems = items.filter((item) =>
-        item.name.toLowerCase().includes(search.toLowerCase())
-    )
+    const filteredItems = useMemo(() => {
+        const lowerSearch = search.toLowerCase()
+        return items.filter((item) =>
+            item.name.toLowerCase().includes(lowerSearch)
+        )
+    }, [items, search])
 
     const updatePosition = () => {
         if (inputRef.current) {

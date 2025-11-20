@@ -64,3 +64,23 @@ export async function getSerialNumbersByItem(
         ...docSnap.data()
     })) as SerialNumber[]
 }
+
+export async function findSerialNumber(
+    shopId: string,
+    serialNo: string
+): Promise<SerialNumber | null> {
+    const firestore = getFirestore(app)
+    const q = query(
+        collection(firestore, 'serialNumbers'),
+        where('shopId', '==', shopId),
+        where('serialNo', '==', serialNo),
+        where('isSold', '==', false)
+    )
+    const snapshot = await getDocs(q)
+    if (snapshot.empty) return null
+    const docSnap = snapshot.docs[0]
+    return {
+        id: docSnap.id,
+        ...docSnap.data()
+    } as SerialNumber
+}
