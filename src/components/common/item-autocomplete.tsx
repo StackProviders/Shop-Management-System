@@ -56,7 +56,6 @@ export function ItemAutocomplete({
         setSearch(item.name)
         onSelect(item)
         setShowSuggestions(false)
-        inputRef.current?.focus()
         onSelectCallback?.(item)
     }
 
