@@ -242,18 +242,18 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
     return (
         <FormProvider {...form}>
             <div className="space-y-2">
-                <div className="border rounded-lg overflow-x-auto">
+                <div className="[&>div]:max-h-[500px] border rounded-lg">
                     <DndContext
                         sensors={sensors}
                         collisionDetection={closestCenter}
                         onDragEnd={handleDragEnd}
                     >
-                        <Table style={{ minWidth: '1200px' }}>
-                            <TableHeader>
+                        <Table className="border-separate border-spacing-0 [&_td]:border-border [&_tfoot_td]:border-t [&_th]:border-b [&_th]:border-border [&_tr]:border-none [&_tr:not(:last-child)_td]:border-b">
+                            <TableHeader className="sticky top-0 z-10 bg-background/90 backdrop-blur-xs">
                                 {table.getHeaderGroups().map((headerGroup) => (
                                     <TableRow
                                         key={headerGroup.id}
-                                        className="bg-muted/50"
+                                        className="hover:bg-transparent"
                                     >
                                         {headerGroup.headers.map((header) => (
                                             <TableHead
@@ -282,7 +282,7 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
                                                     </Button>
                                                 </PopoverTrigger>
                                                 <PopoverContent
-                                                    className="w-64"
+                                                    className="w-48"
                                                     align="end"
                                                 >
                                                     <div className="space-y-4">

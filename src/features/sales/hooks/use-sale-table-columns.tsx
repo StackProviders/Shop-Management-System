@@ -11,6 +11,7 @@ import { StandaloneWarrantyInput } from '../components/standalone-warranty-input
 import type { SaleItemRow } from '../types'
 import { useContext, useMemo } from 'react'
 import { DragHandleContext } from '../components/sale-items-table'
+import { formatCurrency } from '@/lib/utils'
 
 function DragHandle() {
     const context = useContext(DragHandleContext)
@@ -73,22 +74,22 @@ export function useSaleTableColumns(
                 id: 'actions',
                 header: '#',
                 cell: ({ row }) => (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => removeItem(row.index)}
-                            className="h-7 w-7"
+                            className="size-7"
                         >
                             <Trash2 className="h-3.5 w-3.5 text-destructive" />
                         </Button>
                         <DragHandle />
-                        <span className="text-sm text-muted-foreground min-w-[20px]">
+                        <span className="text-sm text-muted-foreground">
                             {row.index + 1}
                         </span>
                     </div>
                 ),
-                size: 90
+                size: 60
             },
             {
                 accessorKey: 'itemName',
@@ -126,7 +127,7 @@ export function useSaleTableColumns(
                         />
                     )
                 },
-                size: 150
+                size: 100
             },
             ...customFieldColumns.filter(
                 (col) => visibility[col.accessorKey as string]
@@ -153,21 +154,28 @@ export function useSaleTableColumns(
             {
                 accessorKey: 'quantity',
                 header: 'QTY',
-                cell: ({ row }) => (
-                    <Input
-                        type="number"
-                        value={row.original.quantity}
-                        onChange={(e) =>
-                            updateItem(
-                                row.index,
-                                'quantity',
-                                Number(e.target.value)
-                            )
-                        }
-                        className="border-0 focus-visible:ring-0 w-20"
-                        min={1}
-                    />
-                ),
+                cell: ({ row }) => {
+                    const itemId = row.original.itemId
+                    const hasSerialTracking =
+                        itemId && getSerialNumbers(itemId).length > 0
+
+                    return (
+                        <Input
+                            type="number"
+                            value={row.original.quantity}
+                            onChange={(e) =>
+                                updateItem(
+                                    row.index,
+                                    'quantity',
+                                    Number(e.target.value)
+                                )
+                            }
+                            className="border-0 focus-visible:ring-0 w-20"
+                            min={0}
+                            readOnly={!!hasSerialTracking}
+                        />
+                    )
+                },
                 size: 80
             },
             {
@@ -208,8 +216,8 @@ export function useSaleTableColumns(
                 accessorKey: 'total',
                 header: 'AMOUNT',
                 cell: ({ row }) => (
-                    <div className="text-right font-medium">
-                        ₹{row.original.total.toFixed(2)}
+                    <div className="font-medium">
+                        {formatCurrency(row.original.total)}
                     </div>
                 ),
                 size: 100
