@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router'
+import { useRouter } from 'next/navigation'
 import { useCallback } from 'react'
 
 /**
@@ -6,70 +6,55 @@ import { useCallback } from 'react'
  */
 
 export function useTypedNavigate() {
-    const navigate = useNavigate()
+    const router = useRouter()
 
     return {
-        toHome: useCallback(() => navigate({ to: '/' }), [navigate]),
-        toAuth: useCallback(() => navigate({ to: '/auth' }), [navigate]),
-        toShops: useCallback(() => navigate({ to: '/shops' }), [navigate]),
-        toParties: useCallback(() => navigate({ to: '/parties' }), [navigate]),
+        toHome: useCallback(() => router.push('/'), [router]),
+        toAuth: useCallback(() => router.push('/auth'), [router]),
+        toShops: useCallback(() => router.push('/shops'), [router]),
+        toParties: useCallback(() => router.push('/parties'), [router]),
         toParty: useCallback(
-            (id: string) => navigate({ to: '/parties/$id', params: { id } }),
-            [navigate]
+            (id: string) => router.push(`/parties/${id}`),
+            [router]
         ),
         toPartyEdit: useCallback(
             (id: string, asModal = false) =>
-                navigate({
-                    to: '/parties/$id/edit',
-                    params: { id },
-                    search: asModal ? { fromDetail: true } : undefined
-                }),
-            [navigate]
+                router.push(
+                    `/parties/${id}/edit${asModal ? '?fromDetail=true' : ''}`
+                ),
+            [router]
         ),
         toNewParty: useCallback(
             (asModal = false) =>
-                navigate({
-                    to: '/parties/new',
-                    search: asModal ? { fromParties: true } : undefined
-                }),
-            [navigate]
+                router.push(`/parties/new${asModal ? '?fromParties=true' : ''}`),
+            [router]
         ),
-        toItems: useCallback(() => navigate({ to: '/items' }), [navigate]),
+        toItems: useCallback(() => router.push('/items'), [router]),
         toCreateItem: useCallback(
             (asModal = false) =>
-                navigate({
-                    to: '/items/create',
-                    search: asModal ? { fromItems: true } : undefined
-                }),
-            [navigate]
+                router.push(`/items/create${asModal ? '?fromItems=true' : ''}`),
+            [router]
         ),
         toProduct: useCallback(
-            (id: string) =>
-                navigate({ to: '/items/products/$id', params: { id } }),
-            [navigate]
+            (id: string) => router.push(`/items/products/${id}`),
+            [router]
         ),
         toService: useCallback(
-            (id: string) =>
-                navigate({ to: '/items/services/$id', params: { id } }),
-            [navigate]
+            (id: string) => router.push(`/items/services/${id}`),
+            [router]
         ),
         toCategory: useCallback(
-            (id: string) =>
-                navigate({ to: '/items/category/$id', params: { id } }),
-            [navigate]
+            (id: string) => router.push(`/items/category/${id}`),
+            [router]
         ),
         toUnit: useCallback(
-            (id: string) =>
-                navigate({ to: '/items/units/$id', params: { id } }),
-            [navigate]
+            (id: string) => router.push(`/items/units/${id}`),
+            [router]
         ),
-        toTodos: useCallback(() => navigate({ to: '/todos' }), [navigate]),
-        toSettings: useCallback(
-            () => navigate({ to: '/settings' }),
-            [navigate]
-        ),
-        toScanner: useCallback(() => navigate({ to: '/scanner' }), [navigate]),
-        back: useCallback(() => navigate({ to: '..' }), [navigate])
+        toTodos: useCallback(() => router.push('/todos'), [router]),
+        toSettings: useCallback(() => router.push('/settings'), [router]),
+        toScanner: useCallback(() => router.push('/scanner'), [router]),
+        back: useCallback(() => router.back(), [router])
     }
 }
 

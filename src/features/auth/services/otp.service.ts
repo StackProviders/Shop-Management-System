@@ -22,8 +22,8 @@ export const sendOTP = async (
 
     const isEmail = identifier.includes('@')
     const apiKey = isEmail
-        ? import.meta.env.VITE_EMAIL_API_KEY
-        : import.meta.env.VITE_SMS_API_KEY
+        ? process.env.NEXT_PUBLIC_EMAIL_API_KEY
+        : process.env.NEXT_PUBLIC_SMS_API_KEY
     if (!apiKey)
         throw new Error(`${isEmail ? 'Email' : 'SMS'} API key not configured`)
 

@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 import { useCurrentUser } from '@/features/auth'
 import { useShopActions, useShopContext } from '@/features/shop'
 import type { UserShopAccess } from '@/features/shop'
-import { useNavigate } from '@tanstack/react-router'
+import { useRouter } from 'next/navigation'
 
 export default function ShopDashboard() {
     const [searchQuery, setSearchQuery] = useState('')
@@ -23,7 +23,7 @@ export default function ShopDashboard() {
     const { userShops, loading, refreshShops, setCurrentShop } =
         useShopContext()
     const { deleteShop } = useShopActions()
-    const navigate = useNavigate()
+    const router = useRouter()
 
     const handleEditShop = (shopId: string) => {
         setEditingShopId(shopId)
@@ -43,7 +43,7 @@ export default function ShopDashboard() {
         const shop = userShops.find((s) => s.shopId === shopId)
         if (shop) {
             setCurrentShop(shop)
-            navigate({ to: '/' })
+            router.push('/')
         }
     }
 
@@ -51,10 +51,10 @@ export default function ShopDashboard() {
         const shopList = Array.isArray(userShops) ? userShops : []
         const filtered = searchQuery
             ? shopList.filter((shop) =>
-                  shop.shopName
-                      .toLowerCase()
-                      .includes(searchQuery.toLowerCase())
-              )
+                shop.shopName
+                    .toLowerCase()
+                    .includes(searchQuery.toLowerCase())
+            )
             : shopList
 
         return {

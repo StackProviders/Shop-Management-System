@@ -1,5 +1,5 @@
 import { useState, memo } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
     Drawer,
@@ -36,10 +36,10 @@ QuickActionButton.displayName = 'QuickActionButton'
 export const MobileBottomActions = memo(() => {
     const { bottomActions, showQuickActionCenter } = useAppBar()
     const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-    const navigate = useNavigate()
+    const router = useRouter()
 
     const handleNavigate = (href: string) => {
-        navigate({ to: href })
+        router.push(href)
         setIsDrawerOpen(false)
     }
 

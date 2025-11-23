@@ -4,7 +4,7 @@ import {
     AppBarConfig
 } from '@/components/providers/app-bar'
 import { useIsMobile } from './use-mobile'
-import { useLocation } from '@tanstack/react-router'
+import { usePathname } from 'next/navigation'
 
 interface UseAppBarConfig extends AppBarConfig {
     mobileOnly?: boolean
@@ -14,7 +14,7 @@ interface UseAppBarConfig extends AppBarConfig {
 export function useAppBar(config?: UseAppBarConfig) {
     const { configure, reset } = useAppBarContext()
     const isMobile = useIsMobile()
-    const location = useLocation()
+    const pathname = usePathname()
     const configRef = useRef(config)
 
     configRef.current = config
@@ -33,7 +33,7 @@ export function useAppBar(config?: UseAppBarConfig) {
         }
 
         return () => reset()
-    }, [location.pathname, isMobile, configure, reset, ...(config?.deps ?? [])])
+    }, [pathname, isMobile, configure, reset, ...(config?.deps ?? [])])
 
     return { configure, reset }
 }

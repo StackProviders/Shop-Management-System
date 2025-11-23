@@ -1,0 +1,31 @@
+(globalThis.TURBOPACK_CHUNK_LISTS || (globalThis.TURBOPACK_CHUNK_LISTS = [])).push({
+    script: typeof document === "object" ? document.currentScript : undefined,
+    chunks: [
+  "static/chunks/[root-of-the-server]__f6202ce6._.css",
+  "static/chunks/_adc9d42c._.js",
+  "static/chunks/src_components_ui_488be9a7._.js",
+  "static/chunks/src_components_common_4410d83c._.js",
+  "static/chunks/src_components_shop_09df0cfc._.js",
+  "static/chunks/src_components_2f676609._.js",
+  "static/chunks/src_features_8b2761b5._.js",
+  "static/chunks/src_02317c41._.js",
+  "static/chunks/package_json_f2ba6ba5._.js",
+  "static/chunks/83036_@tauri-apps_api_817a3599._.js",
+  "static/chunks/0894d_tailwind-merge_dist_bundle-mjs_mjs_705de4d7._.js",
+  "static/chunks/ff6ae_lucide-react_dist_esm_64e7a2bd._.js",
+  "static/chunks/90e85_@firebase_firestore_dist_index_esm_0a1ecf3b.js",
+  "static/chunks/3aa0f_@firebase_storage_dist_index_esm_1d43d302.js",
+  "static/chunks/fe665_@base-ui-components_react_esm_f313651d._.js",
+  "static/chunks/176c3_libphonenumber-js_9ba7c018._.js",
+  "static/chunks/2dc0c_react-phone-number-input_28f1fdd4._.js",
+  "static/chunks/7cfd1_country-flag-icons_modules_d9607e5e._.js",
+  "static/chunks/37e87_zod_v4_9728400a._.js",
+  "static/chunks/c4512_@firebase_auth_dist_esm_374a7f67._.js",
+  "static/chunks/1eae9_@firebase_database_dist_index_esm_25bdc3e6.js",
+  "static/chunks/275fa_@tanstack_table-core_build_lib_index_mjs_6f1bc5e2._.js",
+  "static/chunks/e1e6b_prettier_43f55bf8._.js",
+  "static/chunks/a8b74_entities_lib_esm_f6f7514f._.js",
+  "static/chunks/node_modules__pnpm_f895bc83._.js"
+],
+    source: "dynamic"
+});

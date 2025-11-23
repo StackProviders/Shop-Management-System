@@ -12,7 +12,7 @@ import {
     LayoutGrid
 } from 'lucide-react'
 import { memo, useMemo, useState, useTransition, useEffect } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useRouter } from 'next/navigation'
 import { useShopContext, getShopAccessHistory } from '@/features/shop'
 import { CreateShopModal } from '@/features/shop'
 import { Button } from '@/components/ui/button'
@@ -93,7 +93,7 @@ export function ShopSwitcher() {
     const [accessHistory, setAccessHistory] = useState<Record<string, number>>(
         {}
     )
-    const navigate = useNavigate()
+    const router = useRouter()
 
     useEffect(() => {
         getShopAccessHistory().then(setAccessHistory)
@@ -181,7 +181,7 @@ export function ShopSwitcher() {
                                     className={cn(
                                         'gap-2 p-2',
                                         shop.shopId === currentShop.shopId &&
-                                            'bg-accent'
+                                        'bg-accent'
                                     )}
                                 >
                                     <ShopLogo
@@ -214,9 +214,7 @@ export function ShopSwitcher() {
                                                 onClick={(e) => {
                                                     e.stopPropagation()
                                                     setCurrentShop(shop)
-                                                    navigate({
-                                                        to: '/settings'
-                                                    })
+                                                    router.push('/settings')
                                                 }}
                                             >
                                                 <Settings className="size-3.5" />
@@ -228,7 +226,7 @@ export function ShopSwitcher() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                                 className="gap-2 p-2"
-                                onClick={() => navigate({ to: '/shops' })}
+                                onClick={() => router.push('/shops')}
                             >
                                 <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                                     <LayoutGrid className="size-4" />

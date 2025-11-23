@@ -244,7 +244,7 @@ const schema = z.object({
 })
 
 // ✅ CORRECT - Never expose secrets
-const apiKey = import.meta.env.VITE_API_KEY
+const apiKey = import.meta.env.NEXT_PUBLIC_API_KEY
 ```
 
 ## Documentation Standards

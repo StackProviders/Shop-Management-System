@@ -26,12 +26,35 @@ export interface PlatformInfo {
  * Detect the current platform using Tauri OS plugin when available, fallback to user agent
  */
 export function getPlatform(): PlatformInfo {
-    const isTauri = typeof window !== 'undefined' && '__TAURI__' in window
+    if (typeof window === 'undefined') {
+        return {
+            platform: 'mobile-web',
+            isMobile: false,
+            isDesktop: false,
+            isAndroid: false,
+            isIOS: false,
+            isTauri: false,
+            userAgent: 'server'
+        }
+    }
+
+    const isTauri = '__TAURI__' in window
     let platform: Platform
     let isAndroid = false
     let isIOS = false
 
-    const currentPlatform = tauriPlatform()
+    // Only call tauriPlatform if we are in a Tauri environment or if the plugin handles non-Tauri gracefully.
+    // Assuming the plugin might throw or fail if window is missing (which we checked) or if not in Tauri.
+    // But the error was specifically "window is not defined" inside the plugin call likely.
+
+    let currentPlatform: string | null = null;
+    try {
+        if (isTauri) {
+            currentPlatform = tauriPlatform()
+        }
+    } catch (e) {
+        console.warn('Failed to detect Tauri platform:', e)
+    }
 
     switch (currentPlatform) {
         case 'android':

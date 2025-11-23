@@ -1,0 +1,123 @@
+import { useRouter, useSearchParams } from 'next/navigation'
+import { ItemForm, useCategories, useItemMutations } from '@/features/items'
+import type { ItemType } from '@/features/items'
+import type { ItemFormData } from '@/features/items/validations/item.validation'
+import { useShopContext } from '@/features/shop'
+import { InterceptingRoute } from '@/components/intercepting'
+import { useInterceptingRoute } from '@/lib/intercepting-routes'
+import { useState, useCallback, useMemo } from 'react'
+import { ItemSettingsSheet } from '@/features/items/components/item-settings-sheet'
+import { ItemFormHeader } from '@/features/items/components/item-form-header'
+import { createSerialNumbers } from '@/features/items/api/serial-numbers.api'
+
+export default function CreateItemPage() {
+    const router = useRouter()
+    const searchParams = useSearchParams()
+    const { currentShop } = useShopContext()
+    const shopId = currentShop?.shopId || ''
+    const { create: createItem } = useItemMutations(shopId)
+    const { categories } = useCategories(shopId)
+    const { isIntercepting } = useInterceptingRoute(
+        searchParams.get('fromItems') === 'true',
+        '/items'
+    )
+    const [itemType, setItemType] = useState<ItemType>('product')
+    const [showSettings, setShowSettings] = useState(false)
+    const [formState, setFormState] = useState({
+        formId: 'product-form',
+        isDirty: false,
+        isSubmitting: false
+    })
+
+    const handleAddItem = useCallback(
+        async (data: ItemFormData) => {
+            const { status, serialNumbers, ...restData } =
+                data as ItemFormData & { serialNumbers?: string[] }
+            const newItemId = await createItem({
+                ...restData,
+                itemCode: data.itemCode || '',
+                categories: data.categories || [],
+                unit: data.unit || '',
+                images: data.images || [],
+                stockManagement: data.type === 'product',
+                currentStock: data.openingStock || 0,
+                openingStock: data.openingStock || 0,
+                minStockAlert: data.minStockAlert || 0,
+                status: status || 'active'
+            })
+
+            if (serialNumbers && serialNumbers.length > 0 && newItemId) {
+                await createSerialNumbers(shopId, newItemId, serialNumbers)
+            }
+
+            if (isIntercepting) {
+                router.back()
+            } else {
+                router.push('/items')
+            }
+        },
+        [createItem, router, isIntercepting, shopId]
+    )
+
+    const handleTypeChange = useCallback((checked: boolean) => {
+        const newType = checked ? 'service' : 'product'
+        setItemType(newType)
+        setFormState((prev) => ({
+            ...prev,
+            formId: `${newType}-form`,
+            isDirty: false
+        }))
+    }, [])
+
+    const handleSettingsToggle = useCallback(
+        () => setShowSettings((prev) => !prev),
+        []
+    )
+
+    return (
+        <>
+            <InterceptingRoute
+                isIntercepting={isIntercepting}
+                fallbackPath="/items"
+                fullPageClassName="h-full overflow-y-auto"
+                modalProps={{
+                    showHeader: true,
+                    className: '!max-w-6xl',
+                    contentClassName: 'p-0',
+                    showCloseButton: false,
+                    isDirty: formState.isDirty,
+                    header: useMemo(
+                        () => (
+                            <ItemFormHeader
+                                title="Add Item"
+                                itemType={itemType}
+                                onTypeChange={handleTypeChange}
+                                onSettingsClick={handleSettingsToggle}
+                            />
+                        ),
+                        [itemType, handleTypeChange, handleSettingsToggle]
+                    ),
+                    formId: formState.formId,
+                    submitLabel: 'Add Item',
+                    isSubmitting: formState.isSubmitting
+                }}
+            >
+                <ItemForm
+                    type={itemType}
+                    categories={categories}
+                    onSubmit={handleAddItem}
+                    onFormStateChange={setFormState}
+                    isEdit={false}
+                />
+            </InterceptingRoute>
+
+            {currentShop?.shopId && (
+                <ItemSettingsSheet
+                    open={showSettings}
+                    onOpenChange={setShowSettings}
+                    shopId={currentShop.shopId}
+                />
+            )}
+        </>
+    )
+}

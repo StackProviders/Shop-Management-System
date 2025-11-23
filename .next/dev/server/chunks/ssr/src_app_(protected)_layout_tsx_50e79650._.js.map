@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///C:/Projects/Shop-Management-System/shop-management-app/src/app/%28protected%29/layout.tsx"],"sourcesContent":["'use client'\r\n\r\nimport { ProtectedRoute } from '@/components/auth/auth-guard'\r\n\r\nexport default function Layout({ children }: { children: React.ReactNode }) {\r\n    return <ProtectedRoute>{children}</ProtectedRoute>\r\n}\r\n"],"names":[],"mappings":";;;;;AAEA;AAFA;;;AAIe,SAAS,OAAO,EAAE,QAAQ,EAAiC;IACtE,qBAAO,6VAAC,6JAAc;kBAAE;;;;;;AAC5B"}}]
+}

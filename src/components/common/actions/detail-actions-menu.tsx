@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,
@@ -38,21 +38,27 @@ export function DetailActionsMenu<T extends { id: string }>({
     onDeleteClick,
     compact = false
 }: DetailActionsMenuProps<T>) {
-    const navigate = useNavigate()
+    const router = useRouter()
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
     const handleEdit = () => {
         if (onEditClick) {
             onEditClick()
         } else if (editPath) {
-            navigate({ to: editPath })
+            router.push(editPath)
         }
     }
 
     const handleDuplicate = () => {
         if (getDuplicateData && duplicatePath) {
             const duplicateData = getDuplicateData(item)
-            navigate({ to: duplicatePath, state: duplicateData })
+            const searchParams = new URLSearchParams()
+            Object.entries(duplicateData).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    searchParams.append(key, String(value))
+                }
+            })
+            router.push(`${duplicatePath}?${searchParams.toString()}`)
             toast.success(`${itemName} data copied for duplication`)
         }
     }
@@ -62,7 +68,7 @@ export function DetailActionsMenu<T extends { id: string }>({
             if (onDelete) {
                 await onDelete(item.id)
                 setDeleteConfirmOpen(false)
-                if (listPath) navigate({ to: listPath })
+                if (listPath) router.push(listPath)
             }
         } catch {
             // Error handled in mutation hook

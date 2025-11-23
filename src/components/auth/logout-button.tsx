@@ -4,7 +4,7 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import { LogOut } from 'lucide-react'
 import { VariantProps } from 'class-variance-authority'
 import { ConfirmationDialog } from '@/components/common'
-import { useNavigate } from '@tanstack/react-router'
+import { useRouter } from 'next/navigation'
 import { Spinner } from '@/components/ui/spinner'
 
 interface LogoutButtonProps {
@@ -29,14 +29,14 @@ export function LogoutButton({
     onAlertClose
 }: LogoutButtonProps) {
     const { logout, authState } = useAuth()
-    const navigate = useNavigate()
+    const router = useRouter()
     const [isLoggingOut, setIsLoggingOut] = useState(false)
 
     const handleLogout = useCallback(async () => {
         setIsLoggingOut(true)
         try {
             await logout()
-            navigate({ to: '/auth', replace: true })
+            router.replace('/auth')
         } catch (error) {
             console.error('Logout failed:', error)
             setIsLoggingOut(false)

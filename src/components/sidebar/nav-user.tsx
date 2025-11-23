@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/sidebar'
 import { useAuth } from '@/features/auth'
 import { LogoutButton } from '../auth'
-import { useNavigate } from '@tanstack/react-router'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export function NavUser() {
@@ -30,7 +30,7 @@ export function NavUser() {
     const [isOpenLogout, setIsOpenLogout] = useState<boolean>(false)
     const { isMobile } = useSidebar()
     const { authState } = useAuth()
-    const navigate = useNavigate()
+    const router = useRouter()
 
     const user = {
         name: authState.user?.name || 'User',
@@ -102,7 +102,7 @@ export function NavUser() {
                             <DropdownMenuGroup>
                                 <DropdownMenuItem
                                     onClick={() =>
-                                        navigate({ to: '/settings' })
+                                        router.push('/settings')
                                     }
                                 >
                                     <IconUserCircle className="size-4" />
@@ -110,7 +110,7 @@ export function NavUser() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     onClick={() =>
-                                        navigate({ to: '/settings' })
+                                        router.push('/settings')
                                     }
                                 >
                                     <IconSettings className="size-4" />

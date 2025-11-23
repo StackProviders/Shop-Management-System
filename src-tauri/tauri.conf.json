@@ -1,9 +1,9 @@
 {
   "build": {
-    "beforeDevCommand": "vite",
+    "beforeDevCommand": "pnpm dev",
     "beforeBuildCommand": "pnpm build",
-    "frontendDist": "../dist",
-    "devUrl": "http://localhost:1420"
+    "devUrl": "http://localhost:3000",
+    "frontendDist": "../out"
   },
   "bundle": {
     "active": true,

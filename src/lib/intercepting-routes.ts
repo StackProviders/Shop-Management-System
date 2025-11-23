@@ -1,4 +1,4 @@
-import { useNavigate, useRouter } from '@tanstack/react-router'
+import { useRouter } from 'next/navigation'
 import { useCallback } from 'react'
 
 /**
@@ -10,8 +10,8 @@ import { useCallback } from 'react'
  *
  * @example
  * ```tsx
- * const search = Route.useSearch()
- * const { handleClose } = useInterceptingRoute(search.modal === true, '/parties')
+ * const search = useSearchParams()
+ * const { handleClose } = useInterceptingRoute(search.get('modal') === 'true', '/parties')
  *
  * return (
  *   <FormModal open onOpenChange={(open) => !open && handleClose()}>
@@ -25,15 +25,14 @@ export function useInterceptingRoute(
     fallbackPath: string
 ) {
     const router = useRouter()
-    const navigate = useNavigate()
 
     const handleClose = useCallback(() => {
         if (isIntercepting) {
-            router.history.back()
+            router.back()
         } else {
-            navigate({ to: fallbackPath })
+            router.push(fallbackPath)
         }
-    }, [isIntercepting, router, navigate, fallbackPath])
+    }, [isIntercepting, router, fallbackPath])
 
     return { handleClose, isIntercepting }
 }
@@ -42,36 +41,28 @@ export function useInterceptingRoute(
  * Type-safe navigation helpers for intercepting routes
  */
 export function useInterceptingNavigate() {
-    const navigate = useNavigate()
+    const router = useRouter()
 
     return {
         // Parties
         toNewParty: useCallback(
             (asModal = true) =>
-                navigate({
-                    to: '/parties/new',
-                    search: asModal ? { fromParties: true } : undefined
-                }),
-            [navigate]
+                router.push(`/parties/new${asModal ? '?fromParties=true' : ''}`),
+            [router]
         ),
         toEditParty: useCallback(
             (id: string, asModal = true) =>
-                navigate({
-                    to: '/parties/$id/edit',
-                    params: { id },
-                    search: asModal ? { fromDetail: true } : undefined
-                }),
-            [navigate]
+                router.push(
+                    `/parties/${id}/edit${asModal ? '?fromDetail=true' : ''}`
+                ),
+            [router]
         ),
 
         // Items
         toCreateItem: useCallback(
             (asModal = true) =>
-                navigate({
-                    to: '/items/create',
-                    search: asModal ? { fromItems: true } : undefined
-                }),
-            [navigate]
+                router.push(`/items/create${asModal ? '?fromItems=true' : ''}`),
+            [router]
         )
     }
 }

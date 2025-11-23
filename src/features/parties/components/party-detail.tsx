@@ -10,7 +10,7 @@ import {
     ListDetailContentHeaderInfoItem,
     ListDetailContentBody
 } from '@/components/ui/list-detail-layout'
-import { useNavigate } from '@tanstack/react-router'
+import { useRouter } from 'next/navigation'
 import { DetailActionsMenu } from '@/components'
 
 interface PartyDetailProps {
@@ -20,7 +20,7 @@ interface PartyDetailProps {
 }
 
 export function PartyDetail({ party, shopId }: PartyDetailProps) {
-    const navigate = useNavigate()
+    const router = useRouter()
     const { deleteParty } = usePartyMutations(shopId)
     const isMobile = useIsMobile()
     const hasContactInfo = !!(
@@ -30,10 +30,7 @@ export function PartyDetail({ party, shopId }: PartyDetailProps) {
     )
 
     const handleEdit = () => {
-        navigate({
-            to: `/parties/${party.id}/edit`,
-            search: { fromDetail: true }
-        })
+        router.push(`/parties/${party.id}/edit?fromDetail=true`)
     }
 
     return (

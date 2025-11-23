@@ -1,6 +1,5 @@
 import * as React from 'react'
-import { mergeProps } from '@base-ui-components/react/merge-props'
-import { useRender } from '@base-ui-components/react/use-render'
+import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
 
 import { cn } from '@/lib/utils'
@@ -43,27 +42,25 @@ const buttonVariants = cva(
     }
 )
 
-interface ButtonProps extends useRender.ComponentProps<'button'> {
-    variant?: VariantProps<typeof buttonVariants>['variant']
-    size?: VariantProps<typeof buttonVariants>['size']
+export interface ButtonProps
+    extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+    asChild?: boolean
 }
 
-function Button({ className, variant, size, render, ...props }: ButtonProps) {
-    const typeValue: React.ButtonHTMLAttributes<HTMLButtonElement>['type'] =
-        render ? undefined : 'button'
-
-    const defaultProps = {
-        'data-slot': 'button',
-        className: cn(buttonVariants({ variant, size, className })),
-        type: typeValue
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+    ({ className, variant, size, asChild = false, ...props }, ref) => {
+        const Comp = asChild ? Slot : 'button'
+        return (
+            <Comp
+                className={cn(buttonVariants({ variant, size, className }))}
+                ref={ref}
+                {...props}
+            />
+        )
     }
-
-    return useRender({
-        defaultTagName: 'button',
-        render,
-        props: mergeProps<'button'>(defaultProps, props)
-    })
-}
+)
+Button.displayName = 'Button'
 
 function SubmitButton({
     loading,

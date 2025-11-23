@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
-import { useNavigate, useLocation } from '@tanstack/react-router'
+import { useRouter, usePathname } from 'next/navigation'
 import { IconArrowLeft } from '@tabler/icons-react'
 import {
     Sidebar,
@@ -26,8 +26,8 @@ import { ThemeSwitcher } from './theme-switcher'
 
 export function AppSidebar() {
     const { open, isMobile, setOpenMobile } = useSidebar()
-    const navigate = useNavigate()
-    const location = useLocation()
+    const router = useRouter()
+    const pathname = usePathname()
     const [activeItem, setActiveItem] = useState<string | null>(null)
     const [selectedSubItem, setSelectedSubItem] = useState<string | null>(null)
 
@@ -37,7 +37,7 @@ export function AppSidebar() {
     )
 
     useEffect(() => {
-        const currentPath = location.pathname
+        const currentPath = pathname
 
         for (const item of sidebarItems) {
             if (item.route === currentPath) {
@@ -55,7 +55,7 @@ export function AppSidebar() {
                 }
             }
         }
-    }, [location.pathname])
+    }, [pathname])
 
     const handleItemClick = useCallback(
         (item: SidebarItem) => {
@@ -63,22 +63,22 @@ export function AppSidebar() {
                 setActiveItem(item.id)
                 setSelectedSubItem(null)
             } else if (item.route) {
-                navigate({ to: item.route })
+                router.push(item.route)
                 setOpenMobile(false)
             }
         },
-        [navigate, setOpenMobile]
+        [router, setOpenMobile]
     )
 
     const handleSubItemClick = useCallback(
         (subItem: SidebarSubItem) => {
             if (subItem.route) {
-                navigate({ to: subItem.route })
+                router.push(subItem.route)
                 setSelectedSubItem(subItem.id)
                 setOpenMobile(false)
             }
         },
-        [navigate, setOpenMobile]
+        [router, setOpenMobile]
     )
 
     const handleBackToMain = useCallback(() => {
@@ -104,7 +104,7 @@ export function AppSidebar() {
                                             item={item}
                                             onClick={handleItemClick}
                                             isActive={
-                                                location.pathname === item.route
+                                                pathname === item.route
                                             }
                                         />
                                     ))}

@@ -1,5 +1,5 @@
 import { ReactNode, useMemo, useState, useCallback } from 'react'
-import { useNavigate, useParams, useLocation } from '@tanstack/react-router'
+import { useRouter, useParams, usePathname } from 'next/navigation'
 import {
     ListDetailRoot,
     ListDetailHeader,
@@ -62,9 +62,10 @@ export function ListDetailPage<
     emptyDescription = 'Create your first item to get started',
     children
 }: ListDetailPageProps<T>) {
-    const navigate = useNavigate()
-    const { id } = useParams({ strict: false })
-    const { pathname } = useLocation()
+    const router = useRouter()
+    const params = useParams()
+    const id = params?.id as string
+    const pathname = usePathname()
     const [search, setSearch] = useState('')
     const isMobile = useIsMobile()
 
@@ -83,8 +84,8 @@ export function ListDetailPage<
     }, [items, search, searchKeys])
 
     const handleCreate = useCallback(() => {
-        navigate({ to: createPath })
-    }, [navigate, createPath])
+        router.push(createPath)
+    }, [router, createPath])
 
     return (
         <ListDetailRoot>

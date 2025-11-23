@@ -78,7 +78,10 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
             setLoading(true)
             try {
+                console.log({ identifier });
                 const user = await checkDeviceAndLogin(identifier)
+                console.log({ user });
+
                 if (user) {
                     onSuccess?.()
                     return
@@ -214,7 +217,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                                         className={cn(
                                             'rounded-xl',
                                             fieldError &&
-                                                'border-destructive focus-visible:ring-destructive'
+                                            'border-destructive focus-visible:ring-destructive'
                                         )}
                                         value={identifier}
                                         onChange={(e) =>

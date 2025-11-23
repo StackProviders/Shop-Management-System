@@ -5,7 +5,7 @@ import {
     StateFlags
 } from '@tauri-apps/plugin-window-state'
 
-const isProduction = import.meta.env.PROD
+const isProduction = process.env.NODE_ENV === 'production'
 
 export async function setupWindowBehavior() {
     const window = getCurrentWindow()
