@@ -1,4 +1,10 @@
-import { initializeApp } from 'firebase/app'
+import { initializeApp, getApps, getApp } from 'firebase/app'
+import {
+    initializeFirestore,
+    persistentLocalCache,
+    persistentMultipleTabManager
+} from 'firebase/firestore'
+import { getStorage } from 'firebase/storage'
 
 export const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
@@ -16,4 +22,11 @@ if (!firebaseConfig.projectId) {
     )
 }
 
-export const app = initializeApp(firebaseConfig)
+export const app =
+    getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)
+export const db = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+    })
+})
+export const storage = getStorage(app)

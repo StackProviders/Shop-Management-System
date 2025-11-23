@@ -11,53 +11,17 @@ import { AuthProvider } from '@/features/auth/components'
 import {
     SuspenseWithPerf,
     StorageProvider,
-    useFirebaseApp,
     FirebaseAppProvider,
-    FirestoreProvider,
-    useInitFirestore
+    FirestoreProvider
 } from 'reactfire'
 import { Spinner } from '@/components/ui/spinner'
-import { getStorage } from 'firebase/storage'
-import { firebaseConfig } from '@/lib/firebase'
+import { firebaseConfig, db, storage } from '@/lib/firebase'
 import { initializeDesktop } from '@/lib/desktop'
 import { getPlatform } from '@/utils/platform-detection'
 import { checkForAppUpdates } from '@/lib/updater'
 import { MobileUpdaterProvider } from '@/components/providers/mobile-updater-provider'
 import { SafeAreaProvider } from '@/components/providers/safe-area-provider'
-import {
-    getFirestore,
-    initializeFirestore,
-    persistentLocalCache,
-    persistentMultipleTabManager
-} from 'firebase/firestore'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
-
-function AppWithStorage({ children }: { children: ReactNode }) {
-    const app = useFirebaseApp()
-    return <StorageProvider sdk={getStorage(app)}>{children}</StorageProvider>
-}
-
-function FirestoreWrapper({ children }: { children: ReactNode }) {
-    const { data: firestoreInstance } = useInitFirestore(
-        async (firebaseApp) => {
-            try {
-                return initializeFirestore(firebaseApp, {
-                    localCache: persistentLocalCache({
-                        tabManager: persistentMultipleTabManager()
-                    })
-                })
-            } catch {
-                return getFirestore(firebaseApp)
-            }
-        }
-    )
-
-    return (
-        <FirestoreProvider sdk={firestoreInstance}>
-            {children}
-        </FirestoreProvider>
-    )
-}
 
 function PlatformInit({ children }: { children: ReactNode }) {
     const { isDesktop, isMobile } = useMemo(() => getPlatform(), [])
@@ -102,40 +66,42 @@ export default function Providers({ children }: { children: ReactNode }) {
                                 }
                                 traceId="app-init"
                             >
-                                <FirestoreWrapper>
-                                    <PlatformInit>
-                                        <SuspenseWithPerf
-                                            fallback={
-                                                <Spinner
-                                                    fullScreen={true}
-                                                    className="size-7"
-                                                />
-                                            }
-                                            traceId="auth-init"
-                                        >
-                                            <AuthProvider>
-                                                <SuspenseWithPerf
-                                                    fallback={
-                                                        <Spinner
-                                                            fullScreen={true}
-                                                            className="size-7"
-                                                        />
-                                                    }
-                                                    traceId="shop-init"
-                                                >
-                                                    <ShopProvider>
-                                                        <AppWithStorage>
+                                <FirestoreProvider sdk={db}>
+                                    <StorageProvider sdk={storage}>
+                                        <PlatformInit>
+                                            <SuspenseWithPerf
+                                                fallback={
+                                                    <Spinner
+                                                        fullScreen={true}
+                                                        className="size-7"
+                                                    />
+                                                }
+                                                traceId="auth-init"
+                                            >
+                                                <AuthProvider>
+                                                    <SuspenseWithPerf
+                                                        fallback={
+                                                            <Spinner
+                                                                fullScreen={
+                                                                    true
+                                                                }
+                                                                className="size-7"
+                                                            />
+                                                        }
+                                                        traceId="shop-init"
+                                                    >
+                                                        <ShopProvider>
                                                             {children}
                                                             <Toaster
                                                                 richColors
                                                             />
-                                                        </AppWithStorage>
-                                                    </ShopProvider>
-                                                </SuspenseWithPerf>
-                                            </AuthProvider>
-                                        </SuspenseWithPerf>
-                                    </PlatformInit>
-                                </FirestoreWrapper>
+                                                        </ShopProvider>
+                                                    </SuspenseWithPerf>
+                                                </AuthProvider>
+                                            </SuspenseWithPerf>
+                                        </PlatformInit>
+                                    </StorageProvider>
+                                </FirestoreProvider>
                             </SuspenseWithPerf>
                         </ThemeProvider>
                     </TooltipProvider>
