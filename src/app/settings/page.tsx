@@ -12,7 +12,10 @@ export default function SettingsPage() {
                 <div className="mb-6">
                     <Link
                         href="/"
-                        className={cn(buttonVariants({ variant: "ghost" }), "mb-4 flex items-center space-x-2")}
+                        className={cn(
+                            buttonVariants({ variant: 'ghost' }),
+                            'mb-4 flex items-center space-x-2'
+                        )}
                     >
                         <ArrowLeft className="h-4 w-4" />
                         <span>Back to Home</span>

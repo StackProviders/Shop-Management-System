@@ -93,28 +93,27 @@ export default function PartyDetailPage() {
     useAppBar({
         title: isEditOpen ? 'Edit Party' : party?.name || 'Party',
         showBackButton: true,
-        onBack: () =>
-            router.push(isEditOpen ? `/parties/${id}` : '/parties'),
+        onBack: () => router.push(isEditOpen ? `/parties/${id}` : '/parties'),
         actions: isEditOpen ? undefined : actions,
         showBottomActions: true,
         bottomActions: isEditOpen
             ? [
-                {
-                    icon: X,
-                    label: 'Cancel',
-                    onClick: handleEditClose,
-                    variant: 'outline'
-                },
-                {
-                    icon: Check,
-                    label: 'Update',
-                    onClick: () => {
-                        const form = document.querySelector('form')
-                        form?.requestSubmit()
-                    },
-                    variant: 'default'
-                }
-            ]
+                  {
+                      icon: X,
+                      label: 'Cancel',
+                      onClick: handleEditClose,
+                      variant: 'outline'
+                  },
+                  {
+                      icon: Check,
+                      label: 'Update',
+                      onClick: () => {
+                          const form = document.querySelector('form')
+                          form?.requestSubmit()
+                      },
+                      variant: 'default'
+                  }
+              ]
             : [],
         showQuickActionCenter: !isEditOpen,
         deps: [isEditOpen, party?.name]

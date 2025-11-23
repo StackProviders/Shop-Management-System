@@ -71,10 +71,7 @@ const PartiesLayout = memo(function PartiesLayout({
     } = usePartyFilters(parties)
 
     const isRouteActive = useMemo(
-        () =>
-            !!id ||
-            pathname === '/parties/new' ||
-            pathname.includes('/edit'),
+        () => !!id || pathname === '/parties/new' || pathname.includes('/edit'),
         [id, pathname]
     )
 
@@ -214,7 +211,7 @@ const PartiesLayout = memo(function PartiesLayout({
                                 selectedParty={
                                     id
                                         ? parties.find((p) => p.id === id) ||
-                                        null
+                                          null
                                         : null
                                 }
                                 onSelectParty={handleSelectParty}

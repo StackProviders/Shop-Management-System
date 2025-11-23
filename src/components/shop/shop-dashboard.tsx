@@ -51,10 +51,10 @@ export default function ShopDashboard() {
         const shopList = Array.isArray(userShops) ? userShops : []
         const filtered = searchQuery
             ? shopList.filter((shop) =>
-                shop.shopName
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase())
-            )
+                  shop.shopName
+                      .toLowerCase()
+                      .includes(searchQuery.toLowerCase())
+              )
             : shopList
 
         return {

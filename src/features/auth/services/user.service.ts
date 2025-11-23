@@ -29,9 +29,9 @@ export const ensureUserExists = async (
 }
 
 export const getUserById = async (uid: string): Promise<User | null> => {
-    console.log({ uid });
+    console.log({ uid })
     const userData = await usersRepo.get({ id: uid })
-    console.log({ userData });
+    console.log({ userData })
     if (!userData) return null
     return {
         uid: userData.id,

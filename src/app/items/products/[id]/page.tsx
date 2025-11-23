@@ -169,8 +169,8 @@ export default function ProductDetailPage() {
                                                             ? 'bg-destructive'
                                                             : transaction.type ===
                                                                 'Sale'
-                                                                ? 'bg-success'
-                                                                : 'bg-foreground'
+                                                              ? 'bg-success'
+                                                              : 'bg-foreground'
                                                     )}
                                                 />
                                             </TableCell>
@@ -186,17 +186,17 @@ export default function ProductDetailPage() {
                                             <TableCell className="text-xs">
                                                 {transaction.createdAt
                                                     ? format(
-                                                        transaction.createdAt instanceof
-                                                            Date
-                                                            ? transaction.createdAt
-                                                            : new Date(
-                                                                (
-                                                                    transaction.createdAt as any
-                                                                ).seconds *
-                                                                1000
-                                                            ),
-                                                        'dd/MM/yyyy'
-                                                    )
+                                                          transaction.createdAt instanceof
+                                                              Date
+                                                              ? transaction.createdAt
+                                                              : new Date(
+                                                                    (
+                                                                        transaction.createdAt as any
+                                                                    ).seconds *
+                                                                        1000
+                                                                ),
+                                                          'dd/MM/yyyy'
+                                                      )
                                                     : '-'}
                                             </TableCell>
                                             <TableCell className="text-right text-xs">
@@ -212,7 +212,7 @@ export default function ProductDetailPage() {
                                                     <Badge
                                                         variant={
                                                             transaction.status ===
-                                                                'Unpaid'
+                                                            'Unpaid'
                                                                 ? 'destructive'
                                                                 : 'secondary'
                                                         }

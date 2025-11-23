@@ -97,7 +97,9 @@ export default function CategoryDetailPage() {
                                     key={item.id}
                                     className="flex items-center justify-between p-3 hover:bg-accent cursor-pointer"
                                     onClick={() =>
-                                        router.push(`/items/products/${item.id}`)
+                                        router.push(
+                                            `/items/products/${item.id}`
+                                        )
                                     }
                                 >
                                     <span className="text-sm font-medium">

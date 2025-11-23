@@ -50,7 +50,7 @@ export function useAuthActions() {
     const checkDeviceAndLogin = useCallback(
         async (identifier: string): Promise<User | null> => {
             try {
-                console.log({ identifier });
+                console.log({ identifier })
 
                 const user = await authApi.checkDeviceAndLogin(identifier)
                 if (user) setUser(user)

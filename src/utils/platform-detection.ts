@@ -47,7 +47,7 @@ export function getPlatform(): PlatformInfo {
     // Assuming the plugin might throw or fail if window is missing (which we checked) or if not in Tauri.
     // But the error was specifically "window is not defined" inside the plugin call likely.
 
-    let currentPlatform: string | null = null;
+    let currentPlatform: string | null = null
     try {
         if (isTauri) {
             currentPlatform = tauriPlatform()

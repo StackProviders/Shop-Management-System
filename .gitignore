@@ -11,6 +11,8 @@
 /dist
 target/
 gen/
+.next
+/out
 
 # misc
 .DS_Store

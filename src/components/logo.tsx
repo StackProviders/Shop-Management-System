@@ -49,7 +49,11 @@ export default function Logo({
         <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-1.5">
                 <img
-                    src={deferredTheme === 'dark' ? (darkLogo.src || darkLogo) : (lightLogo.src || lightLogo)}
+                    src={
+                        deferredTheme === 'dark'
+                            ? darkLogo.src || darkLogo
+                            : lightLogo.src || lightLogo
+                    }
                     alt="Stack Provider Logo"
                     className={cn(
                         sizeClasses[size],

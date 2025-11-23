@@ -103,9 +103,7 @@ export function AppSidebar() {
                                             key={item.id}
                                             item={item}
                                             onClick={handleItemClick}
-                                            isActive={
-                                                pathname === item.route
-                                            }
+                                            isActive={pathname === item.route}
                                         />
                                     ))}
                                 </SidebarMenu>

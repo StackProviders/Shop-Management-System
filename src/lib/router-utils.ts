@@ -26,7 +26,9 @@ export function useTypedNavigate() {
         ),
         toNewParty: useCallback(
             (asModal = false) =>
-                router.push(`/parties/new${asModal ? '?fromParties=true' : ''}`),
+                router.push(
+                    `/parties/new${asModal ? '?fromParties=true' : ''}`
+                ),
             [router]
         ),
         toItems: useCallback(() => router.push('/items'), [router]),

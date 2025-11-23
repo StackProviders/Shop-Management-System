@@ -126,7 +126,9 @@ export default function Providers({ children }: { children: ReactNode }) {
                                                     <ShopProvider>
                                                         <AppWithStorage>
                                                             {children}
-                                                            <Toaster richColors />
+                                                            <Toaster
+                                                                richColors
+                                                            />
                                                         </AppWithStorage>
                                                     </ShopProvider>
                                                 </SuspenseWithPerf>

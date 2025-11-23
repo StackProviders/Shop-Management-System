@@ -101,17 +101,13 @@ export function NavUser() {
                             <DropdownMenuSeparator />
                             <DropdownMenuGroup>
                                 <DropdownMenuItem
-                                    onClick={() =>
-                                        router.push('/settings')
-                                    }
+                                    onClick={() => router.push('/settings')}
                                 >
                                     <IconUserCircle className="size-4" />
                                     Profile
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                    onClick={() =>
-                                        router.push('/settings')
-                                    }
+                                    onClick={() => router.push('/settings')}
                                 >
                                     <IconSettings className="size-4" />
                                     Settings

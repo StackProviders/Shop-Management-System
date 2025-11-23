@@ -181,7 +181,7 @@ export function ShopSwitcher() {
                                     className={cn(
                                         'gap-2 p-2',
                                         shop.shopId === currentShop.shopId &&
-                                        'bg-accent'
+                                            'bg-accent'
                                     )}
                                 >
                                     <ShopLogo

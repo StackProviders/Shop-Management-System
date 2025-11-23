@@ -44,8 +44,8 @@ export default function ItemsPage({ children }: { children?: ReactNode }) {
         activeTab === 'products'
             ? 'product'
             : activeTab === 'services'
-                ? 'service'
-                : undefined
+              ? 'service'
+              : undefined
     )
     const { items: allItems } = useItems(shopId)
     const { categories } = useCategories(shopId)

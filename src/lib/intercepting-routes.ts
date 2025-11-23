@@ -47,7 +47,9 @@ export function useInterceptingNavigate() {
         // Parties
         toNewParty: useCallback(
             (asModal = true) =>
-                router.push(`/parties/new${asModal ? '?fromParties=true' : ''}`),
+                router.push(
+                    `/parties/new${asModal ? '?fromParties=true' : ''}`
+                ),
             [router]
         ),
         toEditParty: useCallback(
