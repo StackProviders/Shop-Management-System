@@ -25,10 +25,12 @@ if (!firebaseConfig.projectId) {
 
 export const app =
     getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)
+
 export const db = initializeFirestore(app, {
     localCache: persistentLocalCache({
         tabManager: persistentMultipleTabManager()
     })
 })
+
 export const storage = getStorage(app)
 export const auth = getAuth(app)

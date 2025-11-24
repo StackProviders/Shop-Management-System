@@ -42,7 +42,8 @@ export class Repository<T extends { id: string }> {
 
     subscribe(
         callback: (data: T[]) => void,
-        q?: Query<DocumentData>
+        q?: Query<DocumentData>,
+        onError?: (error: Error) => void
     ): () => void {
         const db = this.getDb()
         return onSnapshot(
@@ -53,6 +54,13 @@ export class Repository<T extends { id: string }> {
                     (doc) => ({ id: doc.id, ...doc.data() }) as T
                 )
                 callback(data)
+            },
+            (error) => {
+                if (onError) {
+                    onError(error)
+                } else {
+                    console.error('Snapshot error:', error)
+                }
             }
         )
     }
