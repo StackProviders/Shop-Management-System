@@ -1,3 +1,5 @@
+'use client'
+
 import { createContext, useContext, useEffect, useState } from 'react'
 import { LazyStore } from '@tauri-apps/plugin-store'
 

@@ -1,3 +1,5 @@
+'use client'
+
 import { useParams } from 'next/navigation'
 import { useShopContext } from '@/features/shop'
 import { useItem, useStockTransactions } from '@/features/items'
@@ -24,6 +26,15 @@ import { MoreVertical, Calendar } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { cn, formatCurrency } from '@/lib/utils'
 import { format } from 'date-fns'
+import { Timestamp } from 'firebase/firestore'
+
+// Helper function to convert Firestore Timestamp to Date
+const toDate = (date: Date | Timestamp | undefined): Date => {
+    if (!date) return new Date()
+    if (date instanceof Date) return date
+    if (date instanceof Timestamp) return date.toDate()
+    return new Date()
+}
 
 export default function ProductDetailPage() {
     const params = useParams()
@@ -186,15 +197,9 @@ export default function ProductDetailPage() {
                                             <TableCell className="text-xs">
                                                 {transaction.createdAt
                                                     ? format(
-                                                          transaction.createdAt instanceof
-                                                              Date
-                                                              ? transaction.createdAt
-                                                              : new Date(
-                                                                    (
-                                                                        transaction.createdAt as any
-                                                                    ).seconds *
-                                                                        1000
-                                                                ),
+                                                          toDate(
+                                                              transaction.createdAt
+                                                          ),
                                                           'dd/MM/yyyy'
                                                       )
                                                     : '-'}

@@ -1,3 +1,5 @@
+import { Timestamp } from 'firebase/firestore'
+
 export type StockTransactionType =
     | 'Opening Stock'
     | 'Purchase'
@@ -14,5 +16,5 @@ export interface StockTransaction {
     invoiceRef?: string
     partyName?: string
     status?: 'Paid' | 'Unpaid' | 'Partial'
-    createdAt: Date
+    createdAt: Date | Timestamp
 }

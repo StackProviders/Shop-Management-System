@@ -1,19 +1,30 @@
-import { useState, useCallback, useMemo, ReactNode } from 'react'
+'use client'
+
+import { Button } from '@/components/ui/button'
 import { useAuth } from '@/features/auth'
-import { Button, buttonVariants } from '@/components/ui/button'
 import { LogOut } from 'lucide-react'
 import { VariantProps } from 'class-variance-authority'
-import { ConfirmationDialog } from '@/components/common'
-import { useRouter } from 'next/navigation'
-import { Spinner } from '@/components/ui/spinner'
+import { ReactNode, useState } from 'react'
+import { buttonVariants } from '@/components/ui/button'
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger
+} from '@/components/ui/alert-dialog'
 
 interface LogoutButtonProps {
     variant?: VariantProps<typeof buttonVariants>['variant']
     size?: VariantProps<typeof buttonVariants>['size']
     showIcon?: boolean
-    showConfirm?: boolean
     children?: ReactNode
     className?: string
+    showConfirm?: boolean
     alertOpen?: boolean
     onAlertClose?: (open: boolean) => void
 }
@@ -22,75 +33,59 @@ export function LogoutButton({
     variant = 'ghost',
     size = 'default',
     showIcon = true,
-    showConfirm = true,
     children,
     className,
+    showConfirm = false,
     alertOpen,
     onAlertClose
 }: LogoutButtonProps) {
-    const { signOut, loading } = useAuth()
-    const router = useRouter()
-    const [isLoggingOut, setIsLoggingOut] = useState(false)
+    const { signOut } = useAuth()
+    const [internalOpen, setInternalOpen] = useState(false)
 
-    const handleLogout = useCallback(async () => {
-        setIsLoggingOut(true)
-        try {
-            await signOut()
-            router.replace('/auth')
-        } catch (error) {
-            console.error('Logout failed:', error)
-            setIsLoggingOut(false)
-        }
-    }, [signOut, router])
+    const open = alertOpen !== undefined ? alertOpen : internalOpen
+    const onOpenChange = onAlertClose || setInternalOpen
 
-    const isDisabled = isLoggingOut || loading
-    const isIconSize = size === 'icon'
+    const handleLogout = () => {
+        signOut()
+        onOpenChange(false)
+    }
 
-    const buttonContent = useMemo(
-        () => (
-            <>
-                {isLoggingOut ? (
-                    <Spinner className="size-4" />
-                ) : (
-                    showIcon && <LogOut className="size-4" />
-                )}
-                {!isIconSize && <span>Logout</span>}
-            </>
-        ),
-        [isLoggingOut, showIcon, isIconSize]
-    )
-
-    if (!showConfirm) {
-        return children ? (
-            <div onClick={handleLogout}>{children}</div>
-        ) : (
-            <Button
-                variant={variant}
-                size={size}
-                onClick={handleLogout}
-                disabled={isDisabled}
-                aria-label="Logout"
-                className={className}
-            >
-                {buttonContent}
-            </Button>
+    if (showConfirm) {
+        return (
+            <AlertDialog open={open} onOpenChange={onOpenChange}>
+                <AlertDialogTrigger asChild>
+                    <Button variant={variant} size={size} className={className}>
+                        {showIcon && <LogOut className="mr-2 h-4 w-4" />}
+                        {children || 'Logout'}
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            You will be logged out of your account.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleLogout}>
+                            Log out
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         )
     }
 
     return (
-        <>
-            {children && (
-                <div onClick={() => onAlertClose?.(true)}>{children}</div>
-            )}
-            <ConfirmationDialog
-                open={alertOpen ?? false}
-                onOpenChange={(open) => onAlertClose?.(open)}
-                onConfirm={handleLogout}
-                title="Confirm Logout"
-                description="Are you sure you want to logout? You'll need to sign in again to access your account."
-                confirmText="Logout"
-                cancelText="Cancel"
-            />
-        </>
+        <Button
+            variant={variant}
+            size={size}
+            onClick={signOut}
+            className={className}
+        >
+            {showIcon && <LogOut className="mr-2 h-4 w-4" />}
+            {children || 'Logout'}
+        </Button>
     )
 }

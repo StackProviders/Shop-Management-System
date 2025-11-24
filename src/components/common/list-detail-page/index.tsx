@@ -1,3 +1,5 @@
+'use client'
+
 import { ReactNode, useMemo, useState, useCallback } from 'react'
 import { useRouter, useParams, usePathname } from 'next/navigation'
 import {

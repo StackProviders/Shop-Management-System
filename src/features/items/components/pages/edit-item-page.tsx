@@ -1,3 +1,5 @@
+'use client'
+
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import {
     ItemForm,

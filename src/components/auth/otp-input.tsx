@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useRef, useState } from 'react'
 import { Button, SubmitButton } from '@/components/ui/button'
 import {

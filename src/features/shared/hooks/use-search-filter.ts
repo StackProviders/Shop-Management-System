@@ -1,3 +1,5 @@
+'use client'
+
 import { useMemo, useState } from 'react'
 
 export function useSearchFilter<T extends Record<string, unknown>>(

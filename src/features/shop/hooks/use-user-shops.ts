@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useState } from 'react'
 import { shopMembersRepo, shopsRepo } from '@/lib/db'
 import type { UserShopAccess } from '../types'

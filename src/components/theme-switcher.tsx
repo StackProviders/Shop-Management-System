@@ -1,3 +1,5 @@
+'use client'
+
 import { cn } from '@/lib/utils'
 import { Monitor, Moon, Sun } from 'lucide-react'
 import { useDeferredValue } from 'react'

@@ -64,11 +64,7 @@ export function UserMenu() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                     <div className="w-full">
-                        <LogoutButton
-                            variant="ghost"
-                            size="sm"
-                            showConfirm={false}
-                        />
+                        <LogoutButton variant="default" size="sm" />
                     </div>
                 </DropdownMenuItem>
             </DropdownMenuContent>

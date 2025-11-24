@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect, useCallback } from 'react'
 import { shopStore, STORE_KEYS, storeHelpers } from '@/lib/store'
 import type { UserShopAccess } from '../types'

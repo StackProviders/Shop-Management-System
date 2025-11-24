@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect, ImgHTMLAttributes } from 'react'
 import { fetchAndCacheImage } from '@/lib/image-cache'
 import { cn } from '@/lib/utils'

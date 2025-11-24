@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useCallback, useRef, useMemo } from 'react'
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { useStorage } from 'reactfire'

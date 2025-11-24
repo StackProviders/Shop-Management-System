@@ -1,3 +1,5 @@
+'use client'
+
 import darkLogo from '@/assets/logo/dark-logo.svg'
 import lightLogo from '@/assets/logo/light-logo.svg'
 import { useTheme } from '@/components/providers/theme-provider'

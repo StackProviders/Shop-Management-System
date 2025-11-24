@@ -1,3 +1,5 @@
+'use client'
+
 import { useParams, useRouter } from 'next/navigation'
 import { useShopContext } from '@/features/shop'
 import { useItems, useCategory } from '@/features/items'

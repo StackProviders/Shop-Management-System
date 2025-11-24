@@ -1,3 +1,5 @@
+'use client'
+
 import { ReactNode, memo, useState } from 'react'
 import { ResponsiveModal } from './responsive-modal'
 import { Button } from '@/components/ui/button'

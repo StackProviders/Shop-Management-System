@@ -7,6 +7,10 @@ import {
 } from '@/components/ui/list-detail-layout'
 import { Button } from '@/components/ui/button'
 
+export function generateStaticParams() {
+    return [{ id: '1' }]
+}
+
 export default function UnitDetailPage() {
     return (
         <>

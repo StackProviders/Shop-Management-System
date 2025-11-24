@@ -1,3 +1,5 @@
+'use client'
+
 import { Controller, useFormContext } from 'react-hook-form'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'

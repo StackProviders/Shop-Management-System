@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useMemo } from 'react'
 import { RefreshCw, UserRound, Store, Plus } from 'lucide-react'
 import { EmptyState, LoadingState } from '@/components/common'

@@ -1,3 +1,5 @@
+'use client'
+
 import { useMemo, useState } from 'react'
 import { FormCombobox } from './form-fields'
 import { UnitForm } from '@/features/items/components/unit-form'
