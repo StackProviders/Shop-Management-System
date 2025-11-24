@@ -13,8 +13,7 @@ import { User, Settings } from 'lucide-react'
 import { LogoutButton } from './logout-button'
 
 export function UserMenu() {
-    const { authState } = useAuth()
-    const user = authState.user
+    const { user } = useAuth()
 
     if (!user) return null
 

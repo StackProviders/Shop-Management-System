@@ -14,7 +14,7 @@ export const saleSchema = z.object({
     partyId: z.string().optional(),
     partyName: z.string().optional(),
     items: z.array(saleItemSchema).min(1, 'At least one item is required'),
-    discount: z.number().min(0).default(0),
+    discount: z.number().min(0),
     paymentStatus: z.enum(['paid', 'unpaid', 'partial']),
     paymentMethod: z.enum(['cash', 'card', 'upi', 'other']).optional(),
     notes: z.string().optional()

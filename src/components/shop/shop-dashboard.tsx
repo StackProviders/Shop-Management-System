@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Heading4 } from '@/components/ui/typography'
 import { LogoutButton } from '../auth'
 import { toast } from 'sonner'
-import { useCurrentUser } from '@/features/auth'
+import { useAuth } from '@/features/auth'
 import { useShopActions, useShopContext } from '@/features/shop'
 import type { UserShopAccess } from '@/features/shop'
 import { useRouter } from 'next/navigation'
@@ -19,7 +19,7 @@ export default function ShopDashboard() {
     const [searchQuery, setSearchQuery] = useState('')
     const [createModalOpen, setCreateModalOpen] = useState(false)
     const [editingShopId, setEditingShopId] = useState<string | null>(null)
-    const user = useCurrentUser()
+    const { user } = useAuth()
     const { userShops, loading, refreshShops, setCurrentShop } =
         useShopContext()
     const { deleteShop } = useShopActions()

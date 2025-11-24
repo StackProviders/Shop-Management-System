@@ -29,13 +29,13 @@ export function NavUser() {
     const [isOpenDropdown, setIsOpenDropdown] = useState<boolean>(false)
     const [isOpenLogout, setIsOpenLogout] = useState<boolean>(false)
     const { isMobile } = useSidebar()
-    const { authState } = useAuth()
+    const { user } = useAuth()
     const router = useRouter()
 
-    const user = {
-        name: authState.user?.name || 'User',
-        email: authState.user?.email || authState.user?.phone || '',
-        avatar: authState.user?.photo || ''
+    const userData = {
+        name: user?.name || 'User',
+        email: user?.email || user?.phone || '',
+        avatar: user?.photo || ''
     }
 
     return (
@@ -53,19 +53,19 @@ export function NavUser() {
                             >
                                 <Avatar className="h-8 w-8 rounded-lg">
                                     <AvatarImage
-                                        src={user.avatar}
-                                        alt={user.name}
+                                        src={userData.avatar}
+                                        alt={userData.name}
                                     />
                                     <AvatarFallback className="rounded-lg">
-                                        {user.name.charAt(0).toUpperCase()}
+                                        {userData.name.charAt(0).toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="grid flex-1 text-left text-sm leading-tight">
                                     <span className="truncate font-medium">
-                                        {user.name}
+                                        {userData.name}
                                     </span>
                                     <span className="text-muted-foreground truncate text-xs">
-                                        {user.email}
+                                        {userData.email}
                                     </span>
                                 </div>
                                 <IconDotsVertical className="ml-auto size-4" />
@@ -81,19 +81,21 @@ export function NavUser() {
                                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                                     <Avatar className="h-8 w-8 rounded-lg">
                                         <AvatarImage
-                                            src={user.avatar}
-                                            alt={user.name}
+                                            src={userData.avatar}
+                                            alt={userData.name}
                                         />
                                         <AvatarFallback className="rounded-lg">
-                                            {user.name.charAt(0).toUpperCase()}
+                                            {userData.name
+                                                .charAt(0)
+                                                .toUpperCase()}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className="grid flex-1 text-left text-sm leading-tight">
                                         <span className="truncate font-medium">
-                                            {user.name}
+                                            {userData.name}
                                         </span>
                                         <span className="text-muted-foreground truncate text-xs">
-                                            {user.email}
+                                            {userData.email}
                                         </span>
                                     </div>
                                 </div>

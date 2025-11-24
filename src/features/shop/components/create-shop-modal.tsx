@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import { ResponsiveModal } from '@/components'
 import { CreateShopForm } from './create-shop-form'
 import { useShopActions } from '../hooks'
-import { useCurrentUser } from '@/features/auth'
+import { useAuth } from '@/features/auth'
 import type { ShopFormData } from '@/lib/validations'
 
 interface CreateShopModalProps {
@@ -23,7 +23,7 @@ export function CreateShopModal({
     const open = controlledOpen ?? internalOpen
     const setOpen = onOpenChange ?? setInternalOpen
     const { createShop } = useShopActions()
-    const user = useCurrentUser()
+    const { user } = useAuth()
 
     const handleSubmit = async (data: ShopFormData) => {
         if (!user?.uid) throw new Error('User not authenticated')

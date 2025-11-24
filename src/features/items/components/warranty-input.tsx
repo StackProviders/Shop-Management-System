@@ -25,11 +25,13 @@ interface WarrantyInputProps {
     customPeriods?: CustomWarrantyPeriod[]
 }
 
+import type { ItemFormData } from '../validations/item.validation'
+
 export function WarrantyInput({
     availablePeriods = [],
     customPeriods = []
 }: WarrantyInputProps) {
-    const { control } = useFormContext()
+    const { control } = useFormContext<ItemFormData>()
     const [open, setOpen] = useState(false)
 
     const allPeriods = [

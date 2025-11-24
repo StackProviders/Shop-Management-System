@@ -276,7 +276,7 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
                     }
                 } else {
                     // Add new item
-                    const uniqueSerials = [...new Set(serials)]
+                    const uniqueSerials = Array.from(new Set(serials))
                     addItemWithDetails({
                         itemId: item.id,
                         itemName: item.name,

@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { IconArrowLeft } from '@tabler/icons-react'

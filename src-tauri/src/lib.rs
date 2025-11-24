@@ -53,7 +53,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::utils::greet,
             commands::email::send_email,
-            commands::sms::send_sms
+            commands::sms::send_sms,
+            commands::auth::get_custom_token
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

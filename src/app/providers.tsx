@@ -12,10 +12,11 @@ import {
     SuspenseWithPerf,
     StorageProvider,
     FirebaseAppProvider,
-    FirestoreProvider
+    FirestoreProvider,
+    AuthProvider as ReactFireAuthProvider
 } from 'reactfire'
 import { Spinner } from '@/components/ui/spinner'
-import { firebaseConfig, db, storage } from '@/lib/firebase'
+import { firebaseConfig, db, storage, auth } from '@/lib/firebase'
 import { initializeDesktop } from '@/lib/desktop'
 import { getPlatform } from '@/utils/platform-detection'
 import { checkForAppUpdates } from '@/lib/updater'
@@ -68,38 +69,40 @@ export default function Providers({ children }: { children: ReactNode }) {
                             >
                                 <FirestoreProvider sdk={db}>
                                     <StorageProvider sdk={storage}>
-                                        <PlatformInit>
-                                            <SuspenseWithPerf
-                                                fallback={
-                                                    <Spinner
-                                                        fullScreen={true}
-                                                        className="size-7"
-                                                    />
-                                                }
-                                                traceId="auth-init"
-                                            >
-                                                <AuthProvider>
-                                                    <SuspenseWithPerf
-                                                        fallback={
-                                                            <Spinner
-                                                                fullScreen={
-                                                                    true
-                                                                }
-                                                                className="size-7"
-                                                            />
-                                                        }
-                                                        traceId="shop-init"
-                                                    >
-                                                        <ShopProvider>
-                                                            {children}
-                                                            <Toaster
-                                                                richColors
-                                                            />
-                                                        </ShopProvider>
-                                                    </SuspenseWithPerf>
-                                                </AuthProvider>
-                                            </SuspenseWithPerf>
-                                        </PlatformInit>
+                                        <ReactFireAuthProvider sdk={auth}>
+                                            <PlatformInit>
+                                                <SuspenseWithPerf
+                                                    fallback={
+                                                        <Spinner
+                                                            fullScreen={true}
+                                                            className="size-7"
+                                                        />
+                                                    }
+                                                    traceId="auth-init"
+                                                >
+                                                    <AuthProvider>
+                                                        <SuspenseWithPerf
+                                                            fallback={
+                                                                <Spinner
+                                                                    fullScreen={
+                                                                        true
+                                                                    }
+                                                                    className="size-7"
+                                                                />
+                                                            }
+                                                            traceId="shop-init"
+                                                        >
+                                                            <ShopProvider>
+                                                                {children}
+                                                                <Toaster
+                                                                    richColors
+                                                                />
+                                                            </ShopProvider>
+                                                        </SuspenseWithPerf>
+                                                    </AuthProvider>
+                                                </SuspenseWithPerf>
+                                            </PlatformInit>
+                                        </ReactFireAuthProvider>
                                     </StorageProvider>
                                 </FirestoreProvider>
                             </SuspenseWithPerf>

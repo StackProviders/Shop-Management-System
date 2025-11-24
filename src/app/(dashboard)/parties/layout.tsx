@@ -38,11 +38,13 @@ import {
 } from '@/components/ui/empty'
 
 interface PartiesLayoutProps {
-    children?: ReactNode
+    children: ReactNode
+    modal: ReactNode
 }
 
-const PartiesLayout = memo(function PartiesLayout({
-    children
+const PartiesLayoutContent = memo(function PartiesLayoutContent({
+    children,
+    modal
 }: PartiesLayoutProps) {
     const router = useRouter()
     const params = useParams()
@@ -222,13 +224,20 @@ const PartiesLayout = memo(function PartiesLayout({
 
                 <ListDetailContent isRouteActive={isRouteActive}>
                     {children}
+                    {modal}
                 </ListDetailContent>
             </ListDetailBody>
         </ListDetailRoot>
     )
 })
 
-export default function PartiesPage({ children }: { children?: ReactNode }) {
+export default function PartiesLayout({
+    children,
+    modal
+}: {
+    children: ReactNode
+    modal: ReactNode
+}) {
     return (
         <SuspenseWithPerf
             fallback={
@@ -267,9 +276,11 @@ export default function PartiesPage({ children }: { children?: ReactNode }) {
                     </div>
                 </div>
             }
-            traceId="parties-page"
+            traceId="parties-layout"
         >
-            <PartiesLayout>{children}</PartiesLayout>
+            <PartiesLayoutContent modal={modal}>
+                {children}
+            </PartiesLayoutContent>
         </SuspenseWithPerf>
     )
 }

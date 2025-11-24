@@ -1,189 +1,185 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useAuthStore } from '@/stores/auth-store'
-import { saveLastLoginType, getLastLoginType } from '@/features/auth/services'
+import { useState, useEffect } from 'react'
+import { useAuth as useFirebaseAuth } from 'reactfire'
+import {
+    GoogleAuthProvider,
+    signInWithPopup,
+    signInWithCustomToken
+} from 'firebase/auth'
+import { sendEmail, getCustomToken } from '@/lib/tauri'
+import { OTPInput } from './otp-input'
 import { Button, SubmitButton } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-    Field,
-    FieldGroup,
-    FieldLabel,
-    FieldSet,
-    FieldDescription
-} from '@/components/ui/field'
+import { Field, FieldGroup, FieldLabel, FieldSet } from '@/components/ui/field'
 import { Card, CardContent } from '@/components/ui/card'
-import { Mail, Phone, ArrowLeft } from 'lucide-react'
+import { Mail } from 'lucide-react'
 import Logo from '@/components/logo'
-import { PhoneInput } from '@/components/ui/phone-input'
-import { OTPInput } from '@/components/auth/otp-input'
-import { cn } from '@/lib/utils'
-import { useAuthActions } from '../hooks'
-import { LoginType } from '../types'
+import { useAuth } from './auth-provider'
+import { toast } from 'sonner'
 
 interface LoginFormProps {
     onSuccess?: () => void
 }
 
-type Step = 'input' | 'verify'
-
 export function LoginForm({ onSuccess }: LoginFormProps) {
-    const {
-        lastLoginType,
-        setLastLoginType,
-        isAuthenticated,
-        loading: authLoading
-    } = useAuthStore()
-    const [loginType, setLoginType] = useState<LoginType>(lastLoginType)
-    const [step, setStep] = useState<Step>('input')
-    const [identifier, setIdentifier] = useState('')
+    const { isAuthenticated } = useAuth()
+    const auth = useFirebaseAuth()
+    const [email, setEmail] = useState('')
     const [loading, setLoading] = useState(false)
-    const [fieldError, setFieldError] = useState('')
-    const [otpError, setOtpError] = useState('')
-    const { sendOTP, verifyOTP, checkDeviceAndLogin } = useAuthActions()
+    const [otpSent, setOtpSent] = useState(false)
+    const [generatedOtp, setGeneratedOtp] = useState('')
+
+    // Clear OTP state on mount
+    useEffect(() => {
+        setOtpSent(false)
+        setGeneratedOtp('')
+    }, [])
 
     useEffect(() => {
-        getLastLoginType().then((type: 'email' | 'phone') => {
-            setLoginType(type)
-            setLastLoginType(type)
-        })
-    }, [setLastLoginType])
-
-    useEffect(() => {
-        if (isAuthenticated && !authLoading) {
+        if (isAuthenticated) {
             onSuccess?.()
         }
-    }, [isAuthenticated, authLoading, onSuccess])
+    }, [isAuthenticated, onSuccess])
 
-    const toggleLoginType = useCallback(() => {
-        const newType: LoginType = loginType === 'email' ? 'phone' : 'email'
-        setLoginType(newType)
-        setLastLoginType(newType)
-        saveLastLoginType(newType)
-        setIdentifier('')
-        setFieldError('')
-    }, [loginType, setLastLoginType])
-
-    const handleSendOTP = useCallback(
-        async (e: React.FormEvent) => {
-            e.preventDefault()
-            setFieldError('')
-
-            if (!identifier.trim()) {
-                setFieldError(
-                    loginType === 'email'
-                        ? 'Email address is required'
-                        : 'Phone number is required'
-                )
-                return
-            }
-
-            setLoading(true)
-            try {
-                console.log({ identifier })
-                const user = await checkDeviceAndLogin(identifier)
-                console.log({ user })
-
-                if (user) {
-                    onSuccess?.()
-                    return
-                }
-
-                await sendOTP(identifier, loginType)
-                setStep('verify')
-            } catch (error) {
-                setFieldError(
-                    error instanceof Error
-                        ? error.message
-                        : 'Failed to send verification code'
-                )
-            } finally {
-                setLoading(false)
-            }
-        },
-        [identifier, loginType, checkDeviceAndLogin, sendOTP, onSuccess]
-    )
-
-    const handleVerifyOTP = useCallback(
-        async (otp: string) => {
-            setOtpError('')
-            setLoading(true)
-            try {
-                await verifyOTP(identifier, otp, true)
-                onSuccess?.()
-            } catch (error) {
-                setOtpError(
-                    error instanceof Error
-                        ? error.message
-                        : 'Invalid verification code'
-                )
-            } finally {
-                setLoading(false)
-            }
-        },
-        [identifier, verifyOTP, onSuccess]
-    )
-
-    const handleResendOTP = useCallback(async () => {
-        setOtpError('')
+    const handleGoogleLogin = async () => {
+        setLoading(true)
         try {
-            await sendOTP(identifier, loginType)
+            const provider = new GoogleAuthProvider()
+            await signInWithPopup(auth, provider)
+            toast.success('Signed in with Google')
         } catch (error) {
-            setOtpError(
-                error instanceof Error ? error.message : 'Failed to resend code'
-            )
+            console.error('Google sign in error', error)
+            toast.error('Failed to sign in with Google')
+        } finally {
+            setLoading(false)
         }
-    }, [identifier, loginType, sendOTP])
+    }
 
-    const handleBackToLogin = useCallback(() => {
-        setStep('input')
-        setOtpError('')
-        setFieldError('')
-    }, [])
+    const handleEmailLogin = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!email) return
 
-    const handleIdentifierChange = useCallback((value: string) => {
-        setIdentifier(value)
-        setFieldError('')
-    }, [])
+        setLoading(true)
+        try {
+            // Generate 6-digit OTP
+            const otp = Math.floor(100000 + Math.random() * 900000).toString()
+            setGeneratedOtp(otp)
 
-    const isSubmitDisabled = useMemo(
-        () => loading || !identifier.trim(),
-        [loading, identifier]
-    )
+            const apiKey = process.env.NEXT_PUBLIC_RESEND_API_KEY || ''
+            if (!apiKey) {
+                console.warn('NEXT_PUBLIC_RESEND_API_KEY is missing')
+                // Proceeding might fail if sendEmail checks it strictly, but let's try
+            }
 
-    if (step === 'verify') {
+            await sendEmail(
+                apiKey,
+                email,
+                'Your Login Code',
+                `<p>Your login code is: <strong>${otp}</strong></p>`
+            )
+
+            setOtpSent(true)
+            toast.success('OTP sent to your email')
+        } catch (error) {
+            console.error('Error sending OTP', error)
+            toast.error('Failed to send OTP')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleVerifyOtp = async (otp: string) => {
+        if (otp !== generatedOtp) {
+            toast.error('Invalid OTP')
+            return
+        }
+
+        setLoading(true)
+        try {
+            // Get custom token from backend (via Tauri)
+            // WARNING: Passing secrets from client to backend is not ideal for security,
+            // but requested as a workaround for backend .env loading issues.
+            // Ensure these vars are prefixed with NEXT_PUBLIC_ in .env to be visible here.
+            const serviceAccountEmail =
+                process.env.NEXT_PUBLIC_FIREBASE_SERVICE_ACCOUNT_EMAIL || ''
+            const privateKey =
+                process.env.NEXT_PUBLIC_FIREBASE_PRIVATE_KEY || ''
+
+            if (!serviceAccountEmail || !privateKey) {
+                throw new Error(
+                    'Missing Firebase credentials in client environment'
+                )
+            }
+
+            const customToken = await getCustomToken(
+                email,
+                serviceAccountEmail,
+                privateKey
+            )
+
+            // Sign in with custom token
+            await signInWithCustomToken(auth, customToken)
+            toast.success('Successfully signed in!')
+            onSuccess?.()
+        } catch (error) {
+            console.error('Error verifying OTP or signing in', error)
+            toast.error('Failed to verify OTP or sign in')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleResendOtp = async () => {
+        setLoading(true)
+        try {
+            const otp = Math.floor(100000 + Math.random() * 900000).toString()
+            setGeneratedOtp(otp)
+
+            const apiKey = process.env.NEXT_PUBLIC_RESEND_API_KEY || ''
+            await sendEmail(
+                apiKey,
+                email,
+                'Your Login Code',
+                `<p>Your login code is: <strong>${otp}</strong></p>`
+            )
+            toast.success('OTP resent')
+        } catch {
+            toast.error('Failed to resend OTP')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    if (otpSent) {
         return (
             <Card className="rounded-xl">
                 <CardContent>
-                    <div className="flex flex-col items-center space-y-5">
-                        <div className="space-y-3 w-full">
-                            <Logo size="md" showTagline />
-                            <div className="text-center space-y-1">
-                                <p className="text-muted-foreground text-sm">
-                                    We sent a code to
-                                </p>
-                                <p className="text-sm font-semibold">
-                                    {identifier}
-                                </p>
+                    <div className="flex flex-col items-center space-y-5 py-4">
+                        <Logo size="md" showTagline />
+                        <div className="flex flex-col items-center text-center space-y-2">
+                            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
+                                <Mail className="size-8 text-green-600 dark:text-green-400" />
                             </div>
+                            <h3 className="text-xl font-semibold">Enter OTP</h3>
+                            <p className="text-muted-foreground max-w-xs">
+                                We sent a code to{' '}
+                                <span className="font-medium text-foreground">
+                                    {email}
+                                </span>
+                            </p>
                         </div>
 
-                        <div className="w-full space-y-4">
-                            <OTPInput
-                                onComplete={handleVerifyOTP}
-                                onManualSubmit={handleVerifyOTP}
-                                onResend={handleResendOTP}
-                                error={otpError}
-                                disabled={loading}
-                            />
-                        </div>
+                        <OTPInput
+                            onComplete={handleVerifyOtp}
+                            onResend={handleResendOtp}
+                            disabled={loading}
+                        />
 
                         <Button
-                            type="button"
                             variant="ghost"
-                            className="w-full rounded-xl"
-                            onClick={handleBackToLogin}
+                            className="w-full"
+                            onClick={() => setOtpSent(false)}
                             disabled={loading}
                         >
-                            <ArrowLeft className="size-4" />
                             Back to Login
                         </Button>
                     </div>
@@ -195,88 +191,83 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     return (
         <Card className="rounded-xl">
             <CardContent>
-                <form
-                    onSubmit={handleSendOTP}
-                    className="flex flex-col items-center space-y-5"
-                >
+                <div className="flex flex-col items-center space-y-6 py-2">
                     <Logo size="md" showTagline />
 
-                    <FieldSet className="w-full">
-                        <FieldGroup>
-                            <Field>
-                                <FieldLabel htmlFor="identifier">
-                                    {loginType === 'email'
-                                        ? 'Email Address'
-                                        : 'Phone Number'}
-                                </FieldLabel>
-                                {loginType === 'email' ? (
-                                    <Input
-                                        id="identifier"
-                                        type="email"
-                                        placeholder="you@example.com"
-                                        className={cn(
-                                            'rounded-xl',
-                                            fieldError &&
-                                                'border-destructive focus-visible:ring-destructive'
-                                        )}
-                                        value={identifier}
-                                        onChange={(e) =>
-                                            handleIdentifierChange(
-                                                e.target.value
-                                            )
-                                        }
-                                        required
-                                    />
-                                ) : (
-                                    <PhoneInput
-                                        id="identifier"
-                                        placeholder="Enter phone number"
-                                        value={identifier}
-                                        onChange={handleIdentifierChange}
-                                    />
-                                )}
-                                <FieldDescription
-                                    className={
-                                        fieldError ? 'text-destructive' : ''
-                                    }
-                                >
-                                    {fieldError ||
-                                        "We'll send you a secure verification code"}
-                                </FieldDescription>
-                            </Field>
-                        </FieldGroup>
-                    </FieldSet>
-
-                    <div className="w-full space-y-2">
-                        <SubmitButton
-                            type="submit"
-                            className="w-full rounded-xl"
-                            size="lg"
-                            disabled={isSubmitDisabled}
-                            loading={loading}
-                        >
-                            {loginType === 'email' ? (
-                                <Mail className="size-4" />
-                            ) : (
-                                <Phone className="size-4" />
-                            )}
-                            Continue
-                        </SubmitButton>
+                    <div className="w-full space-y-3">
                         <Button
-                            type="button"
-                            variant="ghost"
-                            className="w-full text-sm text-muted-foreground hover:text-foreground"
-                            onClick={toggleLoginType}
+                            variant="outline"
+                            className="w-full h-11 rounded-xl relative"
+                            onClick={handleGoogleLogin}
                             disabled={loading}
                         >
-                            Use{' '}
-                            {loginType === 'email' ? 'phone number' : 'email'}{' '}
-                            instead
+                            <svg
+                                className="mr-2 h-4 w-4"
+                                aria-hidden="true"
+                                focusable="false"
+                                data-prefix="fab"
+                                data-icon="google"
+                                role="img"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 488 512"
+                            >
+                                <path
+                                    fill="currentColor"
+                                    d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
+                                ></path>
+                            </svg>
+                            Sign in with Google
                         </Button>
+
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t" />
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-background px-2 text-muted-foreground">
+                                    Or continue with email
+                                </span>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleEmailLogin} className="space-y-4">
+                            <FieldSet className="w-full">
+                                <FieldGroup>
+                                    <Field>
+                                        <FieldLabel htmlFor="email">
+                                            Email Address
+                                        </FieldLabel>
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            placeholder="you@example.com"
+                                            className="rounded-xl"
+                                            value={email}
+                                            onChange={(e) =>
+                                                setEmail(e.target.value)
+                                            }
+                                            required
+                                            disabled={loading}
+                                        />
+                                    </Field>
+                                </FieldGroup>
+                            </FieldSet>
+
+                            <SubmitButton
+                                type="submit"
+                                className="w-full rounded-xl"
+                                size="lg"
+                                disabled={loading || !email}
+                                loading={loading}
+                            >
+                                <Mail className="size-4 mr-2" />
+                                Send Code
+                            </SubmitButton>
+                        </form>
                     </div>
 
                     <p className="text-center text-xs text-muted-foreground px-2">
-                        By continuing, you agree to Stack Provider{' '}
+                        By continuing, you agree to Shop Management{' '}
                         <a
                             href="#"
                             className="underline hover:text-foreground transition-colors"
@@ -291,7 +282,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                             Privacy Policy
                         </a>
                     </p>
-                </form>
+                </div>
             </CardContent>
         </Card>
     )

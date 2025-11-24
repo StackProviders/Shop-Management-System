@@ -1,11 +1,11 @@
 import { ReactNode, useCallback } from 'react'
 import { ShopContext } from '../hooks/use-shop-context'
 import { useUserShops, useCurrentShop, useShopActions } from '../hooks'
-import { useCurrentUser } from '@/features/auth'
+import { useAuth } from '@/features/auth'
 import type { Shop } from '../types'
 
 export function ShopProvider({ children }: { children: ReactNode }) {
-    const user = useCurrentUser()
+    const { user } = useAuth()
     const { userShops, loading, error, refreshShops } = useUserShops(user?.uid)
     const { currentShop, setCurrentShop } = useCurrentShop(userShops)
     const { createShop: createShopAction } = useShopActions()

@@ -1,27 +1,53 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Field, FieldGroup, FieldLabel, FieldSet } from '@/components/ui/field'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2 } from 'lucide-react'
-import { useAuthActions, useCurrentUser } from '../hooks'
+import { useAuth } from './auth-provider'
+import { useFirestore, useStorage } from 'reactfire'
+import { doc, updateDoc } from 'firebase/firestore'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { updateProfile as updateFirebaseProfile } from 'firebase/auth'
+import { useAuth as useFirebaseAuth } from 'reactfire'
 
 export function ProfileForm() {
-    const user = useCurrentUser()
-    const { updateProfile, uploadPhoto } = useAuthActions()
-    const [name, setName] = useState(user?.name || '')
+    const { user } = useAuth()
+    const firestore = useFirestore()
+    const storage = useStorage()
+    const auth = useFirebaseAuth()
+
+    const [name, setName] = useState('')
     const [success, setSuccess] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
 
+    useEffect(() => {
+        if (user?.name) {
+            setName(user.name)
+        }
+    }, [user])
+
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault()
+        if (!user) return
+
         setLoading(true)
         setError('')
         setSuccess('')
         try {
-            await updateProfile(name)
+            // Update Firestore
+            const userRef = doc(firestore, 'users', user.uid)
+            await updateDoc(userRef, { name })
+
+            // Update Firebase Auth Profile (optional but good for consistency)
+            if (auth.currentUser) {
+                await updateFirebaseProfile(auth.currentUser, {
+                    displayName: name
+                })
+            }
+
             setSuccess('Profile updated!')
         } catch (err) {
             setError(
@@ -36,12 +62,25 @@ export function ProfileForm() {
         e: React.ChangeEvent<HTMLInputElement>
     ) => {
         const file = e.target.files?.[0]
-        if (!file) return
+        if (!file || !user) return
+
         setLoading(true)
         setError('')
         setSuccess('')
         try {
-            await uploadPhoto(file)
+            const storageRef = ref(storage, `users/${user.uid}/photo.jpg`)
+            await uploadBytes(storageRef, file)
+            const photoURL = await getDownloadURL(storageRef)
+
+            // Update Firestore
+            const userRef = doc(firestore, 'users', user.uid)
+            await updateDoc(userRef, { photo: photoURL })
+
+            // Update Firebase Auth Profile
+            if (auth.currentUser) {
+                await updateFirebaseProfile(auth.currentUser, { photoURL })
+            }
+
             setSuccess('Photo uploaded!')
         } catch (err) {
             setError(
@@ -51,6 +90,8 @@ export function ProfileForm() {
             setLoading(false)
         }
     }
+
+    if (!user) return null
 
     return (
         <Card className="max-w-2xl mx-auto">

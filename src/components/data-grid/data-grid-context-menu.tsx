@@ -179,7 +179,7 @@ function ContextMenuImpl<TData>({
 
         const updates: Array<UpdateCell> = []
 
-        for (const cellKey of selectionState.selectedCells) {
+        for (const cellKey of Array.from(selectionState.selectedCells)) {
             const { rowIndex, columnId } = parseCellKey(cellKey)
             updates.push({ rowIndex, columnId, value: '' })
         }
@@ -199,7 +199,7 @@ function ContextMenuImpl<TData>({
             return
 
         const rowIndices = new Set<number>()
-        for (const cellKey of selectionState.selectedCells) {
+        for (const cellKey of Array.from(selectionState.selectedCells)) {
             const { rowIndex } = parseCellKey(cellKey)
             rowIndices.add(rowIndex)
         }

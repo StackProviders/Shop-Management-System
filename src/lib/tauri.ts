@@ -38,3 +38,24 @@ export const sendEmail = async (
 
     await invoke('send_email', { apiKey, toEmail, subject, html })
 }
+
+export const getCustomToken = async (
+    email: string,
+    serviceAccountEmail: string,
+    privateKey: string
+): Promise<string> => {
+    if (!email || !serviceAccountEmail || !privateKey) {
+        throw new Error('Email and credentials must be provided')
+    }
+
+    if (!isTauri) {
+        console.log('Mocking Custom Token fetch:', { email })
+        return 'mock-custom-token-' + Date.now()
+    }
+
+    return await invoke('get_custom_token', {
+        email,
+        serviceAccountEmail,
+        privateKey
+    })
+}

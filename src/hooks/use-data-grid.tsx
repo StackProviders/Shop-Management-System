@@ -187,7 +187,7 @@ function useDataGrid<TData>({
                 }
             },
             notify: () => {
-                for (const listener of listenersRef.current) {
+                for (const listener of Array.from(listenersRef.current)) {
                     listener()
                 }
             },

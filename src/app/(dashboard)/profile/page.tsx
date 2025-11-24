@@ -4,10 +4,10 @@ import { ProfileForm, useAuth } from '@/features/auth/components'
 import { Button } from '@/components/ui/button'
 
 export default function ProfilePage() {
-    const { logout } = useAuth()
+    const { signOut } = useAuth()
 
     const handleLogout = async () => {
-        await logout()
+        await signOut()
         window.location.href = '/'
     }
 

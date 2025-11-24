@@ -1,6 +1,6 @@
 import { ReactNode, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuthStore } from '@/stores/auth-store'
+import { useAuth } from '@/features/auth'
 import { Spinner } from '../ui/spinner'
 
 interface AuthGuardProps {
@@ -14,7 +14,7 @@ export function AuthGuard({
     requireAuth = true,
     redirectTo
 }: AuthGuardProps) {
-    const { isAuthenticated, loading } = useAuthStore()
+    const { isAuthenticated, loading } = useAuth()
     const router = useRouter()
 
     useEffect(() => {

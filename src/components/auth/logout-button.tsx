@@ -28,22 +28,22 @@ export function LogoutButton({
     alertOpen,
     onAlertClose
 }: LogoutButtonProps) {
-    const { logout, authState } = useAuth()
+    const { signOut, loading } = useAuth()
     const router = useRouter()
     const [isLoggingOut, setIsLoggingOut] = useState(false)
 
     const handleLogout = useCallback(async () => {
         setIsLoggingOut(true)
         try {
-            await logout()
+            await signOut()
             router.replace('/auth')
         } catch (error) {
             console.error('Logout failed:', error)
             setIsLoggingOut(false)
         }
-    }, [logout, navigate])
+    }, [signOut, router])
 
-    const isDisabled = isLoggingOut || authState.loading
+    const isDisabled = isLoggingOut || loading
     const isIconSize = size === 'icon'
 
     const buttonContent = useMemo(

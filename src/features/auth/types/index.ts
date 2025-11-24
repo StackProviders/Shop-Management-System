@@ -1,9 +1,17 @@
 export interface User {
     uid: string
-    email?: string
-    phone?: string
+    email?: string | null
+    phone?: string | null
     name?: string | null
     photo?: string | null
+    providers?: Array<{
+        providerId: string
+        uid: string
+        displayName: string | null
+        email: string | null
+        phoneNumber: string | null
+        photoURL: string | null
+    }>
     createdAt: Date
     lastLoginAt: Date
 }
