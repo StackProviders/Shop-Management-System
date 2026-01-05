@@ -111,10 +111,10 @@ export function ItemAutocomplete({
                 createPortal(
                     <div
                         ref={panelRef}
-                        className="fixed bg-background border border-border rounded-md shadow-lg z-[9999] w-[min(calc(100vw-2rem),700px)]"
+                        className="fixed bg-background border border-border rounded-md shadow-lg z-[9999] w-[min(calc(100vw-2rem),500px)]"
                         style={{
                             top: `${position.top}px`,
-                            left: `${Math.max(8, Math.min(position.left, window.innerWidth - 716))}px`
+                            left: `${Math.max(8, Math.min(position.left, window.innerWidth - 516))}px`
                         }}
                     >
                         <div className="flex items-center gap-4 px-4 py-2.5 bg-muted/20 border-b text-xs font-medium text-muted-foreground uppercase">

@@ -25,6 +25,7 @@ import { Label } from '@/components/ui/label'
 import { useSaleItemsStore } from '../stores/sale-items-store'
 import type { Item } from '@/features/items'
 import type { SaleItemRow } from '../types'
+import type { SaleFormData } from '../validations'
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { useShopContext } from '@/features/shop'
 import { FormProvider, useFormContext } from 'react-hook-form'
@@ -43,7 +44,8 @@ import {
     PointerSensor,
     useSensor,
     useSensors,
-    type DragEndEvent
+    type DragEndEvent,
+    useDraggable
 } from '@dnd-kit/core'
 import {
     SortableContext,
@@ -51,6 +53,12 @@ import {
     useSortable
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+
+import {
+    restrictToVerticalAxis,
+    restrictToParentElement
+} from '@dnd-kit/modifiers'
+import { cn } from '@/lib/utils'
 
 interface SaleItemsTableProps {
     items: Item[]
@@ -61,7 +69,11 @@ interface ItemCellProps {
     items: Item[]
     onItemSelect: (rowIndex: number, itemId: string, items: Item[]) => void
     onSerialModalOpen: (rowIndex: number, itemId: string) => void
-    onUpdateItem: (index: number, field: keyof SaleItemRow, value: any) => void
+    onUpdateItem: (
+        index: number,
+        field: keyof SaleItemRow,
+        value: SaleItemRow[keyof SaleItemRow]
+    ) => void
     selectedItemIds?: Set<string>
 }
 
@@ -125,8 +137,8 @@ ItemCellComponent.displayName = 'ItemCellComponent'
 // Context to pass drag handle ref and props
 export const DragHandleContext = React.createContext<{
     setActivatorNodeRef: (element: HTMLElement | null) => void
-    attributes: any
-    listeners: any
+    attributes: ReturnType<typeof useDraggable>['attributes']
+    listeners: ReturnType<typeof useDraggable>['listeners']
 } | null>(null)
 
 interface DraggableRowProps {
@@ -148,7 +160,7 @@ function DraggableRow({ id, children }: DraggableRowProps) {
     })
 
     const style = {
-        transform: CSS.Transform.toString(transform),
+        transform: CSS.Translate.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
         position: 'relative' as const,
@@ -190,7 +202,7 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
     } = useSaleItemsStore()
     const { currentShop } = useShopContext()
     const shopId = currentShop?.shopId || ''
-    const form = useFormContext() // Changed to useFormContext to access the form
+    const form = useFormContext<SaleFormData>() // Changed to useFormContext to access the form
     const { handleItemSelect } = useItemSelection(shopId)
     const [serialModalState, setSerialModalState] = useState<{
         open: boolean
@@ -329,10 +341,7 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
                 onItemSelect={handleItemSelect}
                 onSerialModalOpen={handleSerialModalOpen}
                 onUpdateItem={updateItem}
-                selectedItemIds={
-                    (table.options.meta as { selectedItemIds: Set<string> })
-                        ?.selectedItemIds
-                }
+                selectedItemIds={table.options.meta?.selectedItemIds}
             />
         ),
         [items, handleItemSelect, handleSerialModalOpen, updateItem]
@@ -362,7 +371,7 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
         getCoreRowModel: getCoreRowModel(),
         meta: {
             selectedItemIds
-        } as any
+        } as { selectedItemIds: Set<string> }
     })
 
     return (
@@ -373,6 +382,10 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
                         sensors={sensors}
                         collisionDetection={closestCenter}
                         onDragEnd={handleDragEnd}
+                        modifiers={[
+                            restrictToVerticalAxis,
+                            restrictToParentElement
+                        ]}
                     >
                         <Table className="border-separate border-spacing-0 [&_td]:border-border [&_tfoot_td]:border-t [&_th]:border-b [&_th]:border-border [&_tr]:border-none [&_tr:not(:last-child)_td]:border-b">
                             <TableHeader className="sticky top-0 z-10 bg-background/90 backdrop-blur-xs">
@@ -385,9 +398,17 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
                                             <TableHead
                                                 key={header.id}
                                                 style={{
-                                                    width: header.getSize()
+                                                    width:
+                                                        header.column.id ===
+                                                        'total'
+                                                            ? 'auto'
+                                                            : header.getSize()
                                                 }}
-                                                className="font-semibold text-xs uppercase"
+                                                className={cn(
+                                                    'font-semibold text-xs uppercase',
+                                                    header.column.id ===
+                                                        'total' && 'w-full'
+                                                )}
                                             >
                                                 {flexRender(
                                                     header.column.columnDef

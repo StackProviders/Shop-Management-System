@@ -1,4 +1,4 @@
-import { type ColumnDef, type Row } from '@tanstack/react-table'
+import { type ColumnDef, type Row, type Table } from '@tanstack/react-table'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Trash2, GripVertical, ScanBarcode } from 'lucide-react'
@@ -34,7 +34,10 @@ function DragHandle() {
 
 export function useSaleTableColumns(
     shopId: string,
-    ItemCell: React.ComponentType<{ row: Row<SaleItemRow>; table: any }>,
+    ItemCell: React.ComponentType<{
+        row: Row<SaleItemRow>
+        table: Table<SaleItemRow>
+    }>,
     visibility: ColumnVisibility,
     settings: ItemSettings,
     onScanClick: () => void
@@ -230,8 +233,7 @@ export function useSaleTableColumns(
                     <div className="font-medium">
                         {formatCurrency(row.original.total)}
                     </div>
-                ),
-                size: 100
+                )
             }
         ]
         return cols

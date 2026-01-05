@@ -47,11 +47,15 @@ export function UnitCombobox<T extends FieldValues>({
     const unitOptions = useMemo(() => {
         const defaultUnits = UNITS.map((unit) => ({
             value: unit.id,
-            label: `${unit.fullName} (${unit.shortName})`
+            label: unit.shortName
+                ? `${unit.fullName} (${unit.shortName})`
+                : unit.fullName
         }))
         const shopUnits = customUnits.map((unit) => ({
             value: unit.id,
-            label: `${unit.fullName} (${unit.shortName})`
+            label: unit.shortName
+                ? `${unit.fullName} (${unit.shortName})`
+                : unit.fullName
         }))
         return [...defaultUnits, ...shopUnits]
     }, [customUnits])
@@ -95,11 +99,15 @@ export function StandaloneUnitCombobox({
     const unitOptions = useMemo(() => {
         const defaultUnits = UNITS.map((unit) => ({
             value: unit.id,
-            label: `${unit.fullName} (${unit.shortName})`
+            label: unit.shortName
+                ? `${unit.fullName} (${unit.shortName})`
+                : unit.fullName
         }))
         const shopUnits = customUnits.map((unit) => ({
             value: unit.id,
-            label: `${unit.fullName} (${unit.shortName})`
+            label: unit.shortName
+                ? `${unit.fullName} (${unit.shortName})`
+                : unit.fullName
         }))
         return [...defaultUnits, ...shopUnits]
     }, [customUnits])

@@ -49,10 +49,10 @@ export function SaleForm({ items, onSubmit }: SaleFormProps) {
     )
 
     const form = useForm<SaleFormData>({
-        resolver: zodResolver(saleSchema) as any,
+        resolver: zodResolver(saleSchema),
         defaultValues: {
             invoiceNumber: defaultInvoiceNumber,
-            items: [] as any,
+            items: [],
             discount: 0,
             paymentStatus: 'unpaid',
             notes: '',
