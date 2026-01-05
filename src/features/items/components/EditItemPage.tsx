@@ -29,7 +29,7 @@ interface ExtendedItem extends Item {
     [key: string]: unknown
 }
 
-export default function EditItemPage() {
+export function EditItemPage() {
     const navigate = useNavigate()
     const { id } = useParams({ from: '/_protected/_dashboard/items/$id/edit' })
     const search = useSearch({ from: '/_protected/_dashboard/items/$id/edit' })

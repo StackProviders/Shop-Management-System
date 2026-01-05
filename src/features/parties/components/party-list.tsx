@@ -80,11 +80,11 @@ export function PartyList({
                                     <Badge
                                         variant={
                                             party.type === 'customer'
-                                                ? 'primary'
+                                                ? 'default'
                                                 : 'secondary'
                                         }
                                         className="shrink-0 capitalize"
-                                        size="xs"
+                                        size="sm"
                                     >
                                         {party.type}
                                     </Badge>

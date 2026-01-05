@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import PartyDetailPage from '@/app/pages/parties/detail'
+import { PartyDetailPage } from '@/features/parties/components/PartyDetailPage'
 import { z } from 'zod'
 
 const searchSchema = z.object({

@@ -24,8 +24,9 @@ import { MoreVertical, Calendar } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { cn, formatCurrency } from '@/lib/utils'
 import { format } from 'date-fns'
+import { Timestamp } from 'firestore-repository/document'
 
-export default function ProductDetailPage() {
+export function ProductDetailPage() {
     const { id } = useParams({
         from: '/_protected/_dashboard/items/products/$id'
     })
@@ -192,7 +193,7 @@ export default function ProductDetailPage() {
                                                               ? transaction.createdAt
                                                               : new Date(
                                                                     (
-                                                                        transaction.createdAt as any
+                                                                        transaction.createdAt as Timestamp
                                                                     ).seconds *
                                                                         1000
                                                                 ),

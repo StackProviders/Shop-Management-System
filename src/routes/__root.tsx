@@ -3,7 +3,7 @@ import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
 import { Suspense } from 'react'
 import { Spinner } from '@/components/ui/spinner'
-import NotFoundErrorPage from '@/app/pages/not-found'
+import NotFoundErrorPage from '@/components/common/NotFoundPage'
 
 function RootComponent() {
     return (

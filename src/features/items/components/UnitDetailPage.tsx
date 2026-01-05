@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/list-detail-layout'
 import { Button } from '@/components/ui/button'
 
-export default function UnitDetailPage() {
+export function UnitDetailPage() {
     return (
         <>
             <ListDetailContentHeader>

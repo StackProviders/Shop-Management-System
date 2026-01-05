@@ -2,7 +2,8 @@ import {
     useReactTable,
     getCoreRowModel,
     flexRender,
-    type Row
+    type Row,
+    type Table as ReactTable
 } from '@tanstack/react-table'
 import {
     Table,
@@ -315,14 +316,23 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
     )
 
     const ItemCell = useCallback(
-        ({ row, table }: { row: Row<SaleItemRow>; table: any }) => (
+        ({
+            row,
+            table
+        }: {
+            row: Row<SaleItemRow>
+            table: ReactTable<SaleItemRow>
+        }) => (
             <ItemCellComponent
                 row={row}
                 items={items}
                 onItemSelect={handleItemSelect}
                 onSerialModalOpen={handleSerialModalOpen}
                 onUpdateItem={updateItem}
-                selectedItemIds={(table.options.meta as any)?.selectedItemIds}
+                selectedItemIds={
+                    (table.options.meta as { selectedItemIds: Set<string> })
+                        ?.selectedItemIds
+                }
             />
         ),
         [items, handleItemSelect, handleSerialModalOpen, updateItem]

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import ProductDetailPage from '@/app/pages/items/products/detail'
+import { ProductDetailPage } from '@/features/items/components/ProductDetailPage'
 
 export const Route = createFileRoute(
     '/_protected/_dashboard/items/products/$id'

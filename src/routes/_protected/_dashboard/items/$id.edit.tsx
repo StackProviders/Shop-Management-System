@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import EditItemPage from '@/app/pages/items/edit'
+import { EditItemPage } from '@/features/items/components/EditItemPage'
 import { z } from 'zod'
 
 const searchSchema = z.object({

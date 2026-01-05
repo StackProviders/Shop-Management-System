@@ -57,6 +57,3 @@ export default function NotFoundErrorPage() {
         </ErrorView>
     )
 }
-
-// Necessary for react router to lazy load.
-export const Component = NotFoundErrorPage

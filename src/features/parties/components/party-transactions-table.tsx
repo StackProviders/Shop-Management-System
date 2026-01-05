@@ -95,7 +95,7 @@ export function PartyTransactionsTable({
                     return (
                         <Badge
                             variant={
-                                type === 'customer' ? 'primary' : 'secondary'
+                                type === 'customer' ? 'default' : 'secondary'
                             }
                         >
                             {type}
@@ -194,7 +194,7 @@ export function PartyTransactionsTable({
                     return (
                         <Badge
                             variant={
-                                status === 'active' ? 'primary' : 'secondary'
+                                status === 'active' ? 'default' : 'secondary'
                             }
                         >
                             {status}
@@ -304,7 +304,7 @@ export function PartyTransactionsTable({
                                                     variant={
                                                         party.type ===
                                                         'customer'
-                                                            ? 'primary'
+                                                            ? 'default'
                                                             : 'secondary'
                                                     }
                                                     className="text-xs"
@@ -315,7 +315,7 @@ export function PartyTransactionsTable({
                                                     variant={
                                                         party.status ===
                                                         'active'
-                                                            ? 'primary'
+                                                            ? 'default'
                                                             : 'secondary'
                                                     }
                                                     className="text-xs"

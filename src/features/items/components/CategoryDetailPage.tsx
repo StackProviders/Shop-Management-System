@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useMemo } from 'react'
 import { formatCurrency } from '@/lib/utils'
 
-export default function CategoryDetailPage() {
+export function CategoryDetailPage() {
     const { id } = useParams({
         from: '/_protected/_dashboard/items/category/$id'
     })

@@ -17,7 +17,9 @@ export const saleSchema = z.object({
     discount: z.number().min(0).default(0),
     paymentStatus: z.enum(['paid', 'unpaid', 'partial']),
     paymentMethod: z.enum(['cash', 'card', 'upi', 'other']).optional(),
-    notes: z.string().optional()
+    notes: z.string().optional(),
+    customerPhone: z.string().optional(),
+    billingAddress: z.string().optional()
 })
 
 export type SaleFormData = z.infer<typeof saleSchema>

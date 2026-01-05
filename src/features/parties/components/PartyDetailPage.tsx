@@ -15,7 +15,7 @@ import {
 } from '@/features/parties'
 import { Skeleton } from '@/components/ui/skeleton'
 import { X, Check } from 'lucide-react'
-import NotFoundErrorPage from '@/app/pages/not-found'
+import NotFoundErrorPage from '@/components/common/NotFoundPage'
 import { FormModal } from '@/components'
 import { useCallback } from 'react'
 import { DetailActionsMenu } from '@/components/common'
@@ -30,7 +30,7 @@ interface PartyFormData {
     status: 'active' | 'inactive'
 }
 
-export default function PartyDetailPage() {
+export function PartyDetailPage() {
     const { id } = useParams({ strict: false })
     const navigate = useNavigate()
     const router = useRouter()
