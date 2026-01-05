@@ -24,6 +24,8 @@ export interface Sale {
     invoiceNumber: string
     partyId?: string
     partyName?: string
+    customerPhone?: string
+    billingAddress?: string
     items: SaleItem[]
     subtotal: number
     discount: number
@@ -37,8 +39,11 @@ export interface Sale {
 }
 
 export interface CreateSaleData {
+    invoiceNumber: string
     partyId?: string
     partyName?: string
+    customerPhone?: string
+    billingAddress?: string
     items: SaleItem[]
     discount?: number
     paymentStatus: 'paid' | 'unpaid' | 'partial'

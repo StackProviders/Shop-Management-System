@@ -141,19 +141,12 @@ export function CustomerAutocomplete({
                                             <span
                                                 className={
                                                     customer.balance > 0
-                                                        ? 'text-emerald-600'
+                                                        ? 'text-success'
                                                         : 'text-muted-foreground'
                                                 }
                                             >
                                                 {formatCurrency(
                                                     Math.abs(customer.balance)
-                                                )}
-                                                {customer.balance !== 0 && (
-                                                    <span className="text-[10px] ml-1 px-1 rounded bg-muted">
-                                                        {customer.balance > 0
-                                                            ? 'Cr'
-                                                            : 'Dr'}
-                                                    </span>
                                                 )}
                                             </span>
                                         </div>

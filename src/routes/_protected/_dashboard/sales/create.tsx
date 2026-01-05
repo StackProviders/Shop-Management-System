@@ -28,7 +28,7 @@ function CreateSaleRouteComponent() {
     }
 
     return (
-        <div className="h-full overflow-auto">
+        <div className="h-full">
             <SaleForm items={items} onSubmit={handleCreateSale} />
         </div>
     )

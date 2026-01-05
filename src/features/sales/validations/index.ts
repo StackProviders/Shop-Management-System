@@ -11,6 +11,10 @@ export const saleItemSchema = z.object({
 })
 
 export const saleSchema = z.object({
+    invoiceNumber: z
+        .string()
+        .min(6, 'Invoice number must be at least 6 characters')
+        .max(20, 'Invoice number must be at most 20 characters'),
     partyId: z.string().optional(),
     partyName: z.string().optional(),
     items: z.array(saleItemSchema).min(1, 'At least one item is required'),

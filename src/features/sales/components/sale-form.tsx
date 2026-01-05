@@ -39,13 +39,19 @@ export function SaleForm({ items, onSubmit }: SaleFormProps) {
     const shopId = currentShop?.shopId || ''
     const { parties } = usePartiesByShop(shopId)
     const saleItems = useSaleItemsStore((state) => state.items)
-    // const [customerOpen, setCustomerOpen] = useState(false) // Removed
     const [date, setDate] = useState<Date>(new Date())
     const [showDescription, setShowDescription] = useState(false)
+
+    // Generate a default invoice number (simple timestamp based for now)
+    const defaultInvoiceNumber = useMemo(
+        () => `INV-${Math.floor(100000 + Math.random() * 900000)}`,
+        []
+    )
 
     const form = useForm<SaleFormData>({
         resolver: zodResolver(saleSchema) as any,
         defaultValues: {
+            invoiceNumber: defaultInvoiceNumber,
             items: [] as any,
             discount: 0,
             paymentStatus: 'unpaid',
