@@ -46,39 +46,13 @@ export function NavUser() {
                         open={isOpenDropdown}
                         onOpenChange={(open) => setIsOpenDropdown(open)}
                     >
-                        <DropdownMenuTrigger asChild>
+                        <DropdownMenuTrigger>
                             <SidebarMenuButton
                                 size="lg"
                                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                                asChild
                             >
-                                <Avatar className="h-8 w-8 rounded-lg">
-                                    <AvatarImage
-                                        src={user.avatar}
-                                        alt={user.name}
-                                    />
-                                    <AvatarFallback className="rounded-lg">
-                                        {user.name.charAt(0).toUpperCase()}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div className="grid flex-1 text-left text-sm leading-tight">
-                                    <span className="truncate font-medium">
-                                        {user.name}
-                                    </span>
-                                    <span className="text-muted-foreground truncate text-xs">
-                                        {user.email}
-                                    </span>
-                                </div>
-                                <IconDotsVertical className="ml-auto size-4" />
-                            </SidebarMenuButton>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                            side={isMobile ? 'bottom' : 'right'}
-                            align="end"
-                            sideOffset={4}
-                        >
-                            <DropdownMenuLabel className="p-0 font-normal">
-                                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                                <span>
                                     <Avatar className="h-8 w-8 rounded-lg">
                                         <AvatarImage
                                             src={user.avatar}
@@ -96,8 +70,41 @@ export function NavUser() {
                                             {user.email}
                                         </span>
                                     </div>
-                                </div>
-                            </DropdownMenuLabel>
+                                    <IconDotsVertical className="ml-auto size-4" />
+                                </span>
+                            </SidebarMenuButton>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                            side={isMobile ? 'bottom' : 'right'}
+                            align="end"
+                            sideOffset={4}
+                        >
+                            <DropdownMenuGroup>
+                                <DropdownMenuLabel className="p-0 font-normal">
+                                    <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                                        <Avatar className="h-8 w-8 rounded-lg">
+                                            <AvatarImage
+                                                src={user.avatar}
+                                                alt={user.name}
+                                            />
+                                            <AvatarFallback className="rounded-lg">
+                                                {user.name
+                                                    .charAt(0)
+                                                    .toUpperCase()}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="grid flex-1 text-left text-sm leading-tight">
+                                            <span className="truncate font-medium">
+                                                {user.name}
+                                            </span>
+                                            <span className="text-muted-foreground truncate text-xs">
+                                                {user.email}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </DropdownMenuLabel>
+                            </DropdownMenuGroup>
                             <DropdownMenuSeparator />
                             <DropdownMenuGroup>
                                 <DropdownMenuItem
@@ -118,13 +125,15 @@ export function NavUser() {
                                 </DropdownMenuItem>
                             </DropdownMenuGroup>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                onClick={() => setIsOpenLogout(true)}
-                                onSelect={(e) => e.preventDefault()}
-                            >
-                                <IconLogout className="size-4" />
-                                Log out
-                            </DropdownMenuItem>
+                            <DropdownMenuGroup>
+                                <DropdownMenuItem
+                                    onClick={() => setIsOpenLogout(true)}
+                                    onSelect={(e) => e.preventDefault()}
+                                >
+                                    <IconLogout className="size-4" />
+                                    Log out
+                                </DropdownMenuItem>
+                            </DropdownMenuGroup>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </SidebarMenuItem>

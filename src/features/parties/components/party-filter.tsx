@@ -46,14 +46,17 @@ export function PartyFilter({
     return (
         <Popover>
             <PopoverTrigger asChild>
-                <Button variant="outline" className="relative">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 relative overflow-visible"
+                >
                     <Filter className="size-4" />
+                    <span className="sr-only">Filter</span>
                     {activeFiltersCount > 0 && (
                         <Badge
                             variant="destructive"
-                            shape="circle"
-                            size="sm"
-                            className="absolute top-0 start-full -translate-y-1/2 -translate-x-1/2 rtl:translate-x-1/2"
+                            className="absolute -top-1.5 -right-1.5 h-4 w-4 p-0 flex items-center justify-center text-[10px] rounded-full"
                         >
                             {activeFiltersCount}
                         </Badge>

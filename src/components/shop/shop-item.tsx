@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { MoreVertical, Store } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Badge, BadgeDot } from '@/components/ui/badge'
 import {
     DropdownMenu,
@@ -101,14 +101,14 @@ export default function ShopItem({
                         Open
                     </Button>
                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="outline"
-                                size={isMobile ? 'xs' : 'sm'}
-                            >
-                                <MoreVertical className="size-4" />
-                                <span className="sr-only">More options</span>
-                            </Button>
+                        <DropdownMenuTrigger
+                            className={buttonVariants({
+                                variant: 'outline',
+                                size: isMobile ? 'xs' : 'sm'
+                            })}
+                        >
+                            <MoreVertical className="size-4" />
+                            <span className="sr-only">More options</span>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
                             <DropdownMenuItem onClick={() => onEdit?.(shop.id)}>

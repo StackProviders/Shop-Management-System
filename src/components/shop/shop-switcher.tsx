@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
@@ -167,87 +168,94 @@ export function ShopSwitcher() {
                             side={isMobile ? 'bottom' : 'right'}
                             sideOffset={4}
                         >
-                            <DropdownMenuLabel className="text-muted-foreground text-xs">
-                                Recent Shops
-                            </DropdownMenuLabel>
-                            {sortedShops.map((shop) => (
-                                <DropdownMenuItem
-                                    key={shop.shopId}
-                                    onClick={() => handleShopSwitch(shop)}
-                                    disabled={
-                                        isPending ||
-                                        shop.shopId === currentShop.shopId
-                                    }
-                                    className={cn(
-                                        'gap-2 p-2',
-                                        shop.shopId === currentShop.shopId &&
-                                            'bg-accent'
-                                    )}
-                                >
-                                    <ShopLogo
-                                        logoUrl={shop.logoUrl}
-                                        shopName={shop.shopName}
-                                        size="small"
-                                    />
-                                    <div className="flex items-center flex-1 min-w-0 gap-2">
-                                        <div className="flex flex-col flex-1 min-w-0">
-                                            <span className="truncate font-medium">
-                                                {shop.shopName}
-                                            </span>
-                                            <div className="flex items-center gap-1">
-                                                {(() => {
-                                                    const RoleIcon =
-                                                        getRoleIcon(shop.role)
-                                                    return (
-                                                        <RoleIcon className="size-3 text-muted-foreground" />
-                                                    )
-                                                })()}
-                                                <span className="text-xs text-muted-foreground truncate capitalize">
-                                                    {shop.role}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        {shop.isOwner && (
-                                            <Button
-                                                variant="ghost"
-                                                size="xs"
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    setCurrentShop(shop)
-                                                    navigate({
-                                                        to: '/settings'
-                                                    })
-                                                }}
-                                            >
-                                                <Settings className="size-3.5" />
-                                            </Button>
+                            <DropdownMenuGroup>
+                                <DropdownMenuLabel className="text-muted-foreground text-xs">
+                                    Recent Shops
+                                </DropdownMenuLabel>
+                                {sortedShops.map((shop) => (
+                                    <DropdownMenuItem
+                                        key={shop.shopId}
+                                        onClick={() => handleShopSwitch(shop)}
+                                        disabled={
+                                            isPending ||
+                                            shop.shopId === currentShop.shopId
+                                        }
+                                        className={cn(
+                                            'gap-2 p-2',
+                                            shop.shopId ===
+                                                currentShop.shopId &&
+                                                'bg-accent'
                                         )}
+                                    >
+                                        <ShopLogo
+                                            logoUrl={shop.logoUrl}
+                                            shopName={shop.shopName}
+                                            size="small"
+                                        />
+                                        <div className="flex items-center flex-1 min-w-0 gap-2">
+                                            <div className="flex flex-col flex-1 min-w-0">
+                                                <span className="truncate font-medium">
+                                                    {shop.shopName}
+                                                </span>
+                                                <div className="flex items-center gap-1">
+                                                    {(() => {
+                                                        const RoleIcon =
+                                                            getRoleIcon(
+                                                                shop.role
+                                                            )
+                                                        return (
+                                                            <RoleIcon className="size-3 text-muted-foreground" />
+                                                        )
+                                                    })()}
+                                                    <span className="text-xs text-muted-foreground truncate capitalize">
+                                                        {shop.role}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            {shop.isOwner && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="xs"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        setCurrentShop(shop)
+                                                        navigate({
+                                                            to: '/settings'
+                                                        })
+                                                    }}
+                                                >
+                                                    <Settings className="size-3.5" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuGroup>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuGroup>
+                                <DropdownMenuItem
+                                    className="gap-2 p-2"
+                                    onClick={() => navigate({ to: '/shops' })}
+                                >
+                                    <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
+                                        <LayoutGrid className="size-4" />
+                                    </div>
+                                    <div className="text-muted-foreground font-medium">
+                                        Manage all shops
                                     </div>
                                 </DropdownMenuItem>
-                            ))}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                className="gap-2 p-2"
-                                onClick={() => navigate({ to: '/shops' })}
-                            >
-                                <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                                    <LayoutGrid className="size-4" />
-                                </div>
-                                <div className="text-muted-foreground font-medium">
-                                    Manage all shops
-                                </div>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                className="gap-2 p-2"
-                                onClick={() => setCreateModalOpen(true)}
-                            >
-                                <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                                    <Plus className="size-4" />
-                                </div>
-                                <div className="text-muted-foreground font-medium">
-                                    Create shop
-                                </div>
-                            </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    className="gap-2 p-2"
+                                    onClick={() => setCreateModalOpen(true)}
+                                >
+                                    <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
+                                        <Plus className="size-4" />
+                                    </div>
+                                    <div className="text-muted-foreground font-medium">
+                                        Create shop
+                                    </div>
+                                </DropdownMenuItem>
+                            </DropdownMenuGroup>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </SidebarMenuItem>

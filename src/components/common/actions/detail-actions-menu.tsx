@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuShortcut,
@@ -90,33 +91,39 @@ export function DetailActionsMenu<T extends { id: string }>({
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
-                    <DropdownMenuItem onClick={handleEdit}>
-                        <Pen />
-                        Edit
-                        {!compact && (
-                            <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
-                        )}
-                    </DropdownMenuItem>
-                    {getDuplicateData && duplicatePath && (
-                        <DropdownMenuItem onClick={handleDuplicate}>
-                            <Copy />
-                            Duplicate
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem onClick={handleEdit}>
+                            <Pen />
+                            Edit
                             {!compact && (
-                                <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
+                                <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
                             )}
                         </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                        variant="destructive"
-                        onClick={handleDeleteClick}
-                    >
-                        <Trash2 />
-                        Delete
-                        {!compact && (
-                            <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+                        {getDuplicateData && duplicatePath && (
+                            <DropdownMenuItem onClick={handleDuplicate}>
+                                <Copy />
+                                Duplicate
+                                {!compact && (
+                                    <DropdownMenuShortcut>
+                                        ⌘D
+                                    </DropdownMenuShortcut>
+                                )}
+                            </DropdownMenuItem>
                         )}
-                    </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem
+                            variant="destructive"
+                            onClick={handleDeleteClick}
+                        >
+                            <Trash2 />
+                            Delete
+                            {!compact && (
+                                <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+                            )}
+                        </DropdownMenuItem>
+                    </DropdownMenuGroup>
                 </DropdownMenuContent>
             </DropdownMenu>
 

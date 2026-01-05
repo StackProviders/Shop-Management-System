@@ -164,24 +164,23 @@ const PartiesLayout = memo(function PartiesLayout({
 
             <ListDetailBody>
                 <ListDetailList isRouteActive={isRouteActive}>
-                    <ListDetailListHeader>
-                        <div className="flex gap-2">
-                            <SearchInput
-                                value={searchQuery}
-                                onValueChange={setSearchQuery}
-                                placeholder="Search parties..."
-                                wrapperClassName="flex-1"
-                            />
-                            <PartyFilter
-                                filterType={filterType}
-                                filterStatus={filterStatus}
-                                filterBalance={filterBalance}
-                                onFilterTypeChange={setFilterType}
-                                onFilterStatusChange={setFilterStatus}
-                                onFilterBalanceChange={setFilterBalance}
-                                onClearFilters={clearFilters}
-                            />
-                        </div>
+                    <ListDetailListHeader className="flex px-4 py-3 gap-2">
+                        <SearchInput
+                            value={searchQuery}
+                            onValueChange={setSearchQuery}
+                            placeholder="Search parties..."
+                            wrapperClassName="flex-1"
+                            className="bg-muted/50"
+                        />
+                        <PartyFilter
+                            filterType={filterType}
+                            filterStatus={filterStatus}
+                            filterBalance={filterBalance}
+                            onFilterTypeChange={setFilterType}
+                            onFilterStatusChange={setFilterStatus}
+                            onFilterBalanceChange={setFilterBalance}
+                            onClearFilters={clearFilters}
+                        />
                     </ListDetailListHeader>
 
                     <ListDetailListContent>
