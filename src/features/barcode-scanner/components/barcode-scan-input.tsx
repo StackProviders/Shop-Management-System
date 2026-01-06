@@ -32,20 +32,25 @@ export const BarcodeScanInput = forwardRef<
         ref
     ) => {
         return (
-            <div className={cn('flex gap-2', className)}>
+            <div className="relative w-full">
                 <Input
                     ref={ref}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={placeholder}
                     disabled={disabled}
+                    className={cn('pr-6', className)}
                     {...props}
                 />
-                <BarcodeScanButton
-                    onScan={(barcode) => onChange(barcode)}
-                    disabled={disabled}
-                    formats={formats}
-                />
+                <div className="absolute right-0 top-0 h-full flex items-center pr-2 z-20">
+                    <BarcodeScanButton
+                        variant="ghost"
+                        className="size-7 hover:bg-transparent"
+                        onScan={(barcode) => onChange(barcode)}
+                        disabled={disabled}
+                        formats={formats}
+                    />
+                </div>
             </div>
         )
     }

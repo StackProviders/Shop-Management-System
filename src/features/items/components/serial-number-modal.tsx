@@ -156,21 +156,26 @@ export function SerialNumberModal({
                     </span>
                 </div>
 
-                <div className="flex gap-2">
-                    <div className="flex-1" onKeyPress={handleKeyPress}>
-                        <BarcodeScanInput
-                            value={inputValue}
-                            onChange={setInputValue}
-                            placeholder={
-                                mode === 'select' ? 'Search/Scan' : 'Enter/Scan'
-                            }
-                        />
-                    </div>
+                <div
+                    className="relative flex items-center"
+                    onKeyPress={handleKeyPress}
+                >
+                    <BarcodeScanInput
+                        value={inputValue}
+                        onChange={setInputValue}
+                        placeholder={
+                            mode === 'select'
+                                ? 'Search/Scan Serial No.'
+                                : 'Enter/Scan Serial No.'
+                        }
+                        className="pr-20"
+                    />
                     {mode === 'add' && (
                         <Button
                             type="button"
                             onClick={handleAdd}
-                            className="px-8"
+                            size="sm"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-4 z-20"
                         >
                             Add
                         </Button>
