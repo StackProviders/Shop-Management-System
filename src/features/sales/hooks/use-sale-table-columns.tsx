@@ -9,7 +9,7 @@ import type { ColumnVisibility } from './use-column-visibility'
 import type { ItemSettings } from '@/features/items/types/settings'
 import { StandaloneWarrantyInput } from '../components/standalone-warranty-input'
 import type { SaleItemRow } from '../types'
-import { useContext, useMemo } from 'react'
+import { useContext, useMemo, useState, useEffect } from 'react'
 import { DragHandleContext } from '../components/sale-items-table'
 import { formatCurrency } from '@/lib/utils'
 
@@ -29,6 +29,49 @@ function DragHandle() {
         >
             <GripVertical className="h-4 w-4 text-muted-foreground" />
         </div>
+    )
+}
+
+function NumberInput({
+    value,
+    onChange,
+    className,
+    ...props
+}: {
+    value: number
+    onChange: (value: number) => void
+} & Omit<React.ComponentProps<typeof Input>, 'value' | 'onChange'>) {
+    const [inputValue, setInputValue] = useState(value.toString())
+
+    useEffect(() => {
+        // Sync local state if parent value changes externally
+        // But exclude changes that match the current parsed local value to avoid cursor jumps/formatting loss
+        if (Number(inputValue) !== value) {
+            setInputValue(value.toString())
+        }
+        // If the value is 0 and locally it's empty string, we want to keep it empty
+        // logic above: Number("") is 0. So if value is 0, 0 !== 0 is false.
+        // So it won't force "0" if we have "".
+    }, [value, inputValue])
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newValue = e.target.value
+        setInputValue(newValue)
+        if (newValue === '') {
+            onChange(0)
+        } else {
+            onChange(Number(newValue))
+        }
+    }
+
+    return (
+        <Input
+            type="number"
+            value={inputValue}
+            onChange={handleChange}
+            className={className}
+            {...props}
+        />
     )
 }
 
@@ -108,8 +151,7 @@ export function useSaleTableColumns(
             {
                 accessorKey: 'itemName',
                 header: 'ITEM',
-                cell: ({ row, table }) => <ItemCell row={row} table={table} />,
-                size: 280
+                cell: ({ row, table }) => <ItemCell row={row} table={table} />
             },
             {
                 accessorKey: 'serialNo',
@@ -174,17 +216,12 @@ export function useSaleTableColumns(
                         itemId && getSerialNumbers(itemId).length > 0
 
                     return (
-                        <Input
-                            type="number"
+                        <NumberInput
                             value={row.original.quantity}
-                            onChange={(e) =>
-                                updateItem(
-                                    row.index,
-                                    'quantity',
-                                    Number(e.target.value)
-                                )
+                            onChange={(val) =>
+                                updateItem(row.index, 'quantity', val)
                             }
-                            className="border-0 focus-visible:ring-0 w-20"
+                            className="border-0 focus-visible:ring-0 w-20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             min={0}
                             readOnly={!!hasSerialTracking}
                         />
@@ -210,17 +247,10 @@ export function useSaleTableColumns(
                 accessorKey: 'price',
                 header: 'PRICE/UNIT',
                 cell: ({ row }) => (
-                    <Input
-                        type="number"
+                    <NumberInput
                         value={row.original.price}
-                        onChange={(e) =>
-                            updateItem(
-                                row.index,
-                                'price',
-                                Number(e.target.value)
-                            )
-                        }
-                        className="border-0 focus-visible:ring-0 w-28"
+                        onChange={(val) => updateItem(row.index, 'price', val)}
+                        className="border-0 focus-visible:ring-0 w-28 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         min={0}
                     />
                 ),

@@ -98,7 +98,7 @@ export function SaleForm({ items, onSubmit }: SaleFormProps) {
                 className="space-y-0 h-full flex flex-col"
             >
                 {/* Top Section */}
-                <div className="bg-muted/10 p-4 border-b space-y-4">
+                <div className="bg-muted/10 p-3 space-y-4">
                     <div className="flex flex-col md:flex-row gap-5 justify-between">
                         {/* Left: Customer Selection & Details */}
                         <SaleCustomerDetails customers={customers} />
@@ -109,12 +109,12 @@ export function SaleForm({ items, onSubmit }: SaleFormProps) {
                 </div>
 
                 {/* Middle Section: Items Table */}
-                <div className="flex-1 overflow-auto bg-muted/5 p-4 min-h-[300px]">
+                <div className="flex-1 overflow-auto bg-muted/5 p-3 min-h-[300px]">
                     <SaleItemsTable items={items} />
                 </div>
 
                 {/* Bottom Section */}
-                <div className="bg-background border-t p-4">
+                <div className="bg-background border-t p-3">
                     <div className="flex flex-col md:flex-row gap-6">
                         {/* Bottom Left: Actions */}
                         <div className="w-full md:w-1/3 space-y-2">

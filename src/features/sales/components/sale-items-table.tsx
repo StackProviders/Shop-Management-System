@@ -400,14 +400,14 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
                                                 style={{
                                                     width:
                                                         header.column.id ===
-                                                        'total'
+                                                        'itemName'
                                                             ? 'auto'
                                                             : header.getSize()
                                                 }}
                                                 className={cn(
                                                     'font-semibold text-xs uppercase',
                                                     header.column.id ===
-                                                        'total' && 'w-full'
+                                                        'itemName' && 'w-full'
                                                 )}
                                             >
                                                 {flexRender(
