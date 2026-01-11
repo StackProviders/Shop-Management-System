@@ -6,15 +6,16 @@ export interface SaleItem {
     discount?: number
     taxRate?: number
     total: number
-}
-
-export interface SaleItemRow extends SaleItem {
-    id: string
+    // Added optional fields
     serialNo?: string | string[]
     colour?: string
     material?: string
     warranty?: { label: string; days: number }
     unit?: string
+}
+
+export interface SaleItemRow extends SaleItem {
+    id: string
     [key: string]: unknown
 }
 

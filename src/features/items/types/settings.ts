@@ -11,6 +11,7 @@ export interface CustomFieldName {
 export interface ItemSettings {
     id: string
     shopId: string
+    taxEnabled: boolean
     serialNoTracking: boolean
     mrpPrice: boolean
     customFields: boolean
@@ -37,6 +38,7 @@ export interface ItemSettings {
 }
 
 export interface UpdateItemSettingsData {
+    taxEnabled?: boolean
     serialNoTracking?: boolean
     mrpPrice?: boolean
     customFields?: boolean

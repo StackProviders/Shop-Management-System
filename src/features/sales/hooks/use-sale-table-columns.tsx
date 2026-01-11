@@ -3,13 +3,13 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Trash2, GripVertical, ScanBarcode } from 'lucide-react'
 import { SerialNumberSelector } from '@/features/items'
-import { StandaloneUnitCombobox } from '@/components/common'
+import { StandaloneUnitCombobox, NumberInput } from '@/components/common'
 import { useSaleItemsStore } from '../stores/sale-items-store'
 import type { ColumnVisibility } from './use-column-visibility'
 import type { ItemSettings } from '@/features/items/types/settings'
 import { StandaloneWarrantyInput } from '../components/standalone-warranty-input'
 import type { SaleItemRow } from '../types'
-import { useContext, useMemo, useState, useEffect } from 'react'
+import { useContext, useMemo } from 'react'
 import { DragHandleContext } from '../components/sale-items-table'
 import { formatCurrency } from '@/lib/utils'
 
@@ -29,49 +29,6 @@ function DragHandle() {
         >
             <GripVertical className="h-4 w-4 text-muted-foreground" />
         </div>
-    )
-}
-
-function NumberInput({
-    value,
-    onChange,
-    className,
-    ...props
-}: {
-    value: number
-    onChange: (value: number) => void
-} & Omit<React.ComponentProps<typeof Input>, 'value' | 'onChange'>) {
-    const [inputValue, setInputValue] = useState(value.toString())
-
-    useEffect(() => {
-        // Sync local state if parent value changes externally
-        // But exclude changes that match the current parsed local value to avoid cursor jumps/formatting loss
-        if (Number(inputValue) !== value) {
-            setInputValue(value.toString())
-        }
-        // If the value is 0 and locally it's empty string, we want to keep it empty
-        // logic above: Number("") is 0. So if value is 0, 0 !== 0 is false.
-        // So it won't force "0" if we have "".
-    }, [value, inputValue])
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newValue = e.target.value
-        setInputValue(newValue)
-        if (newValue === '') {
-            onChange(0)
-        } else {
-            onChange(Number(newValue))
-        }
-    }
-
-    return (
-        <Input
-            type="number"
-            value={inputValue}
-            onChange={handleChange}
-            className={className}
-            {...props}
-        />
     )
 }
 

@@ -30,6 +30,7 @@ function getDefaultSettings(shopId: string): ItemSettings {
     return {
         id: shopId,
         shopId,
+        taxEnabled: false,
         serialNoTracking: false,
         mrpPrice: false,
         customFields: false,
