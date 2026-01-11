@@ -1,33 +1,17 @@
-import { useState, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import { useState, useMemo, useEffect } from 'react'
+import { toast } from 'sonner'
+import { useForm, type FieldErrors } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { saleSchema, type SaleFormData } from '../validations'
-import { Form, FormField } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
-} from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
+import { Form } from '@/components/ui/form'
 import type { Item } from '@/features/items'
 import { SaleItemsTable } from './sale-items-table'
 import { SaleCustomerDetails } from './sale-customer-details'
 import { SaleInvoiceDetails } from './sale-invoice-details'
+import { SaleFormBottom } from './sale-form-bottom'
 import { useSaleItemsStore } from '../stores/sale-items-store'
 import { useShopContext } from '@/features/shop'
 import { usePartiesByShop } from '@/features/parties/hooks/use-party-queries'
-import { Button } from '@/components/ui/button'
-import {
-    FileText,
-    Image as ImageIcon,
-    File,
-    X,
-    ChevronsUpDown
-} from 'lucide-react'
-import { Checkbox } from '@/components/ui/checkbox'
 
 interface SaleFormProps {
     items: Item[]
@@ -39,10 +23,16 @@ export function SaleForm({ items, onSubmit }: SaleFormProps) {
     const shopId = currentShop?.shopId || ''
     const { parties } = usePartiesByShop(shopId)
     const saleItems = useSaleItemsStore((state) => state.items)
-    const [date, setDate] = useState<Date>(new Date())
-    const [showDescription, setShowDescription] = useState(false)
+    // We need to sync store items to form manually or just use form for everything.
+    // Given the architecture seems to split them, we will sync store -> form
 
-    // Generate a default invoice number (simple timestamp based for now)
+    // Local state for date (invoice date)
+    const [date, setDate] = useState<Date>(new Date())
+
+    // Local state for tax type helper
+    const [taxType, setTaxType] = useState<'none' | 'percent'>('none')
+
+    // Generate a default invoice number
     const defaultInvoiceNumber = useMemo(
         () => `INV-${Math.floor(100000 + Math.random() * 900000)}`,
         []
@@ -54,10 +44,14 @@ export function SaleForm({ items, onSubmit }: SaleFormProps) {
             invoiceNumber: defaultInvoiceNumber,
             items: [],
             discount: 0,
+            discountType: 'percent',
             paymentStatus: 'unpaid',
             notes: '',
             customerPhone: '',
-            billingAddress: ''
+            billingAddress: '',
+            paidAmount: 0,
+            roundOff: 0,
+            taxRate: 0
         }
     })
 
@@ -66,44 +60,108 @@ export function SaleForm({ items, onSubmit }: SaleFormProps) {
         [parties]
     )
 
-    const handleSubmit = async (data: SaleFormData) => {
-        await onSubmit({ ...data, items: saleItems })
+    // Sync Store Items to Form
+    // This connects the zustand store (where the table likely updates) to the RHF state
+    useEffect(() => {
+        // We cast saleItems to the schema type. Ideally they should match exactly.
+        // If the store has extra fields, they are ignored by the validation if not in schema,
+        // but for strictness we trust the store produces valid items.
+        form.setValue('items', saleItems as SaleFormData['items'], {
+            shouldValidate: true
+        })
+    }, [saleItems, form])
+
+    // Calculate Totals for Display & Logic
+    // We can rely on the store values for calculation to keep it responsive
+    const subtotal = saleItems.reduce((sum, item) => sum + (item.total || 0), 0)
+
+    const discountValue = form.watch('discount') || 0
+    const discountType = form.watch('discountType')
+    const discountAmount =
+        discountType === 'percent'
+            ? (subtotal * discountValue) / 100
+            : discountValue
+
+    const taxRate = form.watch('taxRate') || 0
+    // Tax is applied on (Subtotal - Discount) usually
+    const taxableAmount = Math.max(0, subtotal - discountAmount)
+    const taxAmount = (taxableAmount * taxRate) / 100
+
+    const rawTotal = taxableAmount + taxAmount
+    const finalTotal = Math.round(rawTotal)
+
+    // Auto-update totals in form state before submit could be handled here,
+    // but typically we recalculate on submit or rely on the form values being up to date.
+
+    // Auto-fill paid amount if fully paid or just default logic
+    // The previous code had a specific effect for this:
+    const paymentStatus = form.watch('paymentStatus')
+    useEffect(() => {
+        if (paymentStatus === 'paid') {
+            form.setValue('paidAmount', finalTotal)
+        }
+    }, [finalTotal, form, paymentStatus])
+
+    const onFormSubmit = async (data: SaleFormData) => {
+        // Final recalculation/verification to ensure data integrity
+        const calculatedSubtotal = data.items.reduce(
+            (sum, i) => sum + i.total,
+            0
+        )
+
+        // Recalculate everything precisely to send clean data
+        const currentDiscountAmount =
+            data.discountType === 'percent'
+                ? (calculatedSubtotal * data.discount) / 100
+                : data.discount
+
+        const currentTaxable = Math.max(
+            0,
+            calculatedSubtotal - currentDiscountAmount
+        )
+        const currentTax = taxType === 'none' ? 0 : data.taxRate || 0
+        const currentTaxAmount = (currentTaxable * currentTax) / 100
+
+        const expectedTotal = Math.round(currentTaxable + currentTaxAmount)
+        const roundOff = expectedTotal - (currentTaxable + currentTaxAmount)
+
+        // Determine Payment Status based on paidAmount vs Total
+        // If user explicitly selected 'paid', we forcefully matched paidAmount above.
+        // If partial/unpaid, we trust the paidAmount entered.
+
+        const finalData: SaleFormData = {
+            ...data,
+            items: saleItems, // Taking from store ensures we have latest array
+            roundOff: roundOff,
+            taxRate: taxType === 'none' ? 0 : data.taxRate // Ensure 0 if disabled
+            // If the user didn't touch the paid amount but status is unpaid, ensure 0?
+            // The zod default is 0.
+        }
+
+        await onSubmit(finalData)
     }
 
-    const subtotal = saleItems.reduce((sum, item) => sum + item.total, 0)
-    const discountPercent = form.watch('discount') || 0
-    const discountAmount = (subtotal * discountPercent) / 100
+    const onInvalid = (errors: FieldErrors<SaleFormData>) => {
+        console.error('Validation Errors:', errors)
+        const firstErrorKey = Object.keys(errors)[0]
+        const message =
+            errors[firstErrorKey as keyof SaleFormData]?.message ||
+            errors.items?.message || // Check array error
+            'Please check the form for errors'
 
-    // Tax state (local for now)
-    const [taxRate, setTaxRate] = useState(0)
-    const taxAmount = ((subtotal - discountAmount) * taxRate) / 100
-
-    // Round off state
-    const [roundOffEnabled, setRoundOffEnabled] = useState(false)
-    const [roundOffAmount, setRoundOffAmount] = useState(0)
-
-    const rawTotal = subtotal - discountAmount + taxAmount
-
-    // Calculate final total based on round off
-    let finalTotal = rawTotal
-    if (roundOffEnabled) {
-        // If user enters a manual round off adjustment
-        finalTotal = rawTotal + roundOffAmount
+        toast.error(`Validation Error: ${message}`)
     }
 
     return (
         <Form {...form}>
             <form
-                onSubmit={form.handleSubmit(handleSubmit)}
+                onSubmit={form.handleSubmit(onFormSubmit, onInvalid)}
                 className="space-y-0 h-full flex flex-col"
             >
                 {/* Top Section */}
                 <div className="bg-muted/10 p-3 space-y-4">
                     <div className="flex flex-col md:flex-row gap-5 justify-between">
-                        {/* Left: Customer Selection & Details */}
                         <SaleCustomerDetails customers={customers} />
-
-                        {/* Right: Invoice Details */}
                         <SaleInvoiceDetails date={date} setDate={setDate} />
                     </div>
                 </div>
@@ -111,202 +169,23 @@ export function SaleForm({ items, onSubmit }: SaleFormProps) {
                 {/* Middle Section: Items Table */}
                 <div className="flex-1 overflow-auto bg-muted/5 p-3 min-h-[300px]">
                     <SaleItemsTable items={items} />
+                    {/* Hidden input to ensure 'items' field is registered and validates? 
+                        RHF registers via setValue, but sometimes a dummy Input helps if needed. 
+                        For now relies on Sync Effect.
+                    */}
                 </div>
 
                 {/* Bottom Section */}
-                <div className="bg-background border-t p-3">
-                    <div className="flex flex-col md:flex-row gap-6">
-                        {/* Bottom Left: Actions */}
-                        <div className="w-full md:w-1/3 space-y-2">
-                            {!showDescription ? (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="w-full justify-start text-muted-foreground h-10"
-                                    onClick={() => setShowDescription(true)}
-                                >
-                                    <FileText className="mr-2 h-4 w-4" />
-                                    ADD DESCRIPTION
-                                </Button>
-                            ) : (
-                                <div className="relative">
-                                    <FormField
-                                        control={form.control}
-                                        name="notes"
-                                        render={({ field }) => (
-                                            <Textarea
-                                                placeholder="Add notes..."
-                                                className="min-h-[120px]"
-                                                {...field}
-                                            />
-                                        )}
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        className="absolute top-1 right-1 h-6 w-6"
-                                        onClick={() =>
-                                            setShowDescription(false)
-                                        }
-                                    >
-                                        <X className="h-3 w-3" />
-                                    </Button>
-                                </div>
-                            )}
-
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="w-full justify-start text-muted-foreground h-10"
-                            >
-                                <ImageIcon className="mr-2 h-4 w-4" />
-                                ADD IMAGE
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="w-full justify-start text-muted-foreground h-10"
-                            >
-                                <File className="mr-2 h-4 w-4" />
-                                ADD DOCUMENT
-                            </Button>
-                        </div>
-
-                        {/* Bottom Right: Totals */}
-                        <div className="w-full md:w-2/3 space-y-3">
-                            {/* Discount */}
-                            <div className="flex items-center justify-end gap-4">
-                                <span className="text-sm">Discount</span>
-                                <div className="flex items-center gap-2">
-                                    <FormField
-                                        control={form.control}
-                                        name="discount"
-                                        render={({ field }) => (
-                                            <div className="relative w-20">
-                                                <Input
-                                                    type="number"
-                                                    className="pr-6 text-right"
-                                                    {...field}
-                                                    onChange={(e) =>
-                                                        field.onChange(
-                                                            Number(
-                                                                e.target.value
-                                                            )
-                                                        )
-                                                    }
-                                                />
-                                                <span className="absolute right-2 top-2.5 text-xs text-muted-foreground">
-                                                    (%)
-                                                </span>
-                                            </div>
-                                        )}
-                                    />
-                                    <div className="relative w-24">
-                                        <Input
-                                            type="number"
-                                            readOnly
-                                            value={discountAmount.toFixed(2)}
-                                            className="pr-6 text-right bg-muted/50"
-                                        />
-                                        <span className="absolute right-2 top-2.5 text-xs text-muted-foreground">
-                                            (₹)
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Tax */}
-                            <div className="flex items-center justify-end gap-4">
-                                <span className="text-sm">Tax</span>
-                                <div className="flex items-center gap-2">
-                                    <Select
-                                        value={taxRate.toString()}
-                                        onValueChange={(val) =>
-                                            setTaxRate(Number(val))
-                                        }
-                                    >
-                                        <SelectTrigger className="w-20">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="0">
-                                                NONE
-                                            </SelectItem>
-                                            <SelectItem value="18">
-                                                GST 18%
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <div className="w-24 text-right pr-2 text-sm">
-                                        {taxAmount.toFixed(2)}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Round Off */}
-                            <div className="flex items-center justify-end gap-4">
-                                <div className="flex items-center gap-2">
-                                    <Checkbox
-                                        id="roundOff"
-                                        checked={roundOffEnabled}
-                                        onCheckedChange={(c) =>
-                                            setRoundOffEnabled(!!c)
-                                        }
-                                    />
-                                    <label
-                                        htmlFor="roundOff"
-                                        className="text-sm cursor-pointer select-none"
-                                    >
-                                        Round Off
-                                    </label>
-                                </div>
-                                <Input
-                                    type="number"
-                                    value={roundOffAmount}
-                                    onChange={(e) =>
-                                        setRoundOffAmount(
-                                            Number(e.target.value)
-                                        )
-                                    }
-                                    disabled={!roundOffEnabled}
-                                    className="w-20 text-right h-8"
-                                />
-                            </div>
-
-                            {/* Total */}
-                            <div className="flex items-center justify-end gap-4 border-t pt-3">
-                                <span className="text-base font-semibold">
-                                    Total
-                                </span>
-                                <div className="w-48 text-right">
-                                    <Input
-                                        readOnly
-                                        value={finalTotal.toFixed(2)}
-                                        className="text-right text-lg font-bold border-none bg-transparent shadow-none"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Footer Buttons */}
-                <div className="bg-background border-t p-4 flex justify-end gap-4">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="min-w-[100px] text-blue-600 border-blue-200 hover:bg-blue-50"
-                    >
-                        Share <ChevronsUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                    <Button
-                        type="submit"
-                        className="min-w-[100px] bg-blue-600 hover:bg-blue-700"
-                    >
-                        Save
-                    </Button>
-                </div>
+                <SaleFormBottom
+                    subtotal={subtotal}
+                    taxType={taxType}
+                    setTaxType={setTaxType}
+                    discountAmount={discountAmount}
+                    taxAmount={taxAmount}
+                    finalTotal={finalTotal}
+                    dueAmount={finalTotal - (form.watch('paidAmount') || 0)}
+                    isSubmitting={form.formState.isSubmitting}
+                />
             </form>
         </Form>
     )
